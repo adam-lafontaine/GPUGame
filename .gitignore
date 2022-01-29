@@ -4,3 +4,6 @@
 *.ptx
 *.cubin
 *.fatbin
+
+[Bb]uild/
+.vscode/
