@@ -323,9 +323,15 @@ object_files += $(input_o)
 app_h := $(app)/app.hpp
 app_h += $(app)/app_types.hpp
 
-app_c := $(app)/app.cpp
-app_o := $(build)/app.o
+app_c        := $(app)/app.cpp
+app_o        := $(build)/app.o
 object_files += $(app_o)
+
+render_h := $(app)/render.hpp
+
+render_c := $(app)/render.cu
+render_o := $(build)/render.o
+object_files += $(render_o)
 
 
 program_exe := $(build)/$(exe_name)
@@ -343,7 +349,12 @@ $(input_o): $(input_c) $(input_h) $(types_h)
 	$(GPP) -o $@ -c $< $(SDL2)
 
 
-$(app_o): $(app_c) $(app_h) $(input_h) $(device_h) $(types_h)
+$(render_o): $(render_c) $(render_h) $(device_h) $(types_h)
+	@echo "\n render"
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+
+
+$(app_o): $(app_c) $(app_h) $(input_h) $(device_h) $(types_h) $(render_h)
 	@echo "\n app"
 	$(GPP) -o $@ -c $<
 

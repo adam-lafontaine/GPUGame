@@ -43,7 +43,4 @@ namespace app
 }
 
 
-// platform dependent e.g. win32_main.cpp
-u32 platform_to_color_32(u8 red, u8 green, u8 blue);
-
 void platform_signal_stop();

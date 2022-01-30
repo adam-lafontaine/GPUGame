@@ -172,12 +172,6 @@ static void destroy_bitmap_buffer(BitmapBuffer& buffer)
 }
 
 
-u32 platform_to_color_32(u8 red, u8 green, u8 blue)
-{
-    return red << 16 | green << 8 | blue;
-}
-
-
 void platform_signal_stop()
 {
     g_running = false;

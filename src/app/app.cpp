@@ -1,30 +1,35 @@
 #include "app.hpp"
-#include "app_types.hpp"
+#include "render.hpp"
 
 #include <cassert>
 
 
-static constexpr size_t app_state_required_size()
-{
-    return sizeof(AppState);
-}
-
-
-static constexpr size_t device_memory_size()
-{
-    return 10; // TODO
-}
-
-
 static void process_input(Input const& input, AppState& state)
 {
+    auto& controller = input.controllers[0];
+    auto& props = state.props;
 
-}
+    if(controller.button_b.pressed)
+    {
+        props.red += 10;
+    }
 
+    if(controller.button_a.pressed)
+    {
+        props.green += 10;
+    }
 
-void render(AppState& state)
-{
+    if(controller.button_x.pressed)
+    {
+        props.blue += 10;
+    }
 
+    if(controller.button_y.pressed)
+    {
+        props.red = 255;
+        props.green = 255;
+        props.blue = 255;
+    }
 }
 
 
@@ -39,11 +44,29 @@ namespace app
     }
 
 
-    static AppState& get_state(AppMemory& memory, ScreenBuffer const& buffer)
+    static AppState& get_initial_state(AppMemory& memory)
     {
-        assert(app_state_required_size() <= memory.permanent_storage_size);
+        auto state_sz = sizeof(AppState);
+        
+        u32 n_elements = 128; // just because
+        auto elements_sz = n_elements * sizeof(u32);
 
-        return get_state(memory);
+        auto required_sz = state_sz + elements_sz;
+
+        assert(required_sz <= memory.permanent_storage_size);
+
+        auto& state = get_state(memory);
+
+        auto mem = (u8*)memory.permanent_storage + state_sz;
+
+        state.host.elements = (u32*)mem;
+        state.host.n_elements = n_elements;
+
+        mem += elements_sz;
+
+        init_state_props(state);
+
+        return state;
     }
 
 
@@ -77,7 +100,17 @@ namespace app
 
     static bool init_device_memory(DeviceMemory& device, ScreenBuffer const& buffer)
     {
-        if(!device_malloc(device.buffer, device_memory_size()))
+        u32 n_elements = 128; // just because
+        auto elements_sz = n_elements * sizeof(r32);
+
+        auto required_sz = elements_sz;
+
+        if(!device_malloc(device.buffer, required_sz))
+        {
+            return false;
+        }
+
+        if(!make_device_array(device.r32_array, n_elements, device.buffer))
         {
             return false;
         }
@@ -85,12 +118,12 @@ namespace app
         return true;
     }
 
-
-
     
 	bool initialize_memory(AppMemory& memory, ScreenBuffer& screen)
     {
-        auto& state = get_state(memory, screen);
+        memory.is_app_initialized = false;
+
+        auto& state = get_initial_state(memory);        
 
         if(!init_unified_memory(state.unified, screen))
 		{
