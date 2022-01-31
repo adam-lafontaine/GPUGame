@@ -2,6 +2,14 @@
 
 #include "../device/device.hpp"
 
+class Tile
+{
+public:
+    Point2Du32 position;
+
+    Pixel color;
+};
+
 
 class DeviceMemory
 {
@@ -9,6 +17,8 @@ public:
     DeviceBuffer buffer;
 
     DeviceArray<r32> r32_array; // just because
+
+    DeviceArray<Tile> world_tiles;
     
 };
 
@@ -36,6 +46,9 @@ public:
     u8 red; // just because
     u8 green;
     u8 blue;
+
+    u32 screen_width_m;
+    
 };
 
 
@@ -50,11 +63,3 @@ public:
 
     StateProps props;    
 };
-
-
-inline void init_state_props(AppState& state)
-{
-    state.props.red = 55;
-    state.props.green = 155;
-    state.props.blue = 255;
-}
