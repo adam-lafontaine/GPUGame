@@ -11,7 +11,7 @@ constexpr u32 WORLD_WIDTH_TILE = 500;
 constexpr u32 WORLD_HEIGHT_TILE = 500;
 
 
-constexpr r32 tile_distance_m(u32 n_tiles)
+inline constexpr r32 tile_distance_m(u32 n_tiles)
 {
     return n_tiles * TILE_LENGTH_M;
 }

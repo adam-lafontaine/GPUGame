@@ -2,6 +2,15 @@
 
 #include "../device/device.hpp"
 
+
+class WorldPosition
+{
+public:
+    Point2Du32 tile;
+    Point2Dr32 offset_m;
+};
+
+
 class Tile
 {
 public:
@@ -48,7 +57,7 @@ public:
     u8 blue;
 
     u32 screen_width_m;
-    
+    Point2Dr32 screen_positon;
 };
 
 

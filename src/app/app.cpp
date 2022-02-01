@@ -12,6 +12,8 @@ static void init_state_props(StateProps& props)
     props.blue = 255;
 
     props.screen_width_m = tile_distance_m(MIN_SCREEN_WIDTH_TILE);
+
+    props.screen_positon = { 0.0f, 0.0f };
 }
 
 
