@@ -7,40 +7,33 @@
 
 static void init_state_props(StateProps& props)
 {
-    props.red = 55;
-    props.green = 155;
-    props.blue = 255;
-
+    props.screen_width_px = app::SCREEN_BUFFER_WIDTH;
     props.screen_width_m = tile_distance_m(MIN_SCREEN_WIDTH_TILE);
+    
 
-    props.screen_positon = { 0.0f, 0.0f };
+    props.screen_positon.tile = { 0, 0 };
+    props.screen_positon.offset_m = { 0.0f, 0.0f };
 }
 
 
 static bool init_device_memory(DeviceMemory& device, u32 screen_width, u32 screen_height)
 {
-    u32 n_elements = 128; // just because
-    auto elements_sz = n_elements * sizeof(r32);
-
     u32 n_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;;
-    auto tile_sz = n_tiles * sizeof(Tile);
+    auto tile_sz = n_tiles * sizeof(u32);
 
-    auto required_sz = elements_sz + tile_sz;
+    auto required_sz = tile_sz;
 
     if(!device_malloc(device.buffer, required_sz))
     {
         return false;
     }
 
-    if(!make_device_array(device.r32_array, n_elements, device.buffer))
+    if(!make_device_matrix(device.tilemap, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE, device.buffer))
     {
         return false;
     }
 
-    if(!make_device_array(device.world_tiles, n_tiles, device.buffer))
-    {
-        return false;
-    }
+    init_device_memory(device);
 
     return true;
 }
@@ -71,28 +64,6 @@ static void process_input(Input const& input, AppState& state)
 {
     auto& controller = input.controllers[0];
     auto& props = state.props;
-
-    if(controller.button_b.pressed)
-    {
-        props.red += 10;
-    }
-
-    if(controller.button_a.pressed)
-    {
-        props.green += 10;
-    }
-
-    if(controller.button_x.pressed)
-    {
-        props.blue += 10;
-    }
-
-    if(controller.button_y.pressed)
-    {
-        props.red = 255;
-        props.green = 255;
-        props.blue = 255;
-    }
 }
 
 

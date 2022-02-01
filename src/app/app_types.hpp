@@ -10,7 +10,7 @@ public:
     Point2Dr32 offset_m;
 };
 
-
+/*
 class Tile
 {
 public:
@@ -18,16 +18,14 @@ public:
 
     Pixel color;
 };
-
+*/
 
 class DeviceMemory
 {
 public:
     DeviceBuffer buffer;
-
-    DeviceArray<r32> r32_array; // just because
-
-    DeviceArray<Tile> world_tiles;
+    
+    DeviceMatrix tilemap;
     
 };
 
@@ -52,12 +50,11 @@ public:
 class StateProps
 {
 public:
-    u8 red; // just because
-    u8 green;
-    u8 blue;
 
-    u32 screen_width_m;
-    Point2Dr32 screen_positon;
+    u32 screen_width_px;
+    r32 screen_width_m;
+
+    WorldPosition screen_positon;
 };
 
 

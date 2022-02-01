@@ -1,6 +1,8 @@
 #include "render.hpp"
 #include "../device/cuda_def.cuh"
+
 #include <cassert>
+#include <array>
 
 
 constexpr int THREADS_PER_BLOCK = 1024;
@@ -21,9 +23,12 @@ class DrawProps
 {
 public:
 
-    u8 red;
-    u8 green;
-    u8 blue;
+    WorldPosition screen_pos;
+    u32 screen_width_px;
+    r32 screen_width_m;
+    DeviceMatrix tiles;
+    DeviceImage screen_dst;
+
 };
 
 
@@ -33,11 +38,11 @@ static WorldPosition add_distance(WorldPosition const& pos, Vec2Dr32 const& vec)
 {
     auto dist_y_m = pos.tile.y * TILE_LENGTH_M + pos.offset_m.y + vec.y;
     auto tile_y = (u32)(dist_y_m / TILE_LENGTH_M);
-    auto offset_y = dist_y_m - tile_y - TILE_LENGTH_M;
+    auto offset_y = dist_y_m - tile_y * TILE_LENGTH_M;
 
     auto dist_x_m = pos.tile.x * TILE_LENGTH_M + pos.offset_m.x + vec.x;
     auto tile_x = (u32)(dist_x_m / TILE_LENGTH_M);
-    auto offset_x = dist_x_m - tile_x - TILE_LENGTH_M;
+    auto offset_x = dist_x_m - tile_x * TILE_LENGTH_M;
 
     WorldPosition p{};
     p.tile.x = tile_x;
@@ -49,36 +54,8 @@ static WorldPosition add_distance(WorldPosition const& pos, Vec2Dr32 const& vec)
 }
 
 
-
-
-GPU_FUNCTION
-static void something(u32 pixel_id, u32 screen_width_px, WorldPosition const& screen_pos, r32 screen_width_m)
-{
-    auto pixel_y_px = pixel_id / screen_width_px;
-    auto pixel_x_px = pixel_id - pixel_y_px * screen_width_px;
-
-    auto pixel_y_m = pixel_distance_m(pixel_y_px, screen_width_m, screen_width_px);
-    auto pixel_x_m = pixel_distance_m(pixel_x_px, screen_width_m, screen_width_px);
-    
-    auto pixel_pos = add_distance(screen_pos, { pixel_x_m, pixel_y_m});
-}
-
-
-GPU_FUNCTION
-static void draw_pixel(Pixel* dst, u32 id)
-{
-    pixel_t p{};
-
-    p.red = 128;
-    p.green = 128;
-    p.blue = 128;
-
-    dst[id] = p;
-}
-
-
 GPU_KERNAL
-static void gpu_render(Pixel* dst, DrawProps props, u32 n_threads)
+static void gpu_render(DrawProps props, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -86,8 +63,21 @@ static void gpu_render(Pixel* dst, DrawProps props, u32 n_threads)
         return;
     }
 
-   auto pixel_id = (u32)t;
-   draw_pixel(dst, pixel_id);
+    auto pixel_id = (u32)t;
+
+    auto pixel_y_px = pixel_id / props.screen_width_px;
+    auto pixel_x_px = pixel_id - pixel_y_px * props.screen_width_px;
+
+    auto pixel_y_m = pixel_distance_m(pixel_y_px, props.screen_width_m, props.screen_width_px);
+    auto pixel_x_m = pixel_distance_m(pixel_x_px, props.screen_width_m, props.screen_width_px);
+
+    auto pixel_pos = add_distance(props.screen_pos, { pixel_x_m, pixel_y_m });
+
+    auto tile_id = pixel_pos.tile.y * WORLD_WIDTH_TILE + pixel_pos.tile.x;
+
+    auto p = ((Pixel*)(props.tiles.data))[tile_id];
+
+    props.screen_dst.data[pixel_id] = p;   
 }
 
 
@@ -102,14 +92,63 @@ void render(AppState& state)
     auto n_threads = n_elements;
 
     DrawProps props{};
-    props.red = state.props.red;
-    props.blue = state.props.blue;
-    props.green = state.props.green;
+    props.screen_width_px = state.props.screen_width_px;
+    props.screen_width_m = state.props.screen_width_m;
+    props.screen_pos = state.props.screen_positon;
+    props.tiles = state.device.tilemap;
+    props.screen_dst = state.unified.screen_pixels;    
 
     bool proc = cuda_no_errors();
     assert(proc);
 
-    gpu_render<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(dst.data, props, n_threads);
+    gpu_render<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
+
+    proc &= cuda_launch_success();
+    assert(proc);
+}
+
+
+GPU_KERNAL
+void gpu_init_tiles(DeviceMatrix tiles, u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
+    }
+
+    auto tile_id = (u32)t;
+
+    assert(tile_id < tiles.width * tiles.height);
+
+    auto tile_y = tile_id / tiles.width;
+    auto tile_x = tile_id - tile_y * tiles.width;
+
+    auto p = (Pixel*)(tiles.data + tile_id);
+    p->alpha = 255;
+
+    if((tile_y % 2 == 0 && tile_x % 2 != 0) || (tile_y % 2 != 0 && tile_x % 2 == 0))
+    {
+        p->red = 255;
+        p->green = 255;
+        p->blue = 255;
+    }
+    else
+    {
+        p->red = 0; // (u8)(tile_y / 2);
+        p->green = 0; // (u8)((tiles.width - tile_x) / 2);
+        p->blue = 0; // (u8)((tiles.height - tile_y) / 2);
+    }
+}
+
+
+void init_device_memory(DeviceMemory const& device)
+{
+    bool proc = cuda_no_errors();
+    assert(proc);
+
+    auto n_threads = device.tilemap.width * device.tilemap.height;
+    gpu_init_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(device.tilemap, n_threads);
 
     proc &= cuda_launch_success();
     assert(proc);

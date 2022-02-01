@@ -18,4 +18,6 @@ inline constexpr r32 tile_distance_m(u32 n_tiles)
 
 
 
+void init_device_memory(DeviceMemory const& device);
+
 void render(AppState& state);

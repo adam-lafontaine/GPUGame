@@ -159,8 +159,7 @@ public:
 	u32 width;
 	u32 height;
 
-	u32* data_src;
-    u32* data_dst;
+	u32* data;
 };
 
 
