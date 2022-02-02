@@ -60,10 +60,83 @@ static bool init_unified_memory(UnifiedMemory& unified, u32 screen_width, u32 sc
 }
 
 
+constexpr r32 px_to_m(r32 n_pixels, r32 width_m, u32 width_px)
+{
+    return n_pixels * width_m / width_px;
+}
+
+
+static void update_screen_position(WorldPosition& screen_pos, Vec2Dr32 const& delta, r32 screen_width_m)
+{
+    auto abs_pos_x = screen_pos.tile.x * TILE_LENGTH_M + screen_pos.offset_m.x + delta.x;
+    auto abs_pos_y = screen_pos.tile.y * TILE_LENGTH_M + screen_pos.offset_m.y + delta.y;
+
+    auto max_pos_x = WORLD_WIDTH_TILE * TILE_LENGTH_M - screen_width_m;
+    auto screen_height_m = screen_width_m * app::SCREEN_BUFFER_HEIGHT / app::SCREEN_BUFFER_WIDTH;
+    auto max_pos_y = WORLD_HEIGHT_TILE * TILE_LENGTH_M - screen_height_m;
+
+    if(abs_pos_x < 0.0f)
+    {
+        abs_pos_x = 0.0f;
+    }
+    else if (abs_pos_x > max_pos_x)
+    {
+        abs_pos_x = max_pos_x;
+    }    
+
+    if(abs_pos_y < 0.0f)
+    {
+        abs_pos_y = 0.0f;
+    }
+    else if(abs_pos_y > max_pos_y)
+    {
+        abs_pos_y = max_pos_y;
+    }
+
+    screen_pos.tile.x = (u32)(abs_pos_x / TILE_LENGTH_M);
+    screen_pos.offset_m.x = abs_pos_x - screen_pos.tile.x * TILE_LENGTH_M;
+
+    screen_pos.tile.y = (u32)(abs_pos_y / TILE_LENGTH_M);
+    screen_pos.offset_m.y = abs_pos_y - screen_pos.tile.y * TILE_LENGTH_M;
+}
+
+
 static void process_input(Input const& input, AppState& state)
 {
     auto& controller = input.controllers[0];
+    auto& keyboard = input.keyboard;
     auto& props = state.props;
+
+    
+    r32 camera_speed_px = 500.0f;
+
+    auto dt = input.dt_frame;
+    auto camera_movement_px = camera_speed_px * dt;
+    auto camera_movement_m = px_to_m(camera_movement_px, props.screen_width_m, props.screen_width_px);
+
+    Vec2Dr32 camera_d_m = { 0.0f, 0.0f };
+
+    if(keyboard.up_key.is_down)
+    {
+        camera_d_m.y -= camera_movement_m;
+    }
+
+    if(keyboard.down_key.is_down)
+    {
+        camera_d_m.y += camera_movement_m;
+    }
+
+    if(keyboard.left_key.is_down)
+    {
+        camera_d_m.x -= camera_movement_m;
+    }
+
+    if(keyboard.right_key.is_down)
+    {
+        camera_d_m.x += camera_movement_m;
+    }
+
+    update_screen_position(props.screen_positon, camera_d_m, props.screen_width_m);
 }
 
 

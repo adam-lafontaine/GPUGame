@@ -2,7 +2,6 @@
 #include "../device/cuda_def.cuh"
 
 #include <cassert>
-#include <array>
 
 
 constexpr int THREADS_PER_BLOCK = 1024;
@@ -75,9 +74,21 @@ static void gpu_render(DrawProps props, u32 n_threads)
 
     auto tile_id = pixel_pos.tile.y * WORLD_WIDTH_TILE + pixel_pos.tile.x;
 
-    auto p = ((Pixel*)(props.tiles.data))[tile_id];
+    if(tile_id < WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE)
+    {
+        auto p = ((Pixel*)(props.tiles.data))[tile_id];
+        props.screen_dst.data[pixel_id] = p;
+    }
+    else
+    {
+        Pixel p{};
+        p.alpha = 255;
+        p.red = 0;
+        p.green = 0;
+        p.blue = 0;
 
-    props.screen_dst.data[pixel_id] = p;   
+        props.screen_dst.data[pixel_id] = p;
+    }
 }
 
 
@@ -135,9 +146,9 @@ void gpu_init_tiles(DeviceMatrix tiles, u32 n_threads)
     }
     else
     {
-        p->red = 0; // (u8)(tile_y / 2);
-        p->green = 0; // (u8)((tiles.width - tile_x) / 2);
-        p->blue = 0; // (u8)((tiles.height - tile_y) / 2);
+        p->red = (u8)(tile_y / 2);
+        p->green = (u8)((tiles.width - tile_x) / 2);
+        p->blue = (u8)((tiles.height - tile_y) / 2);
     }
 }
 
