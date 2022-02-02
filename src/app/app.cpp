@@ -2,13 +2,14 @@
 #include "render.hpp"
 
 #include <cassert>
+#include <cmath>
 
 
 
 static void init_state_props(StateProps& props)
 {
     props.screen_width_px = app::SCREEN_BUFFER_WIDTH;
-    props.screen_width_m = tile_distance_m(MIN_SCREEN_WIDTH_TILE);
+    props.screen_width_m = MIN_SCREEN_WIDTH_M;
     
 
     props.screen_positon.tile = { 0, 0 };
@@ -107,33 +108,54 @@ static void process_input(Input const& input, AppState& state)
     auto& keyboard = input.keyboard;
     auto& props = state.props;
 
-    
-    r32 camera_speed_px = 500.0f;
+    r32 max_camera_speed_px = 300.0f;
+    r32 min_camera_speed_px = 200.0f;
+
+    auto camera_speed_px = max_camera_speed_px - (props.screen_width_m - MIN_SCREEN_WIDTH_M) / (MAX_SCREEN_WIDTH_M - MIN_SCREEN_WIDTH_M) * (max_camera_speed_px - min_camera_speed_px);
 
     auto dt = input.dt_frame;
+
     auto camera_movement_px = camera_speed_px * dt;
     auto camera_movement_m = px_to_m(camera_movement_px, props.screen_width_m, props.screen_width_px);
 
+    r32 zoom_speed = 50.0f;
+    auto zoom_m = zoom_speed * dt;
+
     Vec2Dr32 camera_d_m = { 0.0f, 0.0f };
 
-    if(keyboard.up_key.is_down)
+    if(keyboard.up_key.is_down || controller.stick_left_y.end > 0.5f)
     {
         camera_d_m.y -= camera_movement_m;
     }
 
-    if(keyboard.down_key.is_down)
+    if(keyboard.down_key.is_down || controller.stick_left_y.end < -0.5f)
     {
         camera_d_m.y += camera_movement_m;
     }
 
-    if(keyboard.left_key.is_down)
+    if(keyboard.left_key.is_down || controller.stick_left_x.end < -0.5f)
     {
         camera_d_m.x -= camera_movement_m;
     }
 
-    if(keyboard.right_key.is_down)
+    if(keyboard.right_key.is_down || controller.stick_left_x.end > 0.5f)
     {
         camera_d_m.x += camera_movement_m;
+    }
+
+    if(props.screen_width_m > MIN_SCREEN_WIDTH_M && controller.stick_right_y.end > 0.5f)
+    {
+        props.screen_width_m = std::max(props.screen_width_m - zoom_m, MIN_SCREEN_WIDTH_M);
+    }
+
+    if(props.screen_width_m < MAX_SCREEN_WIDTH_M && controller.stick_right_y.end < -0.5f)
+    {
+        props.screen_width_m = std::min(props.screen_width_m + zoom_m, MAX_SCREEN_WIDTH_M);
+    }
+
+    if(controller.button_b.pressed)
+    {
+        platform_signal_stop();
     }
 
     update_screen_position(props.screen_positon, camera_d_m, props.screen_width_m);
