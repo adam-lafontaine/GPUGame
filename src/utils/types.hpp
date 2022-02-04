@@ -58,7 +58,7 @@ public:
 };
 
 
-class Range2Du32
+class Rect2Du32
 {
 public:
 	u32 x_begin;
@@ -66,6 +66,20 @@ public:
 	u32 y_begin;
 	u32 y_end;
 };
+
+
+class Rect2Dr32
+{
+public:
+	r32 x_begin;
+	r32 x_end;
+	r32 y_begin;
+	r32 y_end;
+};
+
+
+
+using Range2Du32 = Rect2Du32;
 
 
 using Point2Di32 = Vec2Di32;

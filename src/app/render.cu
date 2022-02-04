@@ -12,7 +12,8 @@ constexpr int calc_thread_blocks(u32 n_threads)
 }
 
 
-GPU_CONSTEXPR_FUNCTION r32 pixel_distance_m(u32 n_pixels, r32 width_m, u32 width_px)
+GPU_CONSTEXPR_FUNCTION
+r32 pixel_distance_m(u32 n_pixels, r32 width_m, u32 width_px)
 {
     auto dist = n_pixels * width_m / width_px;
 
@@ -22,6 +23,17 @@ GPU_CONSTEXPR_FUNCTION r32 pixel_distance_m(u32 n_pixels, r32 width_m, u32 width
     }
 
     return dist;
+}
+
+
+GPU_CONSTEXPR_FUNCTION
+Pixel to_pixel(u8 red, u8 green, u8 blue)
+{
+    Pixel p{};
+    p.alpha = 255;
+    p.red = red;
+    p.green = green;
+    p.blue = blue;
 }
 
 
@@ -53,6 +65,18 @@ static WorldPosition add_delta(WorldPosition const& pos, Vec2Dr32 const& delta)
 }
 
 
+GPU_FUNCTION
+static Vec2Dr32 subtract(WorldPosition const& lhs, WorldPosition const& rhs)
+{
+    Vec2Dr32 delta{};
+
+    delta.x = TILE_LENGTH_M * (lhs.tile.x - rhs.tile.x) + lhs.offset_m.x - rhs.offset_m.x;
+    delta.y = TILE_LENGTH_M * (lhs.tile.y - rhs.tile.y) + lhs.offset_m.y - rhs.offset_m.y;
+
+    return delta;
+}
+
+
 class TileProps
 {
 public:
@@ -75,19 +99,7 @@ static void gpu_draw_tiles(TileProps props, u32 n_threads)
         return;
     }
 
-    Pixel black{};
-    black.alpha = 255;
-    black.red = 30;
-    black.green = 30;
-    black.blue = 30;
-    /*
-
-    Pixel red{};
-    red.alpha = 255;
-    red.red = 255;
-    red.green = 0;
-    red.blue = 0;
-    */
+    auto black = to_pixel(30, 30, 30);
 
     auto pixel_id = (u32)t;
 
@@ -114,37 +126,6 @@ static void gpu_draw_tiles(TileProps props, u32 n_threads)
 }
 
 
-class EntityProps
-{
-public:
-    DeviceArray<Entity> entities;
-    DeviceImage screen_dst;
-
-    WorldPosition screen_pos;
-    u32 screen_width_px;
-    r32 screen_width_m;
-};
-
-/*
-GPU_KERNAL
-static void gpu_draw_entities(EntityProps props, u32 n_threads)
-{
-    int t = blockDim.x * blockIdx.x + threadIdx.x;
-    if (t >= n_threads)
-    {
-        return;
-    }
-
-    auto entity_id = (u32)t;
-
-    auto& entity = props.entities.data[entity_id];
-
-    
-
-
-}
-*/
-
 static void draw_tiles(AppState& state)
 {
     auto& dst = state.unified.screen_pixels;
@@ -170,6 +151,97 @@ static void draw_tiles(AppState& state)
     proc &= cuda_launch_success();
     assert(proc);
 }
+
+
+class EntityProps
+{
+public:
+    DeviceArray<Entity> entities;
+    DeviceImage screen_dst;
+
+    WorldPosition screen_pos;
+
+    u32 screen_width_px;
+    u32 screen_height_px;
+
+    r32 screen_width_m;
+};
+
+
+GPU_FUNCTION
+Rect2Dr32 make_rect(r32 width, r32 height)
+{
+    Rect2Dr32 r{};
+
+    r.x_begin = 0.0f;
+    r.x_end = width;
+    r.y_begin = 0.0f
+    r.y_end = height;
+
+    return r;
+}
+
+
+GPU_FUNCTION
+Rect2Dr32 get_entity_rect(Entity const& entity, Point2Dr32 const& pos)
+{
+    Rect2Dr32 r{};
+
+    // pos at bottom center of rect
+    r.x_begin = pos.x - 0.5f * entity.width;
+    r.x_begin = r.x_begin + entity.width;
+    r.y_end = pos.y;
+    r.y_begin = r.y_end - entity.height;
+
+    return r;
+}
+
+
+
+
+
+GPU_KERNAL
+static void gpu_draw_entities(EntityProps props, u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
+    }
+
+    auto entity_id = (u32)t;
+
+    auto& entity = props.entities.data[entity_id];
+
+    auto screen_pos_m = subtract(entity.position, props.screen_pos);
+    auto screen_height_m = props.screen_width_m * props.screen_height_px / props.screen_width_px;
+
+    auto entity_m = get_entity_rect(entity, screen_pos_m);
+    auto screen_m = make_rect(props.screen_width_m, screen_height_m);
+
+    
+    auto is_offscreen = 
+        entity_rect.x_end < 0.0f ||
+        entity_rect.x_begin > props.screen_width_m ||
+        entity_rect.y_end < 0.0f ||
+        entity_rect.y_begin > screen_height_m; 
+
+    if(is_offscreen)
+    {
+        return;
+    }
+
+
+
+
+
+
+
+
+}
+
+
+
 
 /*
 static void draw_entities(AppState& state)

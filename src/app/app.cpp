@@ -10,6 +10,8 @@
 static void init_state_props(StateProps& props)
 {
     props.screen_width_px = app::SCREEN_BUFFER_WIDTH;
+    props.screen_height_px = app::SCREEN_BUFFER_HEIGHT;
+
     props.screen_width_m = MIN_SCREEN_WIDTH_M;    
 
     props.screen_position.tile = { 10, 10 };
