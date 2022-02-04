@@ -152,18 +152,33 @@ bool copy_to_device(image_t const& src, DeviceImage const& dst);
 bool copy_to_host(DeviceImage const& src, image_t const& dst);
 
 
-
+template <typename T>
 class DeviceMatrix
 {
 public:
 	u32 width;
 	u32 height;
 
-	u32* data;
+	T* data;
 };
 
 
-bool make_device_matrix(DeviceMatrix& matrix, u32 width, u32 height, DeviceBuffer& buffer);
+template <typename T>
+bool make_device_matrix(DeviceMatrix<T>& matrix, u32 width, u32 height, DeviceBuffer& buffer)
+{
+    assert(buffer.data);
+    auto bytes = width * height * sizeof(T);
+
+    bool result = buffer.total_bytes - buffer.offset >= bytes;
+    if(result)
+    {
+        matrix.width = width;
+        matrix.height = height;
+        matrix.data = (T*)((u8*)buffer.data + buffer.offset);
+    }
+
+    return result;
+}
 
 
 class DeviceColorPalette

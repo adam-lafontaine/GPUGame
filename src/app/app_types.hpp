@@ -6,26 +6,42 @@
 class WorldPosition
 {
 public:
-    Point2Du32 tile;
+    Point2Di32 tile;
     Point2Dr32 offset_m;
 };
 
-/*
+
 class Tile
 {
 public:
-    Point2Du32 position;
+    //Point2Du32 position;
 
     Pixel color;
 };
-*/
+
+
+class Entity
+{
+public:
+    r32 width;
+    r32 height;
+
+    Pixel color;
+    WorldPosition position;
+};
+
+
+using DeviceTileMatrix = DeviceMatrix<Tile>;
+
 
 class DeviceMemory
 {
 public:
     DeviceBuffer buffer;
     
-    DeviceMatrix tilemap;
+    DeviceTileMatrix tilemap;
+
+    DeviceArray<Entity> entities;
     
 };
 
@@ -54,7 +70,8 @@ public:
     u32 screen_width_px;
     r32 screen_width_m;
 
-    WorldPosition screen_positon;
+    WorldPosition screen_position;
+    Vec2Dr32 player_direction;
 };
 
 

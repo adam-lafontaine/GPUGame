@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <cmath>
 
 using u8 = uint8_t;
 using u16 = uint16_t;
@@ -74,3 +75,44 @@ using Point2Du32 = Vec2Du32;
 
 //#define NO_CPP_17
 //#define NDEBUG
+
+
+inline i32 round_r32_to_i32(r32 value)
+{
+    return (i32)roundf(value);
+}
+
+
+inline i32 round_r32_to_u32(r32 value)
+{
+    return (u32)(value + 0.5f);
+}
+
+
+inline u8 scale_r32_to_u8(r32 value)
+{
+    if(value < 0.0f)
+        return 0;
+
+    if(value > 255.0f)
+        return 255;
+
+    return (u8)round_r32_to_u32(value);
+}
+
+
+inline i32 floor_r32_to_i32(r32 value)
+{
+    return (i32)(floorf(value));
+}
+
+inline r32 absolute_value(r32 value)
+{
+    return fabsf(value);
+}
+
+
+inline r32 square_root(r32 value)
+{
+    return sqrtf(value);
+}
