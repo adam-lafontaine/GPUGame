@@ -68,7 +68,21 @@ Pixel to_pixel(u8 red, u8 green, u8 blue)
 }
 
 
+GPU_FUNCTION
+static void update_position(WorldPosition& pos, Vec2Dr32 const& delta)
+{
+    r32 dist_m = pos.offset_m.x + delta.x;
+    i32 delta_tile = cuda_floor_r32_to_i32(dist_m / TILE_LENGTH_M);
+    
+    pos.tile.x = pos.tile.x + delta_tile;
+    pos.offset_m.x = dist_m - (r32)delta_tile * TILE_LENGTH_M;
 
+    dist_m = pos.offset_m.y + delta.y;
+    delta_tile = cuda_floor_r32_to_i32(dist_m / TILE_LENGTH_M);
+    
+    pos.tile.y = pos.tile.y + delta_tile;
+    pos.offset_m.y = dist_m - (r32)delta_tile * TILE_LENGTH_M;
+}
 
 
 GPU_FUNCTION
@@ -180,7 +194,7 @@ static void draw_tiles(AppState& state)
 }
 
 
-class EntityProps
+class DrawEntityProps
 {
 public:
     DeviceArray<Entity> entities;
@@ -275,7 +289,7 @@ static Rect2Du32 to_pixel_rect(Rect2Dr32 const& rect_m, r32 length_m, u32 length
 
 
 GPU_KERNAL
-static void gpu_draw_entities(EntityProps props, u32 n_threads)
+static void gpu_draw_entities(DrawEntityProps props, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -327,7 +341,7 @@ static void draw_entities(AppState& state)
     auto n_threads = state.device.entities.n_elements;
 
 
-    EntityProps props{};
+    DrawEntityProps props{};
     props.entities = state.device.entities;
     props.screen_dst = dst;
     props.screen_pos = state.props.screen_position;
@@ -343,11 +357,59 @@ static void draw_entities(AppState& state)
 }
 
 
-void render(AppState& state)
-{    
-    draw_tiles(state);
+class UpdateEntityProps
+{
+public:
+    DeviceArray<Entity> entities;
 
-    draw_entities(state);
+    Vec2Dr32 player_direction;
+};
+
+
+GPU_KERNAL
+static void gpu_update_entities(UpdateEntityProps props, u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
+    }
+
+    auto entity_id = (u32)t;
+    auto& entity = props.entities.data[entity_id];
+
+    if(entity_id == PLAYER_ID)
+    {
+        entity.direction = props.player_direction;
+    }
+
+    auto& pos = entity.position;
+    auto& speed = entity.speed;
+    auto& direction = entity.direction;
+
+    Vec2Dr32 delta_m;
+    delta_m.x = speed * direction.x;
+    delta_m.y = speed * direction.y;
+
+    update_position(pos, delta_m);
+}
+
+
+static void update_entities(AppState& state)
+{
+    auto n_threads = state.device.entities.n_elements;
+
+    UpdateEntityProps props{};
+    props.entities = state.device.entities;
+    props.player_direction = state.props.player_direction;
+
+    bool proc = cuda_no_errors();
+    assert(proc);
+
+    gpu_update_entities<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
+
+    proc &= cuda_launch_success();
+    assert(proc);
 }
 
 
@@ -396,6 +458,9 @@ void init_player(Entity& player)
 
     player.position.tile = { 5, 5 };
     player.position.offset_m = { 0.2f, 0.2f };
+
+    player.speed = 1.0f;
+    player.direction = { 0.0f, 0.0f };
 }
 
 
@@ -433,4 +498,12 @@ void init_device_memory(DeviceMemory const& device)
 
     proc &= cuda_launch_success();
     assert(proc);
+}
+
+
+void render(AppState& state)
+{    
+    update_entities(state);
+    draw_tiles(state);
+    draw_entities(state);
 }

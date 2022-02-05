@@ -25,9 +25,11 @@ class Entity
 public:
     r32 width;
     r32 height;
-
     Pixel color;
+
     WorldPosition position;
+    Vec2Dr32 direction;
+    r32 speed;
 };
 
 
@@ -69,7 +71,7 @@ public:
 
     u32 screen_width_px;
     u32 screen_height_px;
-    
+
     r32 screen_width_m;
 
     WorldPosition screen_position;

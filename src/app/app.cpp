@@ -120,79 +120,9 @@ static WorldPosition add_delta(WorldPosition const& pos, Vec2Dr32 const& delta)
 }
 
 
-/*
-Vec2Dr32 calc_absolute_position(WorldPosition const& pos, Vec2Dr32 const& delta)
-{
-    Vec2Dr32 abs{};
-
-    abs.x = pos.tile.x * TILE_LENGTH_M + pos.offset_m.x + delta.x;
-    abs.y = pos.tile.y * TILE_LENGTH_M + pos.offset_m.y + delta.y;
-
-    return abs;
-}
-
-
-void clamp_absolute_position(Vec2Dr32& pos, r32 max_x, r32 max_y)
-{
-    if(pos.x < 0.0f)
-    {
-        pos.x = 0.0f;
-    }
-    else if (pos.x > max_x)
-    {
-        pos.x = max_x;
-    }    
-
-    if(pos.y < 0.0f)
-    {
-        pos.y = 0.0f;
-    }
-    else if(pos.y > max_y)
-    {
-        pos.y = max_y;
-    }
-}
-*/
-
-
 static void update_screen_position(WorldPosition& screen_pos, Vec2Dr32 const& delta, r32 screen_width_m)
 {
     apply_delta(screen_pos, delta);
-
-    /*    
-    
-    if(screen_pos.tile.x < 0)
-    {
-        screen_pos.tile.x = 0;
-        screen_pos.offset_m.x = 0.0f;
-    }    
-
-    if(screen_pos.tile.y < 0)
-    {
-        screen_pos.tile.y = 0;
-        screen_pos.offset_m.y = 0.0f;
-    }
-    
-    auto screen_height_m = screen_width_m * app::SCREEN_BUFFER_HEIGHT / app::SCREEN_BUFFER_WIDTH;
-    auto bottom_right = add_delta(screen_pos, { screen_width_m, screen_height_m });
-
-    Vec2Dr32 corr = { 0.0f, 0.0f };
-
-    auto max_tile_x = WORLD_WIDTH_TILE - 1;
-    auto max_tile_y = WORLD_HEIGHT_TILE - 1;
-
-    if(bottom_right.tile.x > max_tile_x)
-    {
-        corr.x = -bottom_right.offset_m.x - (max_tile_x - bottom_right.tile.x - 1) * TILE_LENGTH_M;
-    }
-
-    if(bottom_right.tile.y >= WORLD_HEIGHT_TILE)
-    {
-        corr.y = -bottom_right.offset_m.y - (max_tile_y - bottom_right.tile.y - 1) * TILE_LENGTH_M;
-    }
-
-    apply_delta(screen_pos, corr);
-    */
 }
 
 
@@ -245,18 +175,16 @@ static void process_input(Input const& input, AppState& state)
         props.screen_width_m = std::min(props.screen_width_m + zoom_m, MAX_SCREEN_WIDTH_M);
     }
 
-
-    r32 player_speed = 1.0f;
-    auto dist_m = player_speed * dt;
+    auto dist_m = dt;
     player_d = { 0.0f, 0.0f };
 
     if(controller.dpad_up.is_down)
     {
-        player_d.y += dist_m;
+        player_d.y -= dist_m;
     }
     if(controller.dpad_down.is_down)
     {
-        player_d.y -= dist_m;
+        player_d.y += dist_m;
     }
     if(controller.dpad_left.is_down)
     {
