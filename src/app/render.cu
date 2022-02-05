@@ -13,9 +13,23 @@ constexpr int calc_thread_blocks(u32 n_threads)
 
 
 GPU_CONSTEXPR_FUNCTION
-r32 pixel_distance_m(u32 n_pixels, r32 width_m, u32 width_px)
+inline i32 cuda_floor_r32_to_i32(r32 value)
 {
-    auto dist = n_pixels * width_m / width_px;
+    return (i32)(floorf(value));
+}
+
+
+GPU_CONSTEXPR_FUNCTION
+inline i32 cuda_round_r32_to_u32(r32 value)
+{
+    return (u32)(value + 0.5f);
+}
+
+
+GPU_CONSTEXPR_FUNCTION
+r32 px_to_m(u32 n_pixels, r32 length_m, u32 length_px)
+{
+    auto dist = n_pixels * length_m / length_px;
 
     if(fabs(dist) < 0.0001)
     {
@@ -27,6 +41,21 @@ r32 pixel_distance_m(u32 n_pixels, r32 width_m, u32 width_px)
 
 
 GPU_CONSTEXPR_FUNCTION
+u32 m_to_px(r32 dist_m, r32 length_m, u32 length_px)
+{
+    auto px = dist_m * length_px / length_m;
+
+    // never have negative pixels
+    if(px < 0.0f)
+    {
+        px = 0.0f;
+    }
+
+    return cuda_round_r32_to_u32(px);
+}
+
+
+GPU_CONSTEXPR_FUNCTION
 Pixel to_pixel(u8 red, u8 green, u8 blue)
 {
     Pixel p{};
@@ -34,14 +63,12 @@ Pixel to_pixel(u8 red, u8 green, u8 blue)
     p.red = red;
     p.green = green;
     p.blue = blue;
+
+    return p;
 }
 
 
-GPU_FUNCTION
-inline i32 cuda_floor_r32_to_i32(r32 value)
-{
-    return (i32)(floorf(value));
-}
+
 
 
 GPU_FUNCTION
@@ -106,8 +133,8 @@ static void gpu_draw_tiles(TileProps props, u32 n_threads)
     auto pixel_y_px = pixel_id / props.screen_width_px;
     auto pixel_x_px = pixel_id - pixel_y_px * props.screen_width_px;    
 
-    auto pixel_y_m = pixel_distance_m(pixel_y_px, props.screen_width_m, props.screen_width_px);
-    auto pixel_x_m = pixel_distance_m(pixel_x_px, props.screen_width_m, props.screen_width_px);
+    auto pixel_y_m = px_to_m(pixel_y_px, props.screen_width_m, props.screen_width_px);
+    auto pixel_x_m = px_to_m(pixel_x_px, props.screen_width_m, props.screen_width_px);
 
     auto pixel_pos = add_delta(props.screen_pos, { pixel_x_m, pixel_y_m });
 
@@ -161,21 +188,18 @@ public:
 
     WorldPosition screen_pos;
 
-    u32 screen_width_px;
-    u32 screen_height_px;
-
     r32 screen_width_m;
 };
 
 
 GPU_FUNCTION
-Rect2Dr32 make_rect(r32 width, r32 height)
+static Rect2Dr32 make_rect(r32 width, r32 height)
 {
     Rect2Dr32 r{};
 
     r.x_begin = 0.0f;
     r.x_end = width;
-    r.y_begin = 0.0f
+    r.y_begin = 0.0f;
     r.y_end = height;
 
     return r;
@@ -183,13 +207,13 @@ Rect2Dr32 make_rect(r32 width, r32 height)
 
 
 GPU_FUNCTION
-Rect2Dr32 get_entity_rect(Entity const& entity, Point2Dr32 const& pos)
+static Rect2Dr32 get_entity_rect(Entity const& entity, Point2Dr32 const& pos)
 {
     Rect2Dr32 r{};
 
     // pos at bottom center of rect
     r.x_begin = pos.x - 0.5f * entity.width;
-    r.x_begin = r.x_begin + entity.width;
+    r.x_end = r.x_begin + entity.width;
     r.y_end = pos.y;
     r.y_begin = r.y_end - entity.height;
 
@@ -197,7 +221,57 @@ Rect2Dr32 get_entity_rect(Entity const& entity, Point2Dr32 const& pos)
 }
 
 
+GPU_FUNCTION
+static bool rect_intersect(Rect2Dr32 const& a, Rect2Dr32 const& b)
+{
+    bool is_out = 
+        a.x_end < b.x_begin ||
+        b.x_end < a.x_begin ||
+        a.y_end < b.y_begin ||
+        b.y_end < a.y_begin;
 
+    return !is_out;        
+}
+
+
+GPU_FUNCTION
+static void clamp_rect(Rect2Dr32& rect, Rect2Dr32 const& boundary)
+{
+    if(rect.x_begin < boundary.x_begin)
+    {
+        rect.x_begin = boundary.x_begin;
+    }
+
+    if(rect.x_end > boundary.x_end)
+    {
+        rect.x_end = boundary.x_end;
+    }
+
+    if(rect.y_begin < boundary.y_begin)
+    {
+        rect.y_begin = boundary.y_begin;
+    }
+
+    if(rect.y_end > boundary.y_end)
+    {
+        rect.y_end = boundary.y_end;
+    }
+}
+
+
+GPU_FUNCTION
+static Rect2Du32 to_pixel_rect(Rect2Dr32 const& rect_m, r32 length_m, u32 length_px)
+{
+    auto const to_px = [&](r32 m){ return m_to_px(m, length_m, length_px); };
+
+    Rect2Du32 rect_px{};
+    rect_px.x_begin = to_px(rect_m.x_begin);
+    rect_px.x_end = to_px(rect_m.x_end);
+    rect_px.y_begin = to_px(rect_m.y_begin);
+    rect_px.y_end = to_px(rect_m.y_end);
+
+    return rect_px;
+}
 
 
 GPU_KERNAL
@@ -210,40 +284,42 @@ static void gpu_draw_entities(EntityProps props, u32 n_threads)
     }
 
     auto entity_id = (u32)t;
-
     auto& entity = props.entities.data[entity_id];
 
-    auto screen_pos_m = subtract(entity.position, props.screen_pos);
-    auto screen_height_m = props.screen_width_m * props.screen_height_px / props.screen_width_px;
+    auto screen_width_px = props.screen_dst.width;
+    auto screen_height_px = props.screen_dst.height;
+    auto screen_width_m = props.screen_width_m;
+    auto screen_height_m = props.screen_width_m * screen_height_px / screen_width_px;
 
-    auto entity_m = get_entity_rect(entity, screen_pos_m);
-    auto screen_m = make_rect(props.screen_width_m, screen_height_m);
+    auto entity_screen_pos_m = subtract(entity.position, props.screen_pos);
 
+    auto entity_rect_m = get_entity_rect(entity, entity_screen_pos_m);
+
+    auto screen_rect_m = make_rect(screen_width_m, screen_height_m);
     
-    auto is_offscreen = 
-        entity_rect.x_end < 0.0f ||
-        entity_rect.x_begin > props.screen_width_m ||
-        entity_rect.y_end < 0.0f ||
-        entity_rect.y_begin > screen_height_m; 
+    auto is_offscreen = !rect_intersect(entity_rect_m, screen_rect_m);    
 
     if(is_offscreen)
     {
         return;
     }
 
+    clamp_rect(entity_rect_m, screen_rect_m);
 
-
-
-
-
-
+    auto entity_rect_px = to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);    
+    
+    for(u32 y = entity_rect_px.y_begin; y < entity_rect_px.y_end; ++y)
+    {
+        auto row = props.screen_dst.data + y * screen_width_px;
+        for(u32 x = entity_rect_px.x_begin; x < entity_rect_px.x_end; ++x)
+        {
+            row[x] = entity.color;
+        }
+    }
 
 }
 
 
-
-
-/*
 static void draw_entities(AppState& state)
 {
     auto& dst = state.unified.screen_pixels;
@@ -254,7 +330,8 @@ static void draw_entities(AppState& state)
     EntityProps props{};
     props.entities = state.device.entities;
     props.screen_dst = dst;
-
+    props.screen_pos = state.props.screen_position;
+    props.screen_width_m = state.props.screen_width_m;
 
     bool proc = cuda_no_errors();
     assert(proc);
@@ -264,12 +341,13 @@ static void draw_entities(AppState& state)
     proc &= cuda_launch_success();
     assert(proc);
 }
-*/
+
 
 void render(AppState& state)
 {    
     draw_tiles(state);
 
+    draw_entities(state);
 }
 
 
@@ -292,26 +370,17 @@ void gpu_init_tiles(DeviceTileMatrix tiles, u32 n_threads)
     auto& tile = tiles.data[tile_id];
     tile.color.alpha = 255;
 
-    if(tile_y == 0 && tile_x == 0)
-    {
-        tile.color.red = 255;
-        tile.color.green = 0;
-        tile.color.blue = 0;
-
-        return;
-    }
-
     if((tile_y % 2 == 0 && tile_x % 2 != 0) || (tile_y % 2 != 0 && tile_x % 2 == 0))
     {
-        tile.color.red = 255;
-        tile.color.green = 255;
-        tile.color.blue = 255;
+        tile.color = to_pixel(255, 255, 255);
     }
     else
-    {
-        tile.color.red = (u8)(tile_y / 2);
-        tile.color.green = (u8)((tiles.width - tile_x) / 2);
-        tile.color.blue = (u8)((tiles.height - tile_y) / 2);
+    {        
+        auto red = (u8)(tile_y / 2);
+        auto green = (u8)((tiles.width - tile_x) / 2);
+        auto blue = (u8)((tiles.height - tile_y) / 2);
+
+        tile.color = to_pixel(red, green, blue);
     }
 
 }
@@ -320,13 +389,10 @@ void gpu_init_tiles(DeviceTileMatrix tiles, u32 n_threads)
 GPU_FUNCTION
 void init_player(Entity& player)
 {
-    player.width = 0.5f;
-    player.height = 0.6f;
+    player.width = 0.3f;
+    player.height = 0.3f;
 
-    player.color.alpha = 255;
-    player.color.red = 0;
-    player.color.green = 0;
-    player.color.blue = 0;
+    player.color = to_pixel(255, 0, 0);
 
     player.position.tile = { 5, 5 };
     player.position.offset_m = { 0.2f, 0.2f };

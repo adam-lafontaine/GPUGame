@@ -175,6 +175,7 @@ bool make_device_matrix(DeviceMatrix<T>& matrix, u32 width, u32 height, DeviceBu
         matrix.width = width;
         matrix.height = height;
         matrix.data = (T*)((u8*)buffer.data + buffer.offset);
+        buffer.offset += bytes;
     }
 
     return result;

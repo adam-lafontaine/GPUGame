@@ -7,8 +7,8 @@ constexpr r32 TILE_LENGTH_M = 0.5f;
 constexpr u32 MIN_SCREEN_WIDTH_TILE = 10;
 constexpr u32 MAX_SCREEN_WIDTH_TILE = 100;
 
-constexpr u32 WORLD_WIDTH_TILE = 500;
-constexpr u32 WORLD_HEIGHT_TILE = 500;
+constexpr u32 WORLD_WIDTH_TILE = 100;
+constexpr u32 WORLD_HEIGHT_TILE = 100;
 
 constexpr WorldPosition world_minimum()
 {
