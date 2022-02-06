@@ -1,5 +1,5 @@
 #include "app.hpp"
-#include "render.hpp"
+#include "gpu/gpu_app.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -45,7 +45,7 @@ static bool init_device_memory(DeviceMemory& device, u32 screen_width, u32 scree
         return false;
     }
 
-    init_device_memory(device);
+    gpu::init_device_memory(device);
 
     return true;
 }
@@ -102,19 +102,9 @@ static void apply_delta(WorldPosition& pos, Vec2Dr32 const& delta)
 
 static WorldPosition add_delta(WorldPosition const& pos, Vec2Dr32 const& delta)
 {
-    WorldPosition added{};
+    WorldPosition added = pos;
 
-    r32 dist_m = pos.offset_m.x + delta.x;
-    i32 delta_tile = floor_r32_to_i32(dist_m / TILE_LENGTH_M);
-    
-    added.tile.x = pos.tile.x + delta_tile;
-    added.offset_m.x = dist_m - (r32)delta_tile * TILE_LENGTH_M;
-
-    dist_m = pos.offset_m.y + delta.y;
-    delta_tile = floor_r32_to_i32(dist_m / TILE_LENGTH_M);
-    
-    added.tile.y = pos.tile.y + delta_tile;
-    added.offset_m.y = dist_m - (r32)delta_tile * TILE_LENGTH_M;
+    apply_delta(added, delta);
 
     return added;
 }
@@ -138,7 +128,8 @@ static void process_input(Input const& input, AppState& state)
     r32 max_camera_speed_px = 300.0f;
     r32 min_camera_speed_px = 200.0f;
 
-    auto camera_speed_px = max_camera_speed_px - (props.screen_width_m - MIN_SCREEN_WIDTH_M) / (MAX_SCREEN_WIDTH_M - MIN_SCREEN_WIDTH_M) * (max_camera_speed_px - min_camera_speed_px);
+    auto camera_speed_px = max_camera_speed_px - 
+        (props.screen_width_m - MIN_SCREEN_WIDTH_M) / (MAX_SCREEN_WIDTH_M - MIN_SCREEN_WIDTH_M) * (max_camera_speed_px - min_camera_speed_px);
   
     auto camera_movement_px = camera_speed_px * dt;
     auto camera_movement_m = px_to_m(camera_movement_px, props.screen_width_m, props.screen_width_px);    
@@ -161,7 +152,6 @@ static void process_input(Input const& input, AppState& state)
     {
         camera_d_m.x += camera_movement_m;
     }
-
 
     r32 zoom_speed = 50.0f;
     auto zoom_m = zoom_speed * dt;
@@ -280,9 +270,10 @@ namespace app
 		}
 
 		auto& state = get_state(memory);
-        process_input(input, state);
+        process_input(input, state); 
 
-        render(state);
+        gpu::update(state);
+        gpu::render(state);
     }
 
 	
