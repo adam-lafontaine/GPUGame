@@ -7,6 +7,12 @@
 //#include <cstdio>
 
 
+constexpr r32 screen_height_m(r32 screen_width_m)
+{
+    return screen_width_m * app::SCREEN_BUFFER_HEIGHT / app::SCREEN_BUFFER_WIDTH;
+}
+
+
 static void init_state_props(StateProps& props)
 {
     props.screen_width_px = app::SCREEN_BUFFER_WIDTH;
@@ -23,7 +29,7 @@ static void init_state_props(StateProps& props)
 
 static bool init_device_memory(DeviceMemory& device, u32 screen_width, u32 screen_height)
 {
-    u32 n_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;    
+    u32 n_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;  
     auto tile_sz = n_tiles * sizeof(u32);
 
     auto entity_sz = N_ENTITIES * sizeof(Entity);
@@ -158,11 +164,29 @@ static void process_input(Input const& input, AppState& state)
 
     if(props.screen_width_m > MIN_SCREEN_WIDTH_M && controller.stick_right_y.end > 0.5f)
     {
+        auto old_w = props.screen_width_m;
+        auto old_h = screen_height_m(old_w);
+
         props.screen_width_m = std::max(props.screen_width_m - zoom_m, MIN_SCREEN_WIDTH_M);
+
+        auto new_w = props.screen_width_m;
+        auto new_h = screen_height_m(new_w);
+
+        camera_d_m.x += 0.5f * (old_w - new_w);
+        camera_d_m.y += 0.5f * (old_h - new_h);
     }
     if(props.screen_width_m < MAX_SCREEN_WIDTH_M && controller.stick_right_y.end < -0.5f)
     {
+        auto old_w = props.screen_width_m;
+        auto old_h = screen_height_m(old_w);
+
         props.screen_width_m = std::min(props.screen_width_m + zoom_m, MAX_SCREEN_WIDTH_M);
+
+        auto new_w = props.screen_width_m;
+        auto new_h = screen_height_m(new_w);
+
+        camera_d_m.x += 0.5f * (old_w - new_w);
+        camera_d_m.y += 0.5f * (old_h - new_h);
     }
 
     auto dist_m = dt;
