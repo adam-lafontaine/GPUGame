@@ -18,6 +18,8 @@ constexpr u32 N_ENTITIES = 1;
 
 constexpr u32 PLAYER_ID = 0;
 
+constexpr u32 TILE_BITMAP_LENGTH = 64;
+
 
 
 namespace gpu

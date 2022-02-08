@@ -222,6 +222,7 @@ ALL_CCFLAGS += $(NVCCFLAGS)
 ALL_CCFLAGS += $(EXTRA_NVCCFLAGS)
 ALL_CCFLAGS += $(addprefix -Xcompiler ,$(CCFLAGS))
 ALL_CCFLAGS += $(addprefix -Xcompiler ,$(EXTRA_CCFLAGS))
+ALL_CCFLAGS += --expt-relaxed-constexpr
 
 SAMPLE_ENABLED := 1
 
@@ -284,6 +285,7 @@ utils  := $(code)/utils
 device := $(code)/device
 app    := $(code)/app
 gpu    := $(app)/gpu
+tiles  := $(app)/tiles
 
 
 # main
@@ -320,9 +322,14 @@ input_o      := $(build)/input.o
 object_files += $(input_o)
 
 
+# tiles
+tiles_h := $(tiles)/tiles.cuh
+
+
 # gpu
 gpu_h := $(gpu)/gpu_include.cuh
 gpu_h += $(gpu)/gpu_app.hpp
+gpu_h += $(tiles_h)
 
 gpu_update_c := $(gpu)/gpu_update.cu
 gpu_update_o := $(build)/gpu_update.o
@@ -355,14 +362,14 @@ $(device_o): $(device_c) $(device_h) $(types_h)
 $(input_o): $(input_c) $(input_h) $(types_h)
 	@echo "\n input"
 	$(GPP) -o $@ -c $< $(SDL2)
+    
 
-
-$(gpu_update_o): $(gpu_update_c) $(gpu_h) $(device_h) $(types_h)
+$(gpu_update_o): $(gpu_update_c) $(gpu_h) $(device_h) $(types_h) $(tiles_h)
 	@echo "\n gpu_update"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
 
-$(gpu_draw_o): $(gpu_draw_c) $(gpu_h) $(device_h) $(types_h)
+$(gpu_draw_o): $(gpu_draw_c) $(gpu_h) $(device_h) $(types_h) $(tiles_h)
 	@echo "\n gpu_draw"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 

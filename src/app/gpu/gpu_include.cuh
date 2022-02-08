@@ -1,3 +1,5 @@
+#pragma once
+
 #include "gpu_app.hpp"
 #include "../../device/cuda_def.cuh"
 

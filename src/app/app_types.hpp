@@ -14,7 +14,6 @@ public:
 class Tile
 {
 public:
-    //Point2Du32 position;
 
     Pixel color;
 };

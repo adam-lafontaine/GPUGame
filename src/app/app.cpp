@@ -30,7 +30,7 @@ static void init_state_props(StateProps& props)
 static bool init_device_memory(DeviceMemory& device, u32 screen_width, u32 screen_height)
 {
     u32 n_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;  
-    auto tile_sz = n_tiles * sizeof(u32);
+    auto tile_sz = n_tiles * sizeof(Tile);
 
     auto entity_sz = N_ENTITIES * sizeof(Entity);
 

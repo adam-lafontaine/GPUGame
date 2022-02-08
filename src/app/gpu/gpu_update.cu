@@ -1,6 +1,21 @@
-#include "gpu_include.cuh"
+#include "../tiles/tiles.cuh"
 
 #include <cassert>
+
+
+GPU_KERNAL
+void gpu_create_tiles(u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
+    }
+
+    assert(t == 0);
+
+    create_tiles();
+}
 
 
 GPU_KERNAL
@@ -24,15 +39,16 @@ void gpu_init_tiles(DeviceTileMatrix tiles, u32 n_threads)
 
     if((tile_y % 2 == 0 && tile_x % 2 != 0) || (tile_y % 2 != 0 && tile_x % 2 == 0))
     {
-        tile.color = to_pixel(255, 255, 255);
+        tile.color = white_tile(); // to_pixel(255, 255, 255);
     }
     else
-    {        
+    {        /*
         auto red = (u8)(tile_y / 2);
         auto green = (u8)((tiles.width - tile_x) / 2);
         auto blue = (u8)((tiles.height - tile_y) / 2);
+        */
 
-        tile.color = to_pixel(red, green, blue);
+        tile.color = green_tile();  //to_pixel(red, green, blue);
     }
 
 }
@@ -135,7 +151,13 @@ namespace gpu
         bool proc = cuda_no_errors();
         assert(proc);
 
-        auto n_threads = device.tilemap.width * device.tilemap.height;
+        u32 n_threads = 1;
+        gpu_create_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(n_threads);
+
+        proc &= cuda_launch_success();
+        assert(proc);
+
+        n_threads = device.tilemap.width * device.tilemap.height;
         gpu_init_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(device.tilemap, n_threads);
 
         proc &= cuda_launch_success();
