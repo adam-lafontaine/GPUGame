@@ -41,8 +41,9 @@ public:
     DeviceBuffer buffer;
     
     DeviceTileMatrix tilemap;
-
     DeviceArray<Entity> entities;
+
+    DeviceArray<Pixel> tile_bitmap_data;
     
 };
 

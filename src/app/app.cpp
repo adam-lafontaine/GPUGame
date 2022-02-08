@@ -34,7 +34,10 @@ static bool init_device_memory(DeviceMemory& device, u32 screen_width, u32 scree
 
     auto entity_sz = N_ENTITIES * sizeof(Entity);
 
-    auto required_sz = tile_sz + entity_sz;
+    auto n_tile_bitmap_pixels = N_TILE_BITMAPS * TILE_BITMAP_LENGTH * TILE_BITMAP_LENGTH;
+    auto tile_bitmap_sz = n_tile_bitmap_pixels * sizeof(Pixel);
+
+    auto required_sz = tile_sz + entity_sz + tile_bitmap_sz;
 
     if(!device_malloc(device.buffer, required_sz))
     {
@@ -47,6 +50,11 @@ static bool init_device_memory(DeviceMemory& device, u32 screen_width, u32 scree
     }
 
     if(!make_device_array(device.entities, N_ENTITIES, device.buffer))
+    {
+        return false;
+    }
+
+    if(!make_device_array(device.tile_bitmap_data, n_tile_bitmap_pixels, device.buffer))
     {
         return false;
     }

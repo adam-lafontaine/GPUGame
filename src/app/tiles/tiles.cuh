@@ -3,49 +3,44 @@
 #include "../gpu/gpu_include.cuh"
 
 
+GPU_GLOBAL_VARIABLE Pixel* GREEN_TILE_DATA;
+
+GPU_GLOBAL_VARIABLE Pixel* WHITE_TILE_DATA;
 
 
-
-/*
 GPU_FUNCTION
-void fill_image(image_t const& tile, Pixel p)
+inline void create_tiles(DeviceArray<Pixel> const& bitmap_data)
 {
-    assert(tile.data);
-    assert(tile.width);
-    assert(tile.height);
+    auto pixel_data = bitmap_data.data;
+    u32 bitmap_sz = TILE_BITMAP_LENGTH * TILE_BITMAP_LENGTH;
 
-    for(u32 i = 0; i < tile.width * tile.height; ++i)
+    GREEN_TILE_DATA = pixel_data;
+    pixel_data += bitmap_sz;
+
+    for(u32 i = 0; i < bitmap_sz; ++i)
     {
-        tile.data[i] = p;
+        GREEN_TILE_DATA[i] = to_pixel(90, 255, 20);
     }
-}
-*/
 
-/*
-GPU_GLOBAL_VARIABLE
-image_t GREEN_TILE;
+    WHITE_TILE_DATA = pixel_data;
+    pixel_data += bitmap_sz;
 
-GPU_GLOBAL_VARIABLE
-image_t WHITE_TILE;
-*/
-
-GPU_FUNCTION
-inline void create_tiles()
-{
-    
-    
+    for(u32 i = 0; i < bitmap_sz; ++i)
+    {
+        WHITE_TILE_DATA[i] = to_pixel(255, 255, 255);
+    }
 }
 
 
 GPU_FUNCTION
 inline Pixel green_tile()
 {
-    return to_pixel(40, 255, 40);
+    return GREEN_TILE_DATA[0];
 }
 
 
 GPU_FUNCTION
 inline Pixel white_tile()
 {
-    return to_pixel(255, 255, 255);
+    return WHITE_TILE_DATA[0];
 }

@@ -4,7 +4,7 @@
 
 
 GPU_KERNAL
-void gpu_create_tiles(u32 n_threads)
+void gpu_create_tiles(DeviceArray<Pixel> bitmap_data, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -14,7 +14,7 @@ void gpu_create_tiles(u32 n_threads)
 
     assert(t == 0);
 
-    create_tiles();
+    create_tiles(bitmap_data);
 }
 
 
@@ -39,16 +39,11 @@ void gpu_init_tiles(DeviceTileMatrix tiles, u32 n_threads)
 
     if((tile_y % 2 == 0 && tile_x % 2 != 0) || (tile_y % 2 != 0 && tile_x % 2 == 0))
     {
-        tile.color = white_tile(); // to_pixel(255, 255, 255);
+        tile.color = white_tile();
     }
     else
-    {        /*
-        auto red = (u8)(tile_y / 2);
-        auto green = (u8)((tiles.width - tile_x) / 2);
-        auto blue = (u8)((tiles.height - tile_y) / 2);
-        */
-
-        tile.color = green_tile();  //to_pixel(red, green, blue);
+    { 
+        tile.color = green_tile();
     }
 
 }
@@ -152,7 +147,7 @@ namespace gpu
         assert(proc);
 
         u32 n_threads = 1;
-        gpu_create_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(n_threads);
+        gpu_create_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(device.tile_bitmap_data, n_threads);
 
         proc &= cuda_launch_success();
         assert(proc);
