@@ -15,7 +15,7 @@ class Tile
 {
 public:
 
-    Pixel color;
+    Pixel* bitmap_data;
 };
 
 

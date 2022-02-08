@@ -35,15 +35,14 @@ void gpu_init_tiles(DeviceTileMatrix tiles, u32 n_threads)
     auto tile_x = tile_id - tile_y * tiles.width;
 
     auto& tile = tiles.data[tile_id];
-    tile.color.alpha = 255;
 
     if((tile_y % 2 == 0 && tile_x % 2 != 0) || (tile_y % 2 != 0 && tile_x % 2 == 0))
-    {
-        tile.color = white_tile();
+    {       
+        tile.bitmap_data = tiles::GREEN_TILE_DATA;
     }
     else
     { 
-        tile.color = green_tile();
+        tile.bitmap_data = tiles::WHITE_TILE_DATA;
     }
 
 }

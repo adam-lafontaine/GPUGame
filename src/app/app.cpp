@@ -197,7 +197,7 @@ static void process_input(Input const& input, AppState& state)
         camera_d_m.y += 0.5f * (old_h - new_h);
     }
 
-    auto dist_m = dt;
+    auto dist_m = dt * 1.5f;
     player_d = { 0.0f, 0.0f };
 
     if(controller.dpad_up.is_down)

@@ -37,18 +37,23 @@ static void gpu_draw_tiles(TileProps props, u32 n_threads)
 
     auto pixel_pos = add_delta(props.screen_pos, { pixel_x_m, pixel_y_m });
 
-    auto px = pixel_pos.tile.x;
-    auto py = pixel_pos.tile.y;
+    auto tile_x = pixel_pos.tile.x;
+    auto tile_y = pixel_pos.tile.y;
 
-    if(px < 0 || py < 0 || px >= WORLD_WIDTH_TILE || py >= WORLD_HEIGHT_TILE)
+    if(tile_x < 0 || tile_y < 0 || tile_x >= WORLD_WIDTH_TILE || tile_y >= WORLD_HEIGHT_TILE)
     {
         props.screen_dst.data[pixel_id] = black;
         return;
     }
 
-    i32 tile_id = py * WORLD_WIDTH_TILE + px;
+    i32 tile_id = tile_y * WORLD_WIDTH_TILE + tile_x;
+
+    auto bitmap = props.tiles.data[tile_id].bitmap_data;
     
-    props.screen_dst.data[pixel_id] = props.tiles.data[tile_id].color;
+    // position in tile from pixel_pos.offset_m
+    // calculate color from bitmap pixels touching that position
+    
+    props.screen_dst.data[pixel_id] = bitmap[0];
 }
 
 
