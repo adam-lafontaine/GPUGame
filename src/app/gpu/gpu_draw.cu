@@ -16,6 +16,66 @@ public:
 };
 
 
+GPU_FUNCTION
+Pixel get_bitmap_color(Point2Dr32 const& offset_m, Pixel* bitmap, r32 screen_width_m, u32 screen_width_px)
+{
+    Pixel color{};
+
+    auto bitmap_w_px = TILE_BITMAP_LENGTH;
+    auto bitmap_w_m = TILE_LENGTH_M;    
+
+    auto offset_x_px = cuda_floor_r32_to_i32(offset_m.x * bitmap_w_px / bitmap_w_m);
+    auto offset_y_px = cuda_floor_r32_to_i32(offset_m.y * bitmap_w_px / bitmap_w_m);
+
+    auto bitmap_px_id = offset_y_px * bitmap_w_px + offset_x_px;
+
+    assert(bitmap_px_id < TILE_BITMAP_LENGTH * TILE_BITMAP_LENGTH);
+
+    auto bitmap_pixel_m = TILE_LENGTH_M / TILE_BITMAP_LENGTH;
+    auto screen_pixel_m = screen_width_m / screen_width_px;
+
+    if(screen_pixel_m > bitmap_pixel_m)
+    {
+        auto n = cuda_floor_r32_to_i32(screen_pixel_m / bitmap_pixel_m);
+        if(n < 2)
+        {
+            n = 2;
+        }
+
+        u32 count = 0;
+        u32 red = 0;
+        u32 green = 0;
+        u32 blue = 0;
+
+        for(u32 y = offset_y_px; y < offset_y_px + n && y < bitmap_w_px; ++y)
+        {
+            for (u32 x = offset_x_px; x < offset_x_px + n && x < bitmap_w_px; ++x)
+            {
+                auto p = bitmap[y * bitmap_w_px + x];
+                red += p.red;
+                green += p.green;
+                blue += p.blue;
+                ++count;
+            }
+        }
+
+        assert(count > 0);
+
+        red /= count;
+        green /= count;
+        blue /= count;
+
+        color = to_pixel((u8)red, (u8)green, (u8)blue);
+    }
+    else
+    {
+        color = bitmap[bitmap_px_id];
+    }    
+
+    return color;
+}
+
+
 GPU_KERNAL
 static void gpu_draw_tiles(TileProps props, u32 n_threads)
 {
@@ -50,10 +110,7 @@ static void gpu_draw_tiles(TileProps props, u32 n_threads)
 
     auto bitmap = props.tiles.data[tile_id].bitmap_data;
     
-    // position in tile from pixel_pos.offset_m
-    // calculate color from bitmap pixels touching that position
-    
-    props.screen_dst.data[pixel_id] = bitmap[0];
+    props.screen_dst.data[pixel_id] = get_bitmap_color(pixel_pos.offset_m, bitmap, props.screen_width_m, props.screen_width_px);
 }
 
 
@@ -88,11 +145,11 @@ class DrawEntityProps
 {
 public:
     DeviceArray<Entity> entities;
+
     DeviceImage screen_dst;
+    r32 screen_width_m;
 
     WorldPosition screen_pos;
-
-    r32 screen_width_m;
 };
 
 
@@ -111,7 +168,7 @@ static void gpu_draw_entities(DrawEntityProps props, u32 n_threads)
     auto screen_width_px = props.screen_dst.width;
     auto screen_height_px = props.screen_dst.height;
     auto screen_width_m = props.screen_width_m;
-    auto screen_height_m = props.screen_width_m * screen_height_px / screen_width_px;
+    auto screen_height_m = screen_height_px * props.screen_width_m / screen_width_px;
 
     auto entity_screen_pos_m = subtract(entity.position, props.screen_pos);
 
