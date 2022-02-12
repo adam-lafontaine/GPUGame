@@ -8,7 +8,7 @@ namespace app
 
 	// allocate memory
 	constexpr u32 SCREEN_BUFFER_HEIGHT = 800;
-	constexpr u32 SCREEN_BUFFER_WIDTH = SCREEN_BUFFER_HEIGHT * 9 / 8;
+	constexpr u32 SCREEN_BUFFER_WIDTH = SCREEN_BUFFER_HEIGHT * 10 / 8;
 
 
 	class AppMemory

@@ -38,13 +38,12 @@ void gpu_init_tiles(DeviceTileMatrix tiles, u32 n_threads)
 
     if((tile_y % 2 == 0 && tile_x % 2 != 0) || (tile_y % 2 != 0 && tile_x % 2 == 0))
     {       
-        tile.bitmap_data = tiles::GREEN_TILE_DATA;
+        tile = tiles::GREEN_TILE;
     }
     else
     { 
-        tile.bitmap_data = tiles::WHITE_TILE_DATA;
+        tile = tiles::WHITE_TILE;
     }
-
 }
 
 

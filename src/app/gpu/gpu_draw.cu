@@ -17,7 +17,7 @@ public:
 
 
 GPU_FUNCTION
-Pixel get_bitmap_color(Point2Dr32 const& offset_m, Pixel* bitmap, r32 screen_width_m, u32 screen_width_px)
+Pixel get_tile_color(Tile const& tile, Point2Dr32 const& offset_m, r32 screen_width_m, u32 screen_width_px)
 {
     Pixel color{};
 
@@ -36,41 +36,12 @@ Pixel get_bitmap_color(Point2Dr32 const& offset_m, Pixel* bitmap, r32 screen_wid
 
     if(screen_pixel_m > bitmap_pixel_m)
     {
-        auto n = cuda_floor_r32_to_i32(screen_pixel_m / bitmap_pixel_m);
-        if(n < 2)
-        {
-            n = 2;
-        }
-
-        u32 count = 0;
-        u32 red = 0;
-        u32 green = 0;
-        u32 blue = 0;
-
-        for(u32 y = offset_y_px; y < offset_y_px + n && y < bitmap_w_px; ++y)
-        {
-            for (u32 x = offset_x_px; x < offset_x_px + n && x < bitmap_w_px; ++x)
-            {
-                auto p = bitmap[y * bitmap_w_px + x];
-                red += p.red;
-                green += p.green;
-                blue += p.blue;
-                ++count;
-            }
-        }
-
-        assert(count > 0);
-
-        red /= count;
-        green /= count;
-        blue /= count;
-
-        color = to_pixel((u8)red, (u8)green, (u8)blue);
+        color = tile.avg_color;
     }
     else
     {
-        color = bitmap[bitmap_px_id];
-    }    
+        color = tile.bitmap_data[bitmap_px_id];
+    }
 
     return color;
 }
@@ -83,9 +54,7 @@ static void gpu_draw_tiles(TileProps props, u32 n_threads)
     if (t >= n_threads)
     {
         return;
-    }
-
-    auto black = to_pixel(30, 30, 30);
+    }   
 
     auto pixel_id = (u32)t;
 
@@ -100,17 +69,17 @@ static void gpu_draw_tiles(TileProps props, u32 n_threads)
     auto tile_x = pixel_pos.tile.x;
     auto tile_y = pixel_pos.tile.y;
 
+    auto black = to_pixel(30, 30, 30);
+
     if(tile_x < 0 || tile_y < 0 || tile_x >= WORLD_WIDTH_TILE || tile_y >= WORLD_HEIGHT_TILE)
     {
         props.screen_dst.data[pixel_id] = black;
         return;
     }
 
-    i32 tile_id = tile_y * WORLD_WIDTH_TILE + tile_x;
+    auto& tile =  props.tiles.data[tile_y * WORLD_WIDTH_TILE + tile_x];
 
-    auto bitmap = props.tiles.data[tile_id].bitmap_data;
-    
-    props.screen_dst.data[pixel_id] = get_bitmap_color(pixel_pos.offset_m, bitmap, props.screen_width_m, props.screen_width_px);
+    props.screen_dst.data[pixel_id] = get_tile_color(tile, pixel_pos.offset_m, props.screen_width_m, props.screen_width_px);
 }
 
 

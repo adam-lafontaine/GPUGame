@@ -16,6 +16,7 @@ class Tile
 public:
 
     Pixel* bitmap_data;
+    Pixel avg_color;
 };
 
 
