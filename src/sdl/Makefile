@@ -386,7 +386,7 @@ $(input_o): $(input_c) $(input_h) $(types_h)
 	$(GPP) -o $@ -c $< $(SDL2)
 
 
-$(tiles_o): $(tiles_c) $(tiles_h) $(device_h) $(types_h)
+$(tiles_o): $(tiles_c) $(tiles_h) $(device_h) $(types_h) $(gpu_h)
 	@echo "\n tiles"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
     
