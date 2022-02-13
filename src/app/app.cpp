@@ -1,10 +1,28 @@
 #include "app.hpp"
 #include "gpu/gpu_app.hpp"
+#include "../libimage/libimage.hpp"
+
+namespace img = libimage;
 
 #include <cassert>
 #include <cmath>
 
-//#include <cstdio>
+#define PRINT
+
+#ifdef PRINT
+#include <cstdio>
+#endif
+
+static void print(const char* msg)
+{
+#ifdef PRINT
+
+    printf("* %s *\n", msg);
+
+#endif
+}
+
+constexpr auto GRASS_TILE_PATH = "/home/adam/Repos/GPUGame/assets/tiles/basic_grass.png";
 
 
 constexpr r32 screen_height_m(r32 screen_width_m)
@@ -27,24 +45,74 @@ static void init_state_props(StateProps& props)
 }
 
 
-static bool init_device_memory(DeviceMemory& device, u32 screen_width, u32 screen_height)
-{
-    u32 n_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;  
-    auto tile_sz = n_tiles * sizeof(Tile);
+static bool load_tile_assets(DeviceMemory& device)
+{    
+    Image read_img;
+    Image tile_img{};
+    tile_img.width = TILE_WIDTH_PX;
+    tile_img.height = TILE_HEIGHT_PX;
 
-    auto entity_sz = N_ENTITIES * sizeof(Entity);
+    auto& tiles = device.tiles;
 
-    auto n_tile_bitmap_pixels = N_TILE_BITMAPS * TILE_BITMAP_LENGTH * TILE_BITMAP_LENGTH;
-    auto tile_bitmap_sz = n_tile_bitmap_pixels * sizeof(Pixel);
-
-    auto required_sz = tile_sz + entity_sz + tile_bitmap_sz;
-
-    if(!device_malloc(device.buffer, required_sz))
+    if(!make_device_tile(tiles.grass, device.buffer))
     {
+        print("make grass tile failed");
         return false;
     }
 
-    if(!make_device_matrix(device.tilemap, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE, device.buffer))
+    if(!make_device_tile(tiles.white, device.buffer))
+    {
+        print("make white tile failed");
+        return false;
+    }
+
+    auto const cleanup = [&]()
+    {
+        img::destroy_image(read_img);
+        img::destroy_image(tile_img);
+    };
+
+    img::read_image_from_file(GRASS_TILE_PATH, read_img);
+    img::resize_image(read_img, tile_img);
+
+    if(!copy_to_device(tile_img, tiles.grass))
+    {
+        print("copy grass tile failed");
+        cleanup();
+        return false;
+    }
+
+    // temp make white
+    auto white = to_pixel(255, 255, 255);
+    for(u32 i = 0; i < tile_img.width * tile_img.height; ++i)
+    {
+        tile_img.data[i] = white;
+    }
+
+    if(!copy_to_device(tile_img, tiles.white))
+    {
+        print("copy white tile failed");
+        cleanup();
+        return false;
+    }
+
+    cleanup();
+    return true;
+}
+
+
+static bool init_device_memory(DeviceMemory& device, u32 screen_width, u32 screen_height)
+{
+    u32 n_world_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;  
+    auto world_tile_sz = n_world_tiles * sizeof(DeviceTile);
+
+    auto entity_sz = N_ENTITIES * sizeof(Entity);
+
+    auto tile_asset_sz = N_TILE_BITMAPS * (TILE_HEIGHT_PX * TILE_WIDTH_PX * sizeof(Pixel) + sizeof(Pixel));
+
+    auto required_sz = world_tile_sz + entity_sz + tile_asset_sz;
+
+    if(!device_malloc(device.buffer, required_sz))
     {
         return false;
     }
@@ -54,7 +122,12 @@ static bool init_device_memory(DeviceMemory& device, u32 screen_width, u32 scree
         return false;
     }
 
-    if(!make_device_array(device.tile_bitmap_data, n_tile_bitmap_pixels, device.buffer))
+    if(!make_device_matrix(device.tilemap, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE, device.buffer))
+    {
+        return false;
+    }
+
+    if(!load_tile_assets(device))
     {
         return false;
     }

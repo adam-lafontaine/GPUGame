@@ -1,10 +1,10 @@
-#include "../tiles/tiles.cuh"
+#include "gpu_include.cuh"
 
 #include <cassert>
 
 
 GPU_KERNAL
-void gpu_create_tiles(DeviceArray<Pixel> bitmap_data, u32 n_threads)
+void gpu_init_tiles(DeviceTileMatrix world_tiles, TileList tiles, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -12,37 +12,22 @@ void gpu_create_tiles(DeviceArray<Pixel> bitmap_data, u32 n_threads)
         return;
     }
 
-    assert(t == 0);
+    auto world_tile_id = (u32)t;
 
-    create_tiles(bitmap_data);
-}
+    assert(world_tile_id < world_tiles.width * world_tiles.height);
 
+    auto world_tile_y = world_tile_id / world_tiles.width;
+    auto world_tile_x = world_tile_id - world_tile_y * world_tiles.width;
 
-GPU_KERNAL
-void gpu_init_tiles(DeviceTileMatrix tiles, u32 n_threads)
-{
-    int t = blockDim.x * blockIdx.x + threadIdx.x;
-    if (t >= n_threads)
-    {
-        return;
-    }
+    auto& world_tile = world_tiles.data[world_tile_id];
 
-    auto tile_id = (u32)t;
-
-    assert(tile_id < tiles.width * tiles.height);
-
-    auto tile_y = tile_id / tiles.width;
-    auto tile_x = tile_id - tile_y * tiles.width;
-
-    auto& tile = tiles.data[tile_id];
-
-    if((tile_y % 2 == 0 && tile_x % 2 != 0) || (tile_y % 2 != 0 && tile_x % 2 == 0))
+    if((world_tile_y % 2 == 0 && world_tile_x % 2 != 0) || (world_tile_y % 2 != 0 && world_tile_x % 2 == 0))
     {       
-        tile = tiles::GREEN_TILE;
+        world_tile = tiles.grass;
     }
     else
     { 
-        tile = tiles::WHITE_TILE;
+        world_tile = tiles.white;
     }
 }
 
@@ -53,7 +38,7 @@ void init_player(Entity& player)
     player.width = 0.3f;
     player.height = 0.3f;
 
-    player.color = to_pixel(255, 0, 0);
+    player.color = gpu::to_pixel(255, 0, 0);
 
     player.position.tile = { 5, 5 };
     player.position.offset_m = { 0.2f, 0.2f };
@@ -115,7 +100,7 @@ static void gpu_update_entities(UpdateEntityProps props, u32 n_threads)
     delta_m.x = speed * direction.x;
     delta_m.y = speed * direction.y;
 
-    update_position(pos, delta_m);
+    gpu::update_position(pos, delta_m);
 }
 
 
@@ -144,14 +129,8 @@ namespace gpu
         bool proc = cuda_no_errors();
         assert(proc);
 
-        u32 n_threads = 1;
-        gpu_create_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(device.tile_bitmap_data, n_threads);
-
-        proc &= cuda_launch_success();
-        assert(proc);
-
-        n_threads = device.tilemap.width * device.tilemap.height;
-        gpu_init_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(device.tilemap, n_threads);
+        u32 n_threads = device.tilemap.width * device.tilemap.height;
+        gpu_init_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(device.tilemap, device.tiles, n_threads);
 
         proc &= cuda_launch_success();
         assert(proc);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../device/device.hpp"
+#include "tiles/device_tile.hpp"
 
 
 class WorldPosition
@@ -8,15 +8,6 @@ class WorldPosition
 public:
     Point2Di32 tile;
     Point2Dr32 offset_m;
-};
-
-
-class Tile
-{
-public:
-
-    Pixel* bitmap_data;
-    Pixel avg_color;
 };
 
 
@@ -33,19 +24,28 @@ public:
 };
 
 
-using DeviceTileMatrix = DeviceMatrix<Tile>;
+using DeviceTileMatrix = DeviceMatrix<DeviceTile>;
+
+
+class TileList
+{
+public:
+    DeviceTile grass;
+    DeviceTile white;
+
+    u32 n_tiles = 2;
+};
 
 
 class DeviceMemory
 {
 public:
     DeviceBuffer buffer;
+
+    TileList tiles;
     
     DeviceTileMatrix tilemap;
     DeviceArray<Entity> entities;
-
-    DeviceArray<Pixel> tile_bitmap_data;
-    
 };
 
 

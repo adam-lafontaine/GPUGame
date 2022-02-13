@@ -87,6 +87,60 @@ using Point2Dr32 = Vec2Dr32;
 using Point2Dr64 = Vec2Dr64;
 using Point2Du32 = Vec2Du32;
 
+
+
+
+
+constexpr auto RGB_CHANNELS = 3u;
+constexpr auto RGBA_CHANNELS = 4u;
+
+
+typedef union Pixel
+{
+	struct
+	{
+        u8 blue;
+		u8 green;
+		u8 red;
+		u8 alpha;		
+	};
+
+	u8 channels[RGBA_CHANNELS];
+
+	u32 value;
+
+} pixel_t;
+
+using pixel_t = Pixel;
+
+
+class Image
+{
+public:
+
+	u32 width;
+	u32 height;
+
+	pixel_t* data;
+};
+
+using image_t = Image;
+
+
+
+inline pixel_t to_pixel(u8 red, u8 green, u8 blue)
+{
+	pixel_t p{};
+
+	p.alpha = 255;
+	p.red = red;
+	p.green = green;
+	p.blue = blue;
+
+	return p;
+}
+
+
 //#define NO_CPP_17
 //#define NDEBUG
 

@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <cassert>
 #include <array>
-#include <vector>
 
 
 bool cuda_memcpy_to_device(const void* host_src, void* device_dst, size_t n_bytes);
@@ -61,16 +60,6 @@ bool make_device_array(DeviceArray<T>& arr, u32 n_elements, DeviceBuffer& buffer
 }
 
 
-template <typename T>
-void pop_array(DeviceArray<T>& arr, DeviceBuffer& buffer)
-{
-    auto bytes = arr.n_elements * sizeof(T);
-    buffer.offset -= bytes;
-
-    arr.data = NULL;
-}
-
-
 template <class T, size_t N>
 bool copy_to_device(std::array<T, N> const& src, DeviceArray<T>& dst)
 {
@@ -82,55 +71,6 @@ bool copy_to_device(std::array<T, N> const& src, DeviceArray<T>& dst)
 
     return cuda_memcpy_to_device(src.data(), dst.data, bytes);
 }
-
-
-template <typename T>
-bool copy_to_device(std::vector<T> const& src, DeviceArray<T>& dst)
-{
-    assert(dst.data);
-    assert(dst.n_elements);
-    assert(dst.n_elements == src.size());
-
-    auto bytes = src.size() * sizeof(T);
-
-    return cuda_memcpy_to_device(src.data(), dst.data, bytes);
-}
-
-
-constexpr auto RGB_CHANNELS = 3u;
-constexpr auto RGBA_CHANNELS = 4u;
-
-
-typedef union Pixel
-{
-	struct
-	{
-        u8 blue;
-		u8 green;
-		u8 red;
-		u8 alpha;		
-	};
-
-	u8 channels[RGBA_CHANNELS];
-
-	u32 value;
-
-} pixel_t;
-
-using pixel_t = Pixel;
-
-
-class Image
-{
-public:
-
-	u32 width;
-	u32 height;
-
-	pixel_t* data;
-};
-
-using image_t = Image;
 
 
 class DeviceImage

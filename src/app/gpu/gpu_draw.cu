@@ -17,26 +17,26 @@ public:
 
 
 GPU_FUNCTION
-Pixel get_tile_color(Tile const& tile, Point2Dr32 const& offset_m, r32 screen_width_m, u32 screen_width_px)
+Pixel get_tile_color(DeviceTile const& tile, Point2Dr32 const& offset_m, r32 screen_width_m, u32 screen_width_px)
 {
     Pixel color{};
 
-    auto bitmap_w_px = TILE_BITMAP_LENGTH;
+    auto bitmap_w_px = TILE_WIDTH_PX;
     auto bitmap_w_m = TILE_LENGTH_M;    
 
-    auto offset_x_px = cuda_floor_r32_to_i32(offset_m.x * bitmap_w_px / bitmap_w_m);
-    auto offset_y_px = cuda_floor_r32_to_i32(offset_m.y * bitmap_w_px / bitmap_w_m);
+    auto offset_x_px = gpu::floor_r32_to_i32(offset_m.x * bitmap_w_px / bitmap_w_m);
+    auto offset_y_px = gpu::floor_r32_to_i32(offset_m.y * bitmap_w_px / bitmap_w_m);
 
     auto bitmap_px_id = offset_y_px * bitmap_w_px + offset_x_px;
 
-    assert(bitmap_px_id < TILE_BITMAP_LENGTH * TILE_BITMAP_LENGTH);
+    assert(bitmap_px_id < TILE_WIDTH_PX * TILE_HEIGHT_PX);
 
-    auto bitmap_pixel_m = TILE_LENGTH_M / TILE_BITMAP_LENGTH;
+    auto bitmap_pixel_m = TILE_LENGTH_M / TILE_WIDTH_PX;
     auto screen_pixel_m = screen_width_m / screen_width_px;
 
     if(screen_pixel_m > bitmap_pixel_m)
     {
-        color = tile.avg_color;
+        color = *tile.avg_color;
     }
     else
     {
@@ -61,15 +61,15 @@ static void gpu_draw_tiles(TileProps props, u32 n_threads)
     auto pixel_y_px = pixel_id / props.screen_width_px;
     auto pixel_x_px = pixel_id - pixel_y_px * props.screen_width_px;    
 
-    auto pixel_y_m = px_to_m(pixel_y_px, props.screen_width_m, props.screen_width_px);
-    auto pixel_x_m = px_to_m(pixel_x_px, props.screen_width_m, props.screen_width_px);
+    auto pixel_y_m = gpu::px_to_m(pixel_y_px, props.screen_width_m, props.screen_width_px);
+    auto pixel_x_m = gpu::px_to_m(pixel_x_px, props.screen_width_m, props.screen_width_px);
 
-    auto pixel_pos = add_delta(props.screen_pos, { pixel_x_m, pixel_y_m });
+    auto pixel_pos = gpu::add_delta(props.screen_pos, { pixel_x_m, pixel_y_m });
 
     auto tile_x = pixel_pos.tile.x;
     auto tile_y = pixel_pos.tile.y;
 
-    auto black = to_pixel(30, 30, 30);
+    auto black = gpu::to_pixel(30, 30, 30);
 
     if(tile_x < 0 || tile_y < 0 || tile_x >= WORLD_WIDTH_TILE || tile_y >= WORLD_HEIGHT_TILE)
     {
@@ -139,22 +139,22 @@ static void gpu_draw_entities(DrawEntityProps props, u32 n_threads)
     auto screen_width_m = props.screen_width_m;
     auto screen_height_m = screen_height_px * props.screen_width_m / screen_width_px;
 
-    auto entity_screen_pos_m = subtract(entity.position, props.screen_pos);
+    auto entity_screen_pos_m = gpu::subtract(entity.position, props.screen_pos);
 
-    auto entity_rect_m = get_entity_rect(entity, entity_screen_pos_m);
+    auto entity_rect_m = gpu::get_entity_rect(entity, entity_screen_pos_m);
 
-    auto screen_rect_m = make_rect(screen_width_m, screen_height_m);
+    auto screen_rect_m = gpu::make_rect(screen_width_m, screen_height_m);
     
-    auto is_offscreen = !rect_intersect(entity_rect_m, screen_rect_m);    
+    auto is_offscreen = !gpu::rect_intersect(entity_rect_m, screen_rect_m);    
 
     if(is_offscreen)
     {
         return;
     }
 
-    clamp_rect(entity_rect_m, screen_rect_m);
+    gpu::clamp_rect(entity_rect_m, screen_rect_m);
 
-    auto entity_rect_px = to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);    
+    auto entity_rect_px = gpu::to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);    
     
     for(u32 y = entity_rect_px.y_begin; y < entity_rect_px.y_end; ++y)
     {

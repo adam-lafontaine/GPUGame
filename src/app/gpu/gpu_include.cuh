@@ -14,22 +14,25 @@ constexpr int calc_thread_blocks(u32 n_threads)
 }
 
 
+namespace gpu
+{
+
 GPU_CONSTEXPR_FUNCTION
-inline i32 cuda_floor_r32_to_i32(r32 value)
+inline i32 floor_r32_to_i32(r32 value)
 {
     return (i32)(floorf(value));
 }
 
 
 GPU_CONSTEXPR_FUNCTION
-inline i32 cuda_round_r32_to_u32(r32 value)
+inline i32 round_r32_to_u32(r32 value)
 {
     return (u32)(value + 0.5f);
 }
 
 
 GPU_CONSTEXPR_FUNCTION
-r32 px_to_m(u32 n_pixels, r32 length_m, u32 length_px)
+inline r32 px_to_m(u32 n_pixels, r32 length_m, u32 length_px)
 {
     auto dist = n_pixels * length_m / length_px;
 
@@ -43,7 +46,7 @@ r32 px_to_m(u32 n_pixels, r32 length_m, u32 length_px)
 
 
 GPU_CONSTEXPR_FUNCTION
-u32 m_to_px(r32 dist_m, r32 length_m, u32 length_px)
+inline u32 m_to_px(r32 dist_m, r32 length_m, u32 length_px)
 {
     auto px = dist_m * length_px / length_m;
 
@@ -53,12 +56,12 @@ u32 m_to_px(r32 dist_m, r32 length_m, u32 length_px)
         px = 0.0f;
     }
 
-    return cuda_round_r32_to_u32(px);
+    return gpu::round_r32_to_u32(px);
 }
 
 
 GPU_CONSTEXPR_FUNCTION
-Pixel to_pixel(u8 red, u8 green, u8 blue)
+inline Pixel to_pixel(u8 red, u8 green, u8 blue)
 {
     Pixel p{};
     p.alpha = 255;
@@ -74,13 +77,13 @@ GPU_FUNCTION
 static void update_position(WorldPosition& pos, Vec2Dr32 const& delta)
 {
     r32 dist_m = pos.offset_m.x + delta.x;
-    i32 delta_tile = cuda_floor_r32_to_i32(dist_m / TILE_LENGTH_M);
+    i32 delta_tile = gpu::floor_r32_to_i32(dist_m / TILE_LENGTH_M);
     
     pos.tile.x = pos.tile.x + delta_tile;
     pos.offset_m.x = dist_m - (r32)delta_tile * TILE_LENGTH_M;
 
     dist_m = pos.offset_m.y + delta.y;
-    delta_tile = cuda_floor_r32_to_i32(dist_m / TILE_LENGTH_M);
+    delta_tile = gpu::floor_r32_to_i32(dist_m / TILE_LENGTH_M);
     
     pos.tile.y = pos.tile.y + delta_tile;
     pos.offset_m.y = dist_m - (r32)delta_tile * TILE_LENGTH_M;
@@ -93,13 +96,13 @@ static WorldPosition add_delta(WorldPosition const& pos, Vec2Dr32 const& delta)
     WorldPosition added{};
 
     r32 dist_m = pos.offset_m.x + delta.x;
-    i32 delta_tile = cuda_floor_r32_to_i32(dist_m / TILE_LENGTH_M);
+    i32 delta_tile = gpu::floor_r32_to_i32(dist_m / TILE_LENGTH_M);
     
     added.tile.x = pos.tile.x + delta_tile;
     added.offset_m.x = dist_m - (r32)delta_tile * TILE_LENGTH_M;
 
     dist_m = pos.offset_m.y + delta.y;
-    delta_tile = cuda_floor_r32_to_i32(dist_m / TILE_LENGTH_M);
+    delta_tile = gpu::floor_r32_to_i32(dist_m / TILE_LENGTH_M);
     
     added.tile.y = pos.tile.y + delta_tile;
     added.offset_m.y = dist_m - (r32)delta_tile * TILE_LENGTH_M;
@@ -190,7 +193,7 @@ static void clamp_rect(Rect2Dr32& rect, Rect2Dr32 const& boundary)
 GPU_FUNCTION
 static Rect2Du32 to_pixel_rect(Rect2Dr32 const& rect_m, r32 length_m, u32 length_px)
 {
-    auto const to_px = [&](r32 m){ return m_to_px(m, length_m, length_px); };
+    auto const to_px = [&](r32 m){ return gpu::m_to_px(m, length_m, length_px); };
 
     Rect2Du32 rect_px{};
     rect_px.x_begin = to_px(rect_m.x_begin);
@@ -200,3 +203,7 @@ static Rect2Du32 to_pixel_rect(Rect2Dr32 const& rect_m, r32 length_m, u32 length
 
     return rect_px;
 }
+
+}
+
+

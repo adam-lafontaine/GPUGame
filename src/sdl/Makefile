@@ -286,6 +286,8 @@ device := $(code)/device
 app    := $(code)/app
 gpu    := $(app)/gpu
 tiles  := $(app)/tiles
+img    := $(code)/libimage
+stb    := $(img)/stb_wrapper
 
 
 # main
@@ -296,8 +298,18 @@ object_files  := $(main_o)
 
 #utils
 stopwatch_h := $(utils)/stopwatch.hpp
-
 types_h := $(utils)/types.hpp
+
+
+#libimage
+img_h := $(img)/libimage.hpp
+img_h += $(stb)/stb_image_resize.h
+img_h += $(stb)/stb_image.h
+img_h += $(stb)/stb_include.hpp
+
+img_c += $(stb)/stb_libimage.cpp
+img_o := $(build)/img.o
+object_files += $(img_o)
 
 
 # device
@@ -323,12 +335,17 @@ object_files += $(input_o)
 
 
 # tiles
-tiles_h := $(tiles)/tiles.cuh
+tiles_h := $(tiles)/device_tile.hpp
+
+tiles_c := $(tiles)/device_tile.cu
+tiles_o := $(build)/tiles.o
+object_files += $(tiles_o)
 
 
 # gpu
 gpu_h := $(gpu)/gpu_include.cuh
 gpu_h += $(gpu)/gpu_app.hpp
+gpu_h += $(gpu)/gpu_constants.hpp
 gpu_h += $(tiles_h)
 
 gpu_update_c := $(gpu)/gpu_update.cu
@@ -354,6 +371,11 @@ program_exe := $(build)/$(exe_name)
 GPP += -O3
 
 
+$(img_o): $(img_c) $(img_h) $(types_h)
+	@echo "\n img"
+	$(GPP) -o $@ -c $<
+
+
 $(device_o): $(device_c) $(device_h) $(types_h)
 	@echo "\n device"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
@@ -362,6 +384,11 @@ $(device_o): $(device_c) $(device_h) $(types_h)
 $(input_o): $(input_c) $(input_h) $(types_h)
 	@echo "\n input"
 	$(GPP) -o $@ -c $< $(SDL2)
+
+
+$(tiles_o): $(tiles_c) $(tiles_h) $(device_h) $(types_h)
+	@echo "\n tiles"
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
     
 
 $(gpu_update_o): $(gpu_update_c) $(gpu_h) $(device_h) $(types_h) $(tiles_h)
