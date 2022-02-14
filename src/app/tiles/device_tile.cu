@@ -1,6 +1,6 @@
 #include "device_tile.hpp"
 #include "../gpu/gpu_constants.hpp"
-#include "../../device/cuda_def.cuh"
+#include "../gpu/gpu_include.cuh"
 
 
 static Pixel get_avg_color(image_t const& image)
@@ -27,13 +27,7 @@ static Pixel get_avg_color(image_t const& image)
     g /= div;
     b /= div;
 
-    Pixel p{};
-    p.alpha = 255;
-    p.red = (u8)r;
-    p.green = (u8)g;
-    p.blue = (u8)b;
-
-    return p;
+    return gpu::to_pixel((u8)r, (u8)g, (u8)b);
 }
 
 
