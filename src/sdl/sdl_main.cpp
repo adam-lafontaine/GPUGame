@@ -9,8 +9,8 @@
 #include <thread>
 
 constexpr auto WINDOW_TITLE = app::APP_TITLE;
-constexpr int WINDOW_WIDTH = app::BUFFER_WIDTH;
-constexpr int WINDOW_HEIGHT = app::BUFFER_HEIGHT;
+constexpr int WINDOW_WIDTH = app::SCREEN_BUFFER_WIDTH;
+constexpr int WINDOW_HEIGHT = app::SCREEN_BUFFER_HEIGHT;
 
 constexpr u32 SCREEN_BYTES_PER_PIXEL = 4;
 

@@ -168,26 +168,6 @@ bool copy_to_host(DeviceImage const& src, image_t const& dst)
 }
 
 
-bool make_device_matrix(DeviceMatrix& matrix, u32 width, u32 height, DeviceBuffer& buffer)
-{
-    assert(buffer.data);
-    auto bytes_per = width * height * sizeof(u32);
-
-    bool result = buffer.total_bytes - buffer.offset >= 2 * bytes_per;
-    if(result)
-    {
-        matrix.width = width;
-        matrix.height = height;
-        matrix.data_src = (u32*)(buffer.data + buffer.offset);
-        buffer.offset += bytes_per;
-        matrix.data_dst = (u32*)(buffer.data + buffer.offset);
-        buffer.offset += bytes_per;
-    }
-
-    return result;
-}
-
-
 bool make_device_palette(DeviceColorPalette& palette, u32 n_colors, DeviceBuffer& buffer)
 {
     assert(buffer.data);

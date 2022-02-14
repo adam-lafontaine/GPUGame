@@ -222,6 +222,7 @@ ALL_CCFLAGS += $(NVCCFLAGS)
 ALL_CCFLAGS += $(EXTRA_NVCCFLAGS)
 ALL_CCFLAGS += $(addprefix -Xcompiler ,$(CCFLAGS))
 ALL_CCFLAGS += $(addprefix -Xcompiler ,$(EXTRA_CCFLAGS))
+ALL_CCFLAGS += --expt-relaxed-constexpr
 
 SAMPLE_ENABLED := 1
 
@@ -279,10 +280,14 @@ exe_name := gpu_game_sdl
 build  := ../../build/sdl
 code   := ..
 sdl    := $(code)/sdl
-app    := $(code)/app
 input  := $(code)/input
 utils  := $(code)/utils
 device := $(code)/device
+app    := $(code)/app
+gpu    := $(app)/gpu
+tiles  := $(app)/tiles
+img    := $(code)/libimage
+stb    := $(img)/stb_wrapper
 
 
 # main
@@ -293,8 +298,18 @@ object_files  := $(main_o)
 
 #utils
 stopwatch_h := $(utils)/stopwatch.hpp
-
 types_h := $(utils)/types.hpp
+
+
+#libimage
+img_h := $(img)/libimage.hpp
+img_h += $(stb)/stb_image_resize.h
+img_h += $(stb)/stb_image.h
+img_h += $(stb)/stb_include.hpp
+
+img_c += $(stb)/stb_libimage.cpp
+img_o := $(build)/img.o
+object_files += $(img_o)
 
 
 # device
@@ -319,6 +334,29 @@ input_o      := $(build)/input.o
 object_files += $(input_o)
 
 
+# tiles
+tiles_h := $(tiles)/device_tile.hpp
+
+tiles_c := $(tiles)/device_tile.cu
+tiles_o := $(build)/tiles.o
+object_files += $(tiles_o)
+
+
+# gpu
+gpu_h := $(gpu)/gpu_include.cuh
+gpu_h += $(gpu)/gpu_app.hpp
+gpu_h += $(gpu)/gpu_constants.hpp
+gpu_h += $(tiles_h)
+
+gpu_update_c := $(gpu)/gpu_update.cu
+gpu_update_o := $(build)/gpu_update.o
+object_files += $(gpu_update_o)
+
+gpu_draw_c := $(gpu)/gpu_draw.cu
+gpu_draw_o := $(build)/gpu_draw.o
+object_files += $(gpu_draw_o)
+
+
 # application
 app_h := $(app)/app.hpp
 app_h += $(app)/app_types.hpp
@@ -327,16 +365,15 @@ app_c        := $(app)/app.cpp
 app_o        := $(build)/app.o
 object_files += $(app_o)
 
-render_h := $(app)/render.hpp
-
-render_c := $(app)/render.cu
-render_o := $(build)/render.o
-object_files += $(render_o)
-
 
 program_exe := $(build)/$(exe_name)
 
 GPP += -O3
+
+
+$(img_o): $(img_c) $(img_h) $(types_h)
+	@echo "\n img"
+	$(GPP) -o $@ -c $<
 
 
 $(device_o): $(device_c) $(device_h) $(types_h)
@@ -349,12 +386,22 @@ $(input_o): $(input_c) $(input_h) $(types_h)
 	$(GPP) -o $@ -c $< $(SDL2)
 
 
-$(render_o): $(render_c) $(render_h) $(device_h) $(types_h)
-	@echo "\n render"
+$(tiles_o): $(tiles_c) $(tiles_h) $(device_h) $(types_h) $(gpu_h)
+	@echo "\n tiles"
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+    
+
+$(gpu_update_o): $(gpu_update_c) $(gpu_h) $(device_h) $(types_h) $(tiles_h)
+	@echo "\n gpu_update"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
 
-$(app_o): $(app_c) $(app_h) $(input_h) $(device_h) $(types_h) $(render_h)
+$(gpu_draw_o): $(gpu_draw_c) $(gpu_h) $(device_h) $(types_h) $(tiles_h)
+	@echo "\n gpu_draw"
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+
+
+$(app_o): $(app_c) $(app_h) $(input_h) $(device_h) $(types_h) $(gpu_h)
 	@echo "\n app"
 	$(GPP) -o $@ -c $<
 
