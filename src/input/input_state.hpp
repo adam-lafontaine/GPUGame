@@ -1,5 +1,4 @@
 #include "input.hpp"
-#include "button_state.hpp"
 
 inline void record_input(ButtonState const& old_state, ButtonState& new_state, b32 is_down)
 {

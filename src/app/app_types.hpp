@@ -31,9 +31,8 @@ class TileList
 {
 public:
     DeviceTile grass;
-    DeviceTile white;
-
-    u32 n_tiles = 2;
+    
+    DeviceTile brown;
 };
 
 

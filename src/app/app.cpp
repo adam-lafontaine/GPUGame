@@ -60,9 +60,9 @@ static bool load_tile_assets(DeviceMemory& device)
         return false;
     }
 
-    if(!make_device_tile(tiles.white, device.buffer))
+    if(!make_device_tile(tiles.brown, device.buffer))
     {
-        print("make white tile failed");
+        print("make brown tile failed");
         return false;
     }
 
@@ -82,16 +82,16 @@ static bool load_tile_assets(DeviceMemory& device)
         return false;
     }
 
-    // temp make white
-    auto white = to_pixel(255, 255, 255);
+    // temp make brown
+    auto brown = to_pixel(150, 75, 0);
     for(u32 i = 0; i < tile_img.width * tile_img.height; ++i)
     {
-        tile_img.data[i] = white;
+        tile_img.data[i] = brown;
     }
 
-    if(!copy_to_device(tile_img, tiles.white))
+    if(!copy_to_device(tile_img, tiles.brown))
     {
-        print("copy white tile failed");
+        print("copy brown tile failed");
         cleanup();
         return false;
     }

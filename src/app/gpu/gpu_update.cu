@@ -10,24 +10,27 @@ void gpu_init_tiles(DeviceTileMatrix world_tiles, TileList tiles, u32 n_threads)
     if (t >= n_threads)
     {
         return;
-    }
+    }    
 
     auto world_tile_id = (u32)t;
 
     assert(world_tile_id < world_tiles.width * world_tiles.height);
 
+    auto& world_tile = world_tiles.data[world_tile_id];
+
     auto world_tile_y = world_tile_id / world_tiles.width;
     auto world_tile_x = world_tile_id - world_tile_y * world_tiles.width;
 
-    auto& world_tile = world_tiles.data[world_tile_id];
-
-    if((world_tile_y % 2 == 0 && world_tile_x % 2 != 0) || (world_tile_y % 2 != 0 && world_tile_x % 2 == 0))
-    {       
-        world_tile = tiles.grass;
+    if( world_tile_x == 0 ||
+        world_tile_x == world_tiles.width - 1 ||
+        world_tile_y == 0 ||
+        world_tile_y == world_tiles.height - 1)
+    {
+        world_tile = tiles.brown;
     }
     else
-    { 
-        world_tile = tiles.white;
+    {
+        world_tile = tiles.grass;
     }
 }
 
