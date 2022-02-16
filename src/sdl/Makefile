@@ -372,6 +372,10 @@ tiles_c := $(tiles)/device_tile.cu
 tiles_o := $(build)/tiles.o
 object_files += $(tiles_o)
 
+gpu_init_c := $(gpu)/gpu_init.cu
+gpu_init_o := $(build)/gpu_init.o
+object_files += $(gpu_init_o)
+
 gpu_update_c := $(gpu)/gpu_update.cu
 gpu_update_o := $(build)/gpu_update.o
 object_files += $(gpu_update_o)
@@ -413,6 +417,11 @@ $(tiles_o): $(tiles_c) $(device_tile_h) $(gpu_include_h)
     
 
 $(gpu_update_o): $(gpu_update_c) $(gpu_include_h)
+	@echo "\n gpu_update"
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+
+
+$(gpu_init_o): $(gpu_init_c) $(gpu_include_h)
 	@echo "\n gpu_update"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 

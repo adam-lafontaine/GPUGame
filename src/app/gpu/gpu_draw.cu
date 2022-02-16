@@ -131,7 +131,7 @@ static void gpu_draw_entities(DrawEntityProps props, u32 n_threads)
         return;
     }
 
-    auto entity_id = (u32)t;
+    auto entity_id = t;
     auto& entity = props.entities.data[entity_id];
 
     auto screen_width_px = props.screen_dst.width;
