@@ -17,6 +17,8 @@ constexpr int calc_thread_blocks(u32 n_threads)
 namespace gpu
 {
 
+    /***********************/
+
 GPU_CONSTEXPR_FUNCTION
 inline i32 floor_r32_to_i32(r32 value)
 {
@@ -25,9 +27,16 @@ inline i32 floor_r32_to_i32(r32 value)
 
 
 GPU_CONSTEXPR_FUNCTION
-inline i32 round_r32_to_u32(r32 value)
+inline i32 ceil_r32_to_i32(r32 value)
 {
-    return (u32)(value + 0.5f);
+    return (i32)(ceilf(value));
+}
+
+
+GPU_CONSTEXPR_FUNCTION
+inline i32 round_r32_to_i32(r32 value)
+{
+    return (i32)(roundf(value));
 }
 
 
@@ -56,7 +65,7 @@ inline u32 m_to_px(r32 dist_m, r32 length_m, u32 length_px)
         px = 0.0f;
     }
 
-    return gpu::round_r32_to_u32(px);
+    return (u32)gpu::ceil_r32_to_i32(px);
 }
 
 
@@ -74,7 +83,7 @@ inline Pixel to_pixel(u8 red, u8 green, u8 blue)
 
 
 GPU_FUNCTION
-static void update_position(WorldPosition& pos, Vec2Dr32 const& delta)
+inline void update_position(WorldPosition& pos, Vec2Dr32 const& delta)
 {
     r32 dist_m = pos.offset_m.x + delta.x;
     i32 delta_tile = gpu::floor_r32_to_i32(dist_m / TILE_LENGTH_M);
@@ -91,28 +100,18 @@ static void update_position(WorldPosition& pos, Vec2Dr32 const& delta)
 
 
 GPU_FUNCTION
-static WorldPosition add_delta(WorldPosition const& pos, Vec2Dr32 const& delta)
+inline WorldPosition add_delta(WorldPosition const& pos, Vec2Dr32 const& delta)
 {
-    WorldPosition added{};
+    WorldPosition added = pos;
 
-    r32 dist_m = pos.offset_m.x + delta.x;
-    i32 delta_tile = gpu::floor_r32_to_i32(dist_m / TILE_LENGTH_M);
-    
-    added.tile.x = pos.tile.x + delta_tile;
-    added.offset_m.x = dist_m - (r32)delta_tile * TILE_LENGTH_M;
-
-    dist_m = pos.offset_m.y + delta.y;
-    delta_tile = gpu::floor_r32_to_i32(dist_m / TILE_LENGTH_M);
-    
-    added.tile.y = pos.tile.y + delta_tile;
-    added.offset_m.y = dist_m - (r32)delta_tile * TILE_LENGTH_M;
+    gpu::update_position(added, delta);
 
     return added; 
 }
 
 
 GPU_FUNCTION
-static Vec2Dr32 subtract(WorldPosition const& lhs, WorldPosition const& rhs)
+inline Vec2Dr32 subtract(WorldPosition const& lhs, WorldPosition const& rhs)
 {
     Vec2Dr32 delta{};
 
@@ -124,7 +123,7 @@ static Vec2Dr32 subtract(WorldPosition const& lhs, WorldPosition const& rhs)
 
 
 GPU_FUNCTION
-static Rect2Dr32 make_rect(r32 width, r32 height)
+inline Rect2Dr32 make_rect(r32 width, r32 height)
 {
     Rect2Dr32 r{};
 
@@ -138,22 +137,22 @@ static Rect2Dr32 make_rect(r32 width, r32 height)
 
 
 GPU_FUNCTION
-static Rect2Dr32 get_entity_rect(Entity const& entity, Point2Dr32 const& pos)
+inline Rect2Dr32 get_entity_rect(Entity const& entity, Point2Dr32 const& pos)
 {
     Rect2Dr32 r{};
 
-    // pos at bottom center of rect
-    r.x_begin = pos.x - 0.5f * entity.width;
+    // pos at top left
+    r.x_begin = pos.x;
     r.x_end = r.x_begin + entity.width;
-    r.y_end = pos.y;
-    r.y_begin = r.y_end - entity.height;
+    r.y_begin = pos.y;
+    r.y_end = r.y_begin + entity.height;
 
     return r;
 }
 
 
 GPU_FUNCTION
-static bool rect_intersect(Rect2Dr32 const& a, Rect2Dr32 const& b)
+inline bool rect_intersect(Rect2Dr32 const& a, Rect2Dr32 const& b)
 {
     bool is_out = 
         a.x_end < b.x_begin ||
@@ -166,7 +165,7 @@ static bool rect_intersect(Rect2Dr32 const& a, Rect2Dr32 const& b)
 
 
 GPU_FUNCTION
-static void clamp_rect(Rect2Dr32& rect, Rect2Dr32 const& boundary)
+inline void clamp_rect(Rect2Dr32& rect, Rect2Dr32 const& boundary)
 {
     if(rect.x_begin < boundary.x_begin)
     {
@@ -191,7 +190,7 @@ static void clamp_rect(Rect2Dr32& rect, Rect2Dr32 const& boundary)
 
 
 GPU_FUNCTION
-static Rect2Du32 to_pixel_rect(Rect2Dr32 const& rect_m, r32 length_m, u32 length_px)
+inline Rect2Du32 to_pixel_rect(Rect2Dr32 const& rect_m, r32 length_m, u32 length_px)
 {
     auto const to_px = [&](r32 m){ return gpu::m_to_px(m, length_m, length_px); };
 
@@ -203,6 +202,20 @@ static Rect2Du32 to_pixel_rect(Rect2Dr32 const& rect_m, r32 length_m, u32 length
 
     return rect_px;
 }
+
+
+GPU_FUNCTION
+inline Vec2Dr32 vec_mul(Vec2Dr32 const& vec, r32 scale)
+{
+    Vec2Dr32 res{};
+    res.x = vec.x * scale;
+    res.y = vec.y * scale;
+
+    return res;
+}
+
+
+/***********************/
 
 }
 

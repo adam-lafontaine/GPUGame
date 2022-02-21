@@ -19,8 +19,10 @@ public:
     Pixel color;
 
     WorldPosition position;
-    Vec2Dr32 direction;
+    Vec2Dr32 dt;
     r32 speed;
+
+    WorldPosition next_position;
 };
 
 
@@ -33,6 +35,7 @@ public:
     DeviceTile grass;
     
     DeviceTile brown;
+    DeviceTile black;
 };
 
 
@@ -41,7 +44,7 @@ class DeviceMemory
 public:
     DeviceBuffer buffer;
 
-    TileList tiles;
+    TileList tile_assets;
     
     DeviceTileMatrix tilemap;
     DeviceArray<Entity> entities;
@@ -75,7 +78,7 @@ public:
     r32 screen_width_m;
 
     WorldPosition screen_position;
-    Vec2Dr32 player_direction;
+    Vec2Dr32 player_dt;
 };
 
 

@@ -422,7 +422,7 @@ $(gpu_update_o): $(gpu_update_c) $(gpu_include_h)
 
 
 $(gpu_init_o): $(gpu_init_c) $(gpu_include_h)
-	@echo "\n gpu_update"
+	@echo "\n gpu_init"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
 

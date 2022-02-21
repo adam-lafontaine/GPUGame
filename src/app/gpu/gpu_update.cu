@@ -11,7 +11,7 @@ class UpdateEntityProps
 public:
     DeviceArray<Entity> entities;
 
-    Vec2Dr32 player_direction;
+    Vec2Dr32 player_dt;
 };
 
 
@@ -29,18 +29,23 @@ static void gpu_update_entities(UpdateEntityProps props, u32 n_threads)
 
     if(entity_id == PLAYER_ID)
     {
-        entity.direction = props.player_direction;
+        entity.dt = props.player_dt;
+    }
+    else
+    {
+        //entity.dt = props.player_dt;
+        //entity.speed = 0.25f;
     }
 
     auto& pos = entity.position;
     auto& speed = entity.speed;
-    auto& direction = entity.direction;
+    auto& dt = entity.dt;
 
-    Vec2Dr32 delta_m;
-    delta_m.x = speed * direction.x;
-    delta_m.y = speed * direction.y;
+    Vec2Dr32 delta_m = gpu::vec_mul(dt, speed);
 
-    gpu::update_position(pos, delta_m);
+    entity.next_position = gpu::add_delta(pos, delta_m);
+
+    pos = entity.next_position;
 }
 
 
@@ -50,7 +55,7 @@ static void update_entities(AppState& state)
 
     UpdateEntityProps props{};
     props.entities = state.device.entities;
-    props.player_direction = state.props.player_direction;
+    props.player_dt = state.props.player_dt;
 
     bool proc = cuda_no_errors();
     assert(proc);
