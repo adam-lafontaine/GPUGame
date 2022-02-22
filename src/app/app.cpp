@@ -305,31 +305,47 @@ static void process_input(Input const& input, AppState& state)
     }    
 
     update_screen_position(props.screen_position, camera_d_m, props.screen_width_m);
-
-    auto dist_m = dt;
+    
     player_dt = { 0.0f, 0.0f };
-
     if(controller.dpad_up.is_down)
     {
-        player_dt.y -= dist_m;
+        player_dt.y -= dt;
     }
     if(controller.dpad_down.is_down)
     {
-        player_dt.y += dist_m;
+        player_dt.y += dt;
     }
     if(controller.dpad_left.is_down)
     {
-        player_dt.x -= dist_m;
+        player_dt.x -= dt;
     }
     if(controller.dpad_right.is_down)
     {
-        player_dt.x += dist_m;
+        player_dt.x += dt;
     }
 
     if(player_dt.x != 0.0f && player_dt.y != 0.0f)
     {
         player_dt.x *= 0.707107f;
         player_dt.y *= 0.707107f;
+    }
+
+    if(controller.button_x.pressed)
+    {
+        props.spawn_blue = true;
+    }
+    else
+    {
+        props.spawn_blue = false;
+    }
+
+    if(controller.button_y.is_down)
+    {
+        props.move_blue = true;
+    }
+    else
+    {
+        props.move_blue = false;
     }
 }
 

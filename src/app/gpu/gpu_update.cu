@@ -79,17 +79,18 @@ inline u32 get_entity_id_from_brown_offset(u32 offset)
 }
 
 
-class UpdateEntityProps
+class MoveEntityProps
 {
 public:
     DeviceArray<Entity> entities;
 
     Vec2Dr32 player_dt;
+    bool move_blue;
 };
 
 
 GPU_KERNAL
-static void gpu_next_positions(UpdateEntityProps props, u32 n_threads)
+static void gpu_next_positions(MoveEntityProps props, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -106,13 +107,15 @@ static void gpu_next_positions(UpdateEntityProps props, u32 n_threads)
 
     auto& entity = props.entities.data[entity_id];
 
-    if(gpu::is_player_entity(entity_id))
+    entity.dt = { 0.0f, 0.0f };
+
+    if(gpu::is_player_entity(entity_id) && !props.move_blue)
     {
         entity.dt = props.player_dt;
     }
-    else if(gpu::is_blue_entity(entity_id))
+    else if(gpu::is_blue_entity(entity_id) && props.move_blue)
     {
-        //entity.dt = props.player_dt;
+        entity.dt = props.player_dt;
     }
 
     auto& pos = entity.position;
@@ -129,9 +132,10 @@ static void next_positions(AppState& state)
 {
     auto n_threads = state.device.entities.n_elements;
 
-    UpdateEntityProps props{};
+    MoveEntityProps props{};
     props.entities = state.device.entities;
     props.player_dt = state.props.player_dt;
+    props.move_blue = state.props.move_blue;
 
     bool proc = cuda_no_errors();
     assert(proc);
@@ -268,6 +272,57 @@ static void update_positions(AppState& state)
 }
 
 
+class SpawnEntityProps
+{
+public:
+    DeviceArray<Entity> entities;
+
+    bool spawn_blue;
+};
+
+
+GPU_KERNAL
+static void gpu_spawn_entities(SpawnEntityProps props, u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
+    }
+
+    auto entity_id = (u32)t;
+
+    if(!gpu::is_blue_entity(entity_id))
+    {
+        return;
+    }
+
+    auto& entity = props.entities.data[entity_id];
+    if(props.spawn_blue && !entity.is_active)
+    {
+        entity.is_active = true;
+    }
+}
+
+
+static void spawn_entities(AppState& state)
+{
+    auto n_threads = state.device.entities.n_elements;
+
+    SpawnEntityProps props{};
+    props.entities = state.device.entities;
+    props.spawn_blue = state.props.spawn_blue;
+
+    bool proc = cuda_no_errors();
+    assert(proc);
+
+    gpu_spawn_entities<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
+
+    proc &= cuda_launch_success();
+    assert(proc);
+}
+
+
 namespace gpu
 {    
     void update(AppState& state)
@@ -277,5 +332,7 @@ namespace gpu
         collisions(state);
 
         update_positions(state);
+
+        spawn_entities(state);
     }
 }
