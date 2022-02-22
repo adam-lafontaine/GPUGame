@@ -111,7 +111,19 @@ inline WorldPosition add_delta(WorldPosition const& pos, Vec2Dr32 const& delta)
 
 
 GPU_FUNCTION
-inline Vec2Dr32 subtract(WorldPosition const& lhs, WorldPosition const& rhs)
+inline Vec2Di32 subtract(Vec2Di32 const& lhs, Vec2Di32 const& rhs)
+{
+    Vec2Di32 delta{};
+
+    delta.x = lhs.x - rhs.x;
+    delta.y = lhs.y - rhs.y;
+
+    return delta;
+}
+
+
+GPU_FUNCTION
+inline Vec2Dr32 sub_delta_m(WorldPosition const& lhs, WorldPosition const& rhs)
 {
     Vec2Dr32 delta{};
 
@@ -137,14 +149,31 @@ inline Rect2Dr32 make_rect(r32 width, r32 height)
 
 
 GPU_FUNCTION
-inline Rect2Dr32 get_entity_rect(Entity const& entity, Point2Dr32 const& pos)
+inline Rect2Dr32 make_rect(Point2Dr32 const& begin, r32 width, r32 height)
+{
+    assert(width >= 0.0f);
+    assert(height >= 0.0f);
+
+    Rect2Dr32 r{};
+
+    r.x_begin = begin.x;
+    r.x_end = begin.x + width;
+    r.y_begin = begin.y;
+    r.y_end = begin.y + height;
+
+    return r;
+}
+
+
+GPU_FUNCTION
+inline Rect2Dr32 get_screen_rect(Entity const& entity, Point2Dr32 const& screen_pos)
 {
     Rect2Dr32 r{};
 
     // pos at top left
-    r.x_begin = pos.x;
+    r.x_begin = screen_pos.x;
     r.x_end = r.x_begin + entity.width;
-    r.y_begin = pos.y;
+    r.y_begin = screen_pos.y;
     r.y_end = r.y_begin + entity.height;
 
     return r;
@@ -212,6 +241,54 @@ inline Vec2Dr32 vec_mul(Vec2Dr32 const& vec, r32 scale)
     res.y = vec.y * scale;
 
     return res;
+}
+
+
+GPU_CONSTEXPR_FUNCTION
+inline bool is_player_entity(u32 id)
+{
+    return id == PLAYER_ID;
+}
+
+
+GPU_CONSTEXPR_FUNCTION
+inline bool is_blue_entity(u32 id)
+{
+    auto begin = N_PLAYERS;
+    auto end = begin + N_BLUE_ENTITIES;
+
+    return id >= begin && id < end;
+}
+
+
+GPU_CONSTEXPR_FUNCTION
+inline bool is_brown_entity(u32 id)
+{
+    auto begin = N_PLAYERS + N_BLUE_ENTITIES;
+    auto end = begin + N_BROWN_ENTITIES;
+
+    return id >= begin && id < end;
+}
+
+
+GPU_CONSTEXPR_FUNCTION
+inline u32 get_blue_id(u32 id)
+{
+    return id - N_PLAYERS;
+}
+
+
+GPU_CONSTEXPR_FUNCTION
+inline u32 get_brown_id(u32 id)
+{
+    return id - (N_PLAYERS + N_BLUE_ENTITIES);
+}
+
+
+GPU_CONSTEXPR_FUNCTION
+inline u32 get_entity_id_from_brown_id(u32 id)
+{
+    return N_PLAYERS + N_BLUE_ENTITIES + id;
 }
 
 

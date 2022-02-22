@@ -18,13 +18,8 @@ constexpr u32 N_BLUE_ENTITIES = 1;
 
 constexpr u32 N_ENTITIES = N_BLUE_ENTITIES + N_BROWN_ENTITIES + 1;
 
+constexpr u32 N_PLAYERS = 1;
 constexpr u32 PLAYER_ID = 0;
-
-constexpr u32 BLUE_BEGIN = 1;
-constexpr u32 BLUE_END = BLUE_BEGIN + N_BLUE_ENTITIES;
-
-constexpr u32 BROWN_BEGIN = BLUE_END;
-constexpr u32 BROWN_END = BROWN_BEGIN + N_BROWN_ENTITIES;
 
 constexpr u32 TILE_WIDTH_PX = 64;
 constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;

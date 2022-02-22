@@ -23,6 +23,8 @@ public:
     r32 speed;
 
     WorldPosition next_position;
+
+    bool is_active;
 };
 
 

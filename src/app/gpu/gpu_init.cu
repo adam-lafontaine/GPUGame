@@ -38,6 +38,8 @@ void gpu_init_tiles(DeviceTileMatrix world_tiles, TileList tiles, u32 n_threads)
 GPU_FUNCTION
 static void init_player(Entity& player)
 {
+    player.is_active = true;
+
     player.width = 0.3f;
     player.height = 0.3f;
 
@@ -45,6 +47,8 @@ static void init_player(Entity& player)
 
     player.position.tile = { 4, 4 };
     player.position.offset_m = { 0.0f, 0.0f };
+
+    player.next_position = player.position;
 
     player.speed = 1.5f;
     player.dt = { 0.0f, 0.0f };
@@ -54,22 +58,28 @@ static void init_player(Entity& player)
 GPU_FUNCTION
 static void init_entity(Entity& entity, i32 id)
 {
+    entity.is_active = true;
+
     entity.width = 0.1f;
     entity.height = 0.1f;
 
     entity.color = gpu::to_pixel(0, 0, 100);
 
-    entity.position.tile = { 15, id };
+    entity.position.tile = { 6, id + 2 };
     entity.position.offset_m = { 0.2f, 0.2f };
 
+    entity.next_position = entity.position;
+
     entity.speed = 1.0f;
-    entity.dt = { 0.0f, 0.0f };
+    entity.dt = { 0.0f, 0.0f };    
 }
 
 
 GPU_FUNCTION
 static void init_wall(Entity& wall, u32 wall_id)
 {
+    wall.is_active = true;
+
     wall.width = TILE_LENGTH_M;
     wall.height = TILE_LENGTH_M;
 
@@ -105,6 +115,8 @@ static void init_wall(Entity& wall, u32 wall_id)
     }
 
     wall.position.tile = { x, y };
+
+    wall.next_position = wall.position;
 }
 
 
@@ -119,18 +131,18 @@ void gpu_init_entities(DeviceArray<Entity> entities, u32 n_threads)
 
     auto entity_id = (u32)t;
 
-    if(entity_id == PLAYER_ID)
+    if(gpu::is_player_entity(entity_id))
     {
         init_player(entities.data[entity_id]);
         return;
     }
-    else if(entity_id >= BLUE_BEGIN && entity_id < BLUE_END)
+    else if(gpu::is_blue_entity(entity_id))
     {
-        init_entity(entities.data[entity_id], entity_id - BLUE_BEGIN);
+        init_entity(entities.data[entity_id], gpu::get_blue_id(entity_id));
     }
-    else if(entity_id >= BROWN_BEGIN && entity_id < BROWN_END)
+    else if(gpu::is_brown_entity(entity_id))
     {
-        init_wall(entities.data[entity_id], entity_id - BROWN_BEGIN);
+        init_wall(entities.data[entity_id], gpu::get_brown_id(entity_id));
     }
 
     
