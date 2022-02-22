@@ -244,6 +244,14 @@ inline Vec2Dr32 vec_mul(Vec2Dr32 const& vec, r32 scale)
 }
 
 
+constexpr auto PLAYER_BEGIN = 0;
+constexpr auto PLAYER_END = N_PLAYERS;
+constexpr auto BLUE_BEGIN = PLAYER_END;
+constexpr auto BLUE_END = BLUE_BEGIN + N_BLUE_ENTITIES;
+constexpr auto BROWN_BEGIN = BLUE_END;
+constexpr auto BROWN_END = BROWN_BEGIN + N_BROWN_ENTITIES;
+
+
 GPU_CONSTEXPR_FUNCTION
 inline bool is_player_entity(u32 id)
 {
@@ -254,41 +262,28 @@ inline bool is_player_entity(u32 id)
 GPU_CONSTEXPR_FUNCTION
 inline bool is_blue_entity(u32 id)
 {
-    auto begin = N_PLAYERS;
-    auto end = begin + N_BLUE_ENTITIES;
-
-    return id >= begin && id < end;
+    return id >= BLUE_BEGIN && id < BLUE_END;
 }
 
 
 GPU_CONSTEXPR_FUNCTION
 inline bool is_brown_entity(u32 id)
 {
-    auto begin = N_PLAYERS + N_BLUE_ENTITIES;
-    auto end = begin + N_BROWN_ENTITIES;
-
-    return id >= begin && id < end;
+    return id >= BROWN_BEGIN && id < BROWN_END;
 }
 
 
 GPU_CONSTEXPR_FUNCTION
-inline u32 get_blue_id(u32 id)
+inline u32 get_blue_offset(u32 id)
 {
-    return id - N_PLAYERS;
+    return id - BLUE_BEGIN;
 }
 
 
 GPU_CONSTEXPR_FUNCTION
-inline u32 get_brown_id(u32 id)
+inline u32 get_brown_offset(u32 id)
 {
-    return id - (N_PLAYERS + N_BLUE_ENTITIES);
-}
-
-
-GPU_CONSTEXPR_FUNCTION
-inline u32 get_entity_id_from_brown_id(u32 id)
-{
-    return N_PLAYERS + N_BLUE_ENTITIES + id;
+    return id - BROWN_BEGIN;
 }
 
 

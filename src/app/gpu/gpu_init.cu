@@ -138,11 +138,11 @@ void gpu_init_entities(DeviceArray<Entity> entities, u32 n_threads)
     }
     else if(gpu::is_blue_entity(entity_id))
     {
-        init_entity(entities.data[entity_id], gpu::get_blue_id(entity_id));
+        init_entity(entities.data[entity_id], gpu::get_blue_offset(entity_id));
     }
     else if(gpu::is_brown_entity(entity_id))
     {
-        init_wall(entities.data[entity_id], gpu::get_brown_id(entity_id));
+        init_wall(entities.data[entity_id], gpu::get_brown_offset(entity_id));
     }
 
     

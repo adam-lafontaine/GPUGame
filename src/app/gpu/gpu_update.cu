@@ -13,30 +13,32 @@ namespace gpu
 /*************************/
 
 
+constexpr auto PLAYER_WALL_BEGIN = 0;
+constexpr auto PLAYER_WALL_END = PLAYER_WALL_BEGIN + N_PLAYER_WALL_COLLISIONS;
+constexpr auto BLUE_WALL_BEGIN = PLAYER_WALL_END;
+constexpr auto BLUE_WALL_END = BLUE_WALL_BEGIN + N_BLUE_WALL_COLLISIONS;
+constexpr auto PLAYER_BLUE_BEGIN = BLUE_WALL_END;
+constexpr auto PLAYER_BLUE_END = PLAYER_BLUE_BEGIN + N_PLAYER_BLUE_COLLISIONS;
+
+
 GPU_CONSTEXPR_FUNCTION
-static bool is_player_wall(u32 id)
+static bool is_player_wall(u32 offset)
 {
-    return id < N_PLAYER_WALL_COLLISIONS;
+    return /*offset >= PLAYER_WALL_BEGIN &&*/ offset < PLAYER_WALL_END;
 }
 
 
 GPU_CONSTEXPR_FUNCTION
-static bool is_blue_wall(u32 id)
+static bool is_blue_wall(u32 offset)
 {
-    auto begin = N_PLAYER_WALL_COLLISIONS;
-    auto end = begin + N_BLUE_WALL_COLLISIONS;
-
-    return id >= begin && id < end;
+    return offset >= BLUE_WALL_BEGIN && offset < BLUE_WALL_END;
 }
 
 
 GPU_CONSTEXPR_FUNCTION
-static bool is_player_blue(u32 id)
+static bool is_player_blue(u32 offset)
 {
-    auto begin = N_PLAYER_WALL_COLLISIONS + N_BLUE_WALL_COLLISIONS;
-    auto end = begin + N_PLAYER_BLUE_COLLISIONS;
-
-    return id >= begin && id < end;
+    return offset >= PLAYER_BLUE_BEGIN && offset < PLAYER_BLUE_END;
 }
 
 
@@ -53,9 +55,23 @@ static bool entity_intersect(Entity const& lhs, Entity const& rhs)
 
 
 GPU_CONSTEXPR_FUNCTION
-inline u32 get_entity_id_from_brown_id(u32 id)
+inline u32 get_entity_id_from_player_offset(u32 offset)
 {
-    return N_PLAYERS + N_BLUE_ENTITIES + id;
+    return gpu::PLAYER_BEGIN + offset;
+}
+
+
+GPU_CONSTEXPR_FUNCTION
+inline u32 get_entity_id_from_blue_offset(u32 offset)
+{
+    return gpu::BLUE_BEGIN + offset;
+}
+
+
+GPU_CONSTEXPR_FUNCTION
+inline u32 get_entity_id_from_brown_offset(u32 offset)
+{
+    return gpu::BROWN_BEGIN + offset;
 }
 
 
@@ -94,6 +110,10 @@ static void gpu_next_positions(UpdateEntityProps props, u32 n_threads)
     {
         entity.dt = props.player_dt;
     }
+    else if(gpu::is_blue_entity(entity_id))
+    {
+        //entity.dt = props.player_dt;
+    }
 
     auto& pos = entity.position;
     auto& speed = entity.speed;
@@ -126,12 +146,30 @@ static void next_positions(AppState& state)
 GPU_FUNCTION
 static void entity_wall(Entity& ent, Entity const& wall)
 {   
+    if(!ent.is_active || !wall.is_active)
+    {
+        return;
+    }
 
     if(gpu::entity_intersect(ent, wall))
     {
         ent.next_position = ent.position;
+    }    
+}
+
+
+GPU_FUNCTION
+static void player_blue(Entity const& player, Entity& blue)
+{   
+    if(!player.is_active || !blue.is_active)
+    {
+        return;
     }
-    
+
+    if(gpu::entity_intersect(player, blue))
+    {
+        blue.is_active = false;
+    }    
 }
 
 
@@ -144,27 +182,44 @@ static void gpu_collisions(DeviceArray<Entity> entities, u32 n_threads)
         return;
     }
 
-    auto collision_id = (u32)t;
+    auto collision_offset = (u32)t;
 
-    if(gpu::is_player_wall(collision_id))
+    if(gpu::is_player_wall(collision_offset))
     {
-        auto player_id = 0; // collision_id / N_BROWN_ENTITIES;
-        auto wall_id = collision_id - player_id * N_BROWN_ENTITIES;
+        auto offset = collision_offset - gpu::PLAYER_WALL_BEGIN;
+        auto player_offset = offset / N_BROWN_ENTITIES;
+        auto wall_offset = offset - player_offset * N_BROWN_ENTITIES;
 
-        auto& player = entities.data[player_id];        
-        auto& wall = entities.data[gpu::get_entity_id_from_brown_id(wall_id)];
+        auto& player = entities.data[gpu::get_entity_id_from_player_offset(player_offset)];
+        auto& wall = entities.data[gpu::get_entity_id_from_brown_offset(wall_offset)];
 
         entity_wall(player, wall);
 
         return;
     }
-    else if(gpu::is_blue_wall(collision_id))
+    else if(gpu::is_blue_wall(collision_offset))
     {
+        auto offset = collision_offset - gpu::BLUE_WALL_BEGIN;
+        auto blue_offset = offset / N_BROWN_ENTITIES;
+        auto wall_offset = offset - blue_offset * N_BROWN_ENTITIES;
+
+        auto& blue = entities.data[gpu::get_entity_id_from_blue_offset(blue_offset)];
+        auto& wall = entities.data[gpu::get_entity_id_from_brown_offset(wall_offset)];
+
+        entity_wall(blue, wall);
 
         return;
     }
-    else if(gpu::is_player_blue(collision_id))
+    else if(gpu::is_player_blue(collision_offset))
     {
+        auto offset = collision_offset - gpu::PLAYER_BLUE_BEGIN;
+        auto player_offset = offset / N_BLUE_ENTITIES;
+        auto blue_offset = offset - player_offset * N_BLUE_ENTITIES;
+
+        auto& player = entities.data[gpu::get_entity_id_from_player_offset(player_offset)];
+        auto& blue = entities.data[gpu::get_entity_id_from_blue_offset(blue_offset)];
+
+        player_blue(player, blue);
 
         return;
     }
