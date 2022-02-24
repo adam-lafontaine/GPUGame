@@ -10,7 +10,7 @@ void gpu_init_tiles(DeviceTileMatrix world_tiles, TileList tiles, u32 n_threads)
     if (t >= n_threads)
     {
         return;
-    }    
+    }
 
     auto world_tile_id = (u32)t;
 
@@ -19,7 +19,7 @@ void gpu_init_tiles(DeviceTileMatrix world_tiles, TileList tiles, u32 n_threads)
     auto& world_tile = world_tiles.data[world_tile_id];
 
     auto world_tile_y = world_tile_id / world_tiles.width;
-    auto world_tile_x = world_tile_id - world_tile_y * world_tiles.width;
+    auto world_tile_x = world_tile_id - world_tile_y * world_tiles.width;    
 
     if( world_tile_x == 0 ||
         world_tile_x == world_tiles.width - 1 ||
@@ -67,7 +67,7 @@ static void init_entity(Entity& entity, i32 id)
 
     entity.color = gpu::to_pixel(0, 0, 100);
 
-    entity.position.tile = { 6, id + 2 };
+    entity.position.tile = { 6, id + 1 };
     entity.position.offset_m = { 0.2f, 0.2f };
 
     entity.next_position = entity.position;
@@ -102,20 +102,20 @@ static void init_wall(Entity& wall, u32 wall_id)
         x = (i32)wall_id;
         y = 0;
     }
-    else if(wall_id < WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE)
+    else if(wall_id < 2 * WORLD_WIDTH_TILE)
     {
         y = (i32)WORLD_HEIGHT_TILE - 1;
         x = wall_id - (i32)WORLD_WIDTH_TILE;        
     }
-    else if(wall_id < WORLD_WIDTH_TILE + 2 * WORLD_HEIGHT_TILE - 2)
+    else if(wall_id < 2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2)
     {
         x = 0;
-        y = wall_id - (WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE) + 1;
+        y = wall_id - (2 * WORLD_WIDTH_TILE) + 1;
     }
     else
     {
         x = (i32)WORLD_WIDTH_TILE - 1;
-        y = wall_id - (WORLD_WIDTH_TILE + 2 * WORLD_HEIGHT_TILE - 2) + 1;
+        y = wall_id - (2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2) + 1;
     }
 
     wall.position.tile = { x, y };

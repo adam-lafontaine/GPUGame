@@ -83,8 +83,7 @@ public:
 
     WorldPosition screen_position;
     Vec2Dr32 player_dt;
-
-    bool move_blue;
+    
     bool spawn_blue;
 };
 

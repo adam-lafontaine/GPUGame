@@ -28,13 +28,13 @@ constexpr auto GRASS_TILE_PATH = "/home/adam/Repos/GPUGame/assets/tiles/basic_gr
 constexpr size_t device_memory_sz()
 {
     u32 n_world_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;  
-    auto world_tile_sz = n_world_tiles * sizeof(DeviceTile);
+    auto tilemap_sz = n_world_tiles * sizeof(DeviceTile);
 
     auto entity_sz = N_ENTITIES * sizeof(Entity);
 
     auto tile_asset_sz = N_TILE_BITMAPS * (TILE_HEIGHT_PX * TILE_WIDTH_PX * sizeof(Pixel) + sizeof(Pixel));
 
-    return world_tile_sz + entity_sz + tile_asset_sz;
+    return tilemap_sz + entity_sz + tile_asset_sz;
 }
 
 
@@ -337,15 +337,6 @@ static void process_input(Input const& input, AppState& state)
     else
     {
         props.spawn_blue = false;
-    }
-
-    if(controller.button_y.is_down)
-    {
-        props.move_blue = true;
-    }
-    else
-    {
-        props.move_blue = false;
     }
 }
 
