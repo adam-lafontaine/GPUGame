@@ -109,6 +109,17 @@ inline WorldPosition add_delta(WorldPosition const& pos, Vec2Dr32 const& delta)
     return added; 
 }
 
+GPU_FUNCTION
+inline Vec2Dr32 add(Vec2Dr32 const& lhs, Vec2Dr32 const& rhs)
+{
+    Vec2Dr32 delta{};
+
+    delta.x = lhs.x + rhs.x;
+    delta.y = lhs.y + rhs.y;
+
+    return delta;
+}
+
 
 GPU_FUNCTION
 inline Vec2Di32 subtract(Vec2Di32 const& lhs, Vec2Di32 const& rhs)
@@ -171,6 +182,20 @@ inline Rect2Dr32 make_rect(Point2Dr32 const& begin, r32 width, r32 height)
     r.x_end = begin.x + width;
     r.y_begin = begin.y;
     r.y_end = begin.y + height;
+
+    return r;
+}
+
+
+GPU_FUNCTION
+inline Rect2Dr32 add_delta(Rect2Dr32 const& rect, Vec2Dr32 const& delta)
+{
+    Rect2Dr32 r = rect;
+
+    r.x_begin += delta.x;
+    r.x_end += delta.x;
+    r.y_begin += delta.y;
+    r.y_end += delta.y;
 
     return r;
 }

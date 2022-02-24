@@ -234,16 +234,57 @@ static void next_positions(AppState& state)
 GPU_FUNCTION
 static void entity_wall(Entity& ent, Entity& wall)
 {   
-    if(!ent.is_active || !wall.is_active || !gpu::entity_will_intersect(ent, wall))
+    if(!ent.is_active || !wall.is_active/* || !gpu::entity_will_intersect(ent, wall)*/)
     {
         return;
     }
 
-    ent.delta_pos_m = { 0.0f, 0.0f };
+    auto delta = gpu::sub_delta_m(ent.position, wall.position);
     
-    //ent.next_position = ent.position;
+    auto w = gpu::make_rect(wall.width, wall.height);
+    auto e_start = gpu::make_rect(delta, ent.width, ent.height);
+    auto e_finish = gpu::add_delta(e_start, ent.delta_pos_m);
 
-    //gpu::collision_stop(ent, wall);
+    if(!gpu::rect_intersect(e_finish, w))
+    {
+        return;
+    }
+
+    auto mm = 0.001f;
+
+    auto e_x_finish = gpu::add_delta(e_start, { ent.delta_pos_m.x, 0.0f });
+    if(gpu::rect_intersect(e_x_finish, w))
+    {
+        if(fabs(e_start.x_end - w.x_begin) < mm || fabs(e_start.x_begin - w.x_end) < mm)
+        {
+            ent.delta_pos_m.x = 0.0f;
+        }
+        else if(e_start.x_end < w.x_begin)
+        {
+            ent.delta_pos_m.x = w.x_begin - e_start.x_end - 0.5 * mm;
+        }
+        else if(e_start.x_begin > w.x_end)
+        {
+            ent.delta_pos_m.x = w.x_end - e_start.x_begin + 0.5 * mm;
+        }
+    }
+
+    auto e_y_finish = gpu::add_delta(e_start, { 0.0f, ent.delta_pos_m.y });
+    if(gpu::rect_intersect(e_y_finish, w))
+    {
+        if(fabs(e_start.y_end - w.y_begin) < mm || fabs(e_start.y_begin - w.y_end) < mm)
+        {
+            ent.delta_pos_m.y = 0.0f;
+        }
+        else if(e_start.y_end < w.y_begin)
+        {
+            ent.delta_pos_m.y = w.y_begin - e_start.y_end - 0.5 * mm;
+        }
+        else if(e_start.y_begin > w.y_end)
+        {
+            ent.delta_pos_m.y = w.y_end - e_start.y_begin + 0.5 * mm;
+        }
+    }
 }
 
 
@@ -256,6 +297,7 @@ static void player_blue(Entity const& player, Entity& blue)
     }
     
     blue.is_active = false;
+    blue.delta_pos_m = { 0.0f, 0.0f };
 }
 
 
@@ -338,6 +380,7 @@ static void gpu_update_positions(DeviceArray<Entity> entities, u32 n_threads)
     auto& entity = entities.data[t];
     entity.position = gpu::add_delta(entity.position, entity.delta_pos_m);
     entity.next_position = entity.position;
+    entity.delta_pos_m = { 0.0f, 0.0f };
 }
 
 
