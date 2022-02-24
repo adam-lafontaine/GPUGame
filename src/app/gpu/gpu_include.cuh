@@ -121,6 +121,17 @@ inline Vec2Di32 subtract(Vec2Di32 const& lhs, Vec2Di32 const& rhs)
     return delta;
 }
 
+GPU_FUNCTION
+inline Vec2Dr32 subtract(Vec2Dr32 const& lhs, Vec2Dr32 const& rhs)
+{
+    Vec2Dr32 delta{};
+
+    delta.x = lhs.x - rhs.x;
+    delta.y = lhs.y - rhs.y;
+
+    return delta;
+}
+
 
 GPU_FUNCTION
 inline Vec2Dr32 sub_delta_m(WorldPosition const& lhs, WorldPosition const& rhs)

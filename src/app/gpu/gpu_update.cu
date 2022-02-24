@@ -42,18 +42,6 @@ static bool is_player_blue(u32 offset)
 }
 
 
-GPU_FUNCTION
-static bool entity_intersect(Entity const& lhs, Entity const& rhs)
-{
-    auto delta_m = gpu::sub_delta_m(lhs.next_position, rhs.next_position);
-    
-    auto rhs_rect = gpu::make_rect(rhs.width, rhs.height);
-    auto lhs_rect = gpu::make_rect(delta_m, lhs.width, lhs.height);
-
-    return gpu::rect_intersect(lhs_rect, rhs_rect);
-}
-
-
 GPU_CONSTEXPR_FUNCTION
 inline u32 get_entity_id_from_player_offset(u32 offset)
 {
@@ -73,6 +61,106 @@ inline u32 get_entity_id_from_brown_offset(u32 offset)
 {
     return gpu::BROWN_BEGIN + offset;
 }
+
+
+GPU_FUNCTION
+static bool entity_will_intersect(Entity const& lhs, Entity const& rhs)
+{
+    auto delta_m = gpu::sub_delta_m(lhs.next_position, rhs.next_position);
+    
+    auto rhs_rect = gpu::make_rect(rhs.width, rhs.height);
+    auto lhs_rect = gpu::make_rect(delta_m, lhs.width, lhs.height);
+
+    return gpu::rect_intersect(lhs_rect, rhs_rect);
+}
+
+
+
+
+/*
+GPU_FUNCTION
+static void collision_stop(Entity& lhs, Entity& rhs)
+{
+    // everything relative to rhs.position
+    Point2Dr32 rhs_pt_start = { 0.0f, 0.0f };
+    Point2Dr32 rhs_pt_finish = gpu::sub_delta_m(rhs.next_position, rhs.position);
+    Point2Dr32 lhs_pt_start = gpu::sub_delta_m(lhs.position, rhs.position);
+    Point2Dr32 lhs_pt_finish = gpu::sub_delta_m(lhs.next_position, rhs.position);
+
+    auto delta_rhs = gpu::subtract(rhs_pt_finish, rhs_pt_start);
+    auto delta_lhs = gpu::subtract(lhs_pt_finish, lhs_pt_start);
+
+    auto rhs_rect_start = gpu::make_rect(rhs_pt_start, rhs.width, rhs.height);
+    auto lhs_rect_start = gpu::make_rect(lhs_pt_start, lhs.width, lhs.height);
+
+    assert(!gpu::rect_intersect(lhs_rect_start, rhs_rect_start));
+
+    auto rhs_rect_finish = gpu::make_rect(rhs_pt_finish, rhs.width, rhs.height);    
+    auto lhs_rect_finish = gpu::make_rect(lhs_pt_finish, lhs.width, lhs.height);    
+
+    if(!gpu::rect_intersect(lhs_rect_finish, rhs_rect_finish))
+    {
+        return;
+    }
+
+    r32 dx = 1.0f;
+    r32 dy = 1.0f;
+
+    // change in x
+    auto lhs_x = rhs_pt_finish.x;
+    auto rhs_x = lhs_pt_finish.x;
+    auto lhs_y = rhs_pt_start.y;
+    auto rhs_y = lhs_pt_start.y;
+
+    auto lhs_rect = gpu::make_rect({ lhs_x, lhs_y }, lhs.width, lhs.height);
+    auto rhs_rect = gpu::make_rect({ rhs_x, rhs_y }, rhs.width, rhs.height);
+    for(; gpu::rect_intersect(lhs_rect, rhs_rect) && dx >= 0.0f; dx -= 0.1f)
+    {
+        // largest dx (0 - 1) for no intersection
+
+        lhs_x = lhs_pt_start.x + dx * (lhs_pt_finish.x - lhs_pt_start.x);
+        rhs_x = rhs_pt_start.x + dx * (rhs_pt_finish.x - rhs_pt_start.x);
+        lhs_rect = gpu::make_rect({ lhs_x, lhs_y }, lhs.width, lhs.height);
+        rhs_rect = gpu::make_rect({ rhs_x, rhs_y }, rhs.width, rhs.height);
+    }
+
+    if(dx < 0.0f)
+    {
+        dx = 0.0f;
+    }
+
+    // change in y
+    lhs_x = lhs_pt_start.x;
+    rhs_x = rhs_pt_start.x;
+    lhs_y = lhs_pt_finish.y;
+    rhs_y = rhs_pt_finish.y;
+
+    lhs_rect = gpu::make_rect({ lhs_x, lhs_y }, lhs.width, lhs.height);
+    rhs_rect = gpu::make_rect({ rhs_x, rhs_y }, rhs.width, rhs.height);
+    for(; gpu::rect_intersect(lhs_rect, rhs_rect) && dy >= 0.0f; dy -= 0.1f)
+    {
+        // largest dy (0 - 1) for no intersection
+
+        lhs_y = lhs_pt_start.y + dy * (lhs_pt_finish.y - lhs_pt_start.y);
+        rhs_y = rhs_pt_start.y + dy * (rhs_pt_finish.y - rhs_pt_start.y);
+        lhs_rect = gpu::make_rect({ lhs_x, lhs_y }, lhs.width, lhs.height);
+        rhs_rect = gpu::make_rect({ rhs_x, rhs_y }, rhs.width, rhs.height);
+    }
+
+    if(dy < 0.0f)
+    {
+        dy = 0.0f;
+    }
+
+    delta_lhs.x *= dx;
+    delta_lhs.y *= dy;
+    delta_rhs.x *= dx;
+    delta_rhs.y *= dy;
+
+    lhs.next_position = gpu::add_delta(lhs.position, delta_lhs);
+    rhs.next_position = gpu::add_delta(rhs.position, delta_rhs);
+}
+*/
 
 
 /*************************/
@@ -118,13 +206,9 @@ static void gpu_next_positions(MoveEntityProps props, u32 n_threads)
         entity.dt = props.player_dt;
     }
 
-    auto& pos = entity.position;
-    auto& speed = entity.speed;
-    auto& dt = entity.dt;
+    entity.delta_pos_m = gpu::vec_mul(entity.dt, entity.speed);
 
-    Vec2Dr32 delta_m = gpu::vec_mul(dt, speed);
-
-    entity.next_position = gpu::add_delta(pos, delta_m);
+    entity.next_position = gpu::add_delta(entity.position, entity.delta_pos_m);
 }
 
 
@@ -148,32 +232,30 @@ static void next_positions(AppState& state)
 
 
 GPU_FUNCTION
-static void entity_wall(Entity& ent, Entity const& wall)
+static void entity_wall(Entity& ent, Entity& wall)
 {   
-    if(!ent.is_active || !wall.is_active)
+    if(!ent.is_active || !wall.is_active || !gpu::entity_will_intersect(ent, wall))
     {
         return;
     }
 
-    if(gpu::entity_intersect(ent, wall))
-    {
-        ent.next_position = ent.position;
-    }    
+    ent.delta_pos_m = { 0.0f, 0.0f };
+    
+    //ent.next_position = ent.position;
+
+    //gpu::collision_stop(ent, wall);
 }
 
 
 GPU_FUNCTION
 static void player_blue(Entity const& player, Entity& blue)
 {   
-    if(!player.is_active || !blue.is_active)
+    if(!player.is_active || !blue.is_active || !gpu::entity_will_intersect(player, blue))
     {
         return;
     }
-
-    if(gpu::entity_intersect(player, blue))
-    {
-        blue.is_active = false;
-    }    
+    
+    blue.is_active = false;
 }
 
 
@@ -254,7 +336,8 @@ static void gpu_update_positions(DeviceArray<Entity> entities, u32 n_threads)
     }
 
     auto& entity = entities.data[t];
-    entity.position = entity.next_position;
+    entity.position = gpu::add_delta(entity.position, entity.delta_pos_m);
+    entity.next_position = entity.position;
 }
 
 

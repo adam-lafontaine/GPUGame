@@ -52,6 +52,8 @@ static void init_player(Entity& player)
 
     player.speed = 1.5f;
     player.dt = { 0.0f, 0.0f };
+
+    player.delta_pos_m = { 0.0f, 0.0f };
 }
 
 
@@ -71,7 +73,9 @@ static void init_entity(Entity& entity, i32 id)
     entity.next_position = entity.position;
 
     entity.speed = 1.0f;
-    entity.dt = { 0.0f, 0.0f };    
+    entity.dt = { 0.0f, 0.0f };
+
+    entity.delta_pos_m = { 0.0f, 0.0f };
 }
 
 
@@ -117,6 +121,8 @@ static void init_wall(Entity& wall, u32 wall_id)
     wall.position.tile = { x, y };
 
     wall.next_position = wall.position;
+
+    wall.delta_pos_m = { 0.0f, 0.0f };
 }
 
 

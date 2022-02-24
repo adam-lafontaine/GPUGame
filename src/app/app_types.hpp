@@ -22,6 +22,8 @@ public:
     Vec2Dr32 dt;
     r32 speed;
 
+    Vec2Dr32 delta_pos_m;
+
     WorldPosition next_position;
 
     bool is_active;
