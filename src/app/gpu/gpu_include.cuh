@@ -145,6 +145,13 @@ inline Vec2Dr32 subtract(Vec2Dr32 const& lhs, Vec2Dr32 const& rhs)
 
 
 GPU_FUNCTION
+inline bool equal(Vec2Dr32 const& lhs, Vec2Dr32 const& rhs)
+{
+    return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+
+GPU_FUNCTION
 inline Vec2Dr32 sub_delta_m(WorldPosition const& lhs, WorldPosition const& rhs)
 {
     Vec2Dr32 delta{};

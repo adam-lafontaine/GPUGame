@@ -48,7 +48,7 @@ static void init_player(Entity& player)
     player.width = 0.3f;
     player.height = 0.3f;
 
-    player.color = gpu::to_pixel(255, 0, 0);
+    player.color = gpu::to_pixel(200, 0, 0);
 
     player.position.tile = { 4, 4 };
     player.position.offset_m = { 0.0f, 0.0f };
@@ -74,15 +74,66 @@ static void init_entity(Entity& entity, u32 id)
 
     entity.color = gpu::to_pixel(0, 0, 100);
 
-    entity.position.tile = { 6, (i32)id + 2 };
+    auto w = (i32)N_BLUE_W;
+
+    auto y = (i32)id / w;
+    auto x = (i32)id - y * w;
+
+    entity.position.tile = { x + 6, y + 2 };
     entity.position.offset_m = { 0.2f, 0.2f };
 
     entity.next_position = entity.position;
 
-    entity.speed = 1.0f;
-    entity.dt = { 0.0f, 0.0f };
+    entity.speed = 1.0f;    
 
     entity.delta_pos_m = { 0.0f, 0.0f };
+
+    entity.dt = { 0.0f, 0.0f };
+
+    switch(id % 8)
+    {
+        case 0:
+        entity.dt = { 1.0f, 0.0f };
+
+        break;
+
+        case 1:
+        entity.dt = { 0.707107f, 0.707107f };
+
+        break;
+
+        case 2:
+        entity.dt = { 0.0f, 1.0f };
+
+        break;
+
+        case 3:
+        entity.dt = { -0.707107f, 0.707107f };
+
+        break;
+
+        case 4:
+        entity.dt = { -1.0f, 0.0f };
+
+        break;
+
+        case 5:
+        entity.dt = { -0.707107f, -0.707107f };
+
+        break;
+
+        case 6:
+        entity.dt = { 0.0f, -1.0f };
+
+        break;
+
+        case 7:
+        entity.dt = { 0.707107f, -0.707107f };
+
+        break;
+    }
+
+    entity.dt = gpu::vec_mul(entity.dt, 1.0f / 60.0f);
 }
 
 
@@ -155,20 +206,13 @@ void gpu_init_entities(DeviceArray<Entity> entities, u32 n_threads)
     else if(gpu::is_blue_entity(entity_id))
     {
         init_entity(entities.data[entity_id], gpu::get_blue_offset(entity_id));
+        entities.data[entity_id].color = gpu::to_pixel(0, 0, 100);
     }
     else if(gpu::is_brown_entity(entity_id))
     {        
         init_wall(entities.data[entity_id], gpu::get_brown_offset(entity_id));
     }
 }
-
-
-GPU_KERNAL
-void gpu_empty_kernel(u32 n_threads)
-{
-
-}
-
 
 
 namespace gpu
