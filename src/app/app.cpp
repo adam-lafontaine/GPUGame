@@ -157,12 +157,12 @@ static bool init_device_memory(DeviceMemory& device, u32 screen_width, u32 scree
         return false;
     }
 
-    if(!make_device_array(device.entities, N_ENTITIES, device.buffer))
+    if(!make_device_matrix(device.tilemap, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE, device.buffer))
     {
         return false;
     }
 
-    if(!make_device_matrix(device.tilemap, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE, device.buffer))
+    if(!make_device_array(device.entities, N_ENTITIES, device.buffer))
     {
         return false;
     }

@@ -24,50 +24,50 @@ constexpr auto BLUE_BLUE_BEGIN = PLAYER_BLUE_END;
 constexpr auto BLUE_BLUE_END = BLUE_BLUE_BEGIN + N_BLUE_BLUE_COLLISIONS;
 
 
-GPU_CONSTEXPR_FUNCTION
+GPU_FUNCTION
 static bool is_player_wall(u32 offset)
 {
     return /*offset >= PLAYER_WALL_BEGIN &&*/ offset < PLAYER_WALL_END;
 }
 
 
-GPU_CONSTEXPR_FUNCTION
+GPU_FUNCTION
 static bool is_blue_wall(u32 offset)
 {
     return offset >= BLUE_WALL_BEGIN && offset < BLUE_WALL_END;
 }
 
 
-GPU_CONSTEXPR_FUNCTION
+GPU_FUNCTION
 static bool is_player_blue(u32 offset)
 {
     return offset >= PLAYER_BLUE_BEGIN && offset < PLAYER_BLUE_END;
 }
 
 
-GPU_CONSTEXPR_FUNCTION
+GPU_FUNCTION
 static bool is_blue_blue(u32 offset)
 {
     return offset >= BLUE_BLUE_BEGIN && offset < BLUE_BLUE_END;
 }
 
 
-GPU_CONSTEXPR_FUNCTION
-inline u32 get_entity_id_from_player_offset(u32 offset)
+GPU_FUNCTION
+static u32 get_entity_id_from_player_offset(u32 offset)
 {
     return gpu::PLAYER_BEGIN + offset;
 }
 
 
-GPU_CONSTEXPR_FUNCTION
-inline u32 get_entity_id_from_blue_offset(u32 offset)
+GPU_FUNCTION
+static u32 get_entity_id_from_blue_offset(u32 offset)
 {
     return gpu::BLUE_BEGIN + offset;
 }
 
 
-GPU_CONSTEXPR_FUNCTION
-inline u32 get_entity_id_from_brown_offset(u32 offset)
+GPU_FUNCTION
+static u32 get_entity_id_from_brown_offset(u32 offset)
 {
     return gpu::BROWN_BEGIN + offset;
 }
@@ -316,7 +316,7 @@ static void gpu_collisions(DeviceArray<Entity> entities, u32 n_threads)
     }
     else if(gpu::is_blue_blue(collision_offset))
     {
-        auto offset = collision_offset = gpu::BLUE_BLUE_BEGIN;
+        auto offset = collision_offset - gpu::BLUE_BLUE_BEGIN;
         auto a_offset = offset / N_BLUE_ENTITIES;
         auto b_offset = offset - a_offset * N_BLUE_ENTITIES;
 

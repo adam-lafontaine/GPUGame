@@ -16,7 +16,11 @@ void gpu_init_tiles(DeviceTileMatrix world_tiles, TileList tiles, u32 n_threads)
 
     assert(world_tile_id < world_tiles.width * world_tiles.height);
 
-    auto& world_tile = world_tiles.data[world_tile_id];
+    //auto& world_tile = world_tiles.data[world_tile_id];
+
+    world_tiles.data[world_tile_id] = tiles.grass;
+
+    /*
 
     auto world_tile_y = world_tile_id / world_tiles.width;
     auto world_tile_x = world_tile_id - world_tile_y * world_tiles.width;    
@@ -32,6 +36,7 @@ void gpu_init_tiles(DeviceTileMatrix world_tiles, TileList tiles, u32 n_threads)
     {
         world_tile = tiles.grass;
     }
+    */
 }
 
 
@@ -58,8 +63,10 @@ static void init_player(Entity& player)
 
 
 GPU_FUNCTION
-static void init_entity(Entity& entity, i32 id)
+static void init_entity(Entity& entity, u32 id)
 {
+    assert(id < N_BLUE_ENTITIES);
+
     entity.is_active = true;
 
     entity.width = 0.1f;
@@ -67,7 +74,7 @@ static void init_entity(Entity& entity, i32 id)
 
     entity.color = gpu::to_pixel(0, 0, 100);
 
-    entity.position.tile = { 6, id + 1 };
+    entity.position.tile = { 6, (i32)id + 1 };
     entity.position.offset_m = { 0.2f, 0.2f };
 
     entity.next_position = entity.position;
@@ -82,6 +89,8 @@ static void init_entity(Entity& entity, i32 id)
 GPU_FUNCTION
 static void init_wall(Entity& wall, u32 wall_id)
 {
+    assert(wall_id < N_BROWN_ENTITIES);
+
     wall.is_active = true;
 
     wall.width = TILE_LENGTH_M;
@@ -135,24 +144,31 @@ void gpu_init_entities(DeviceArray<Entity> entities, u32 n_threads)
         return;
     }
 
+    assert(n_threads == entities.n_elements);
+
     auto entity_id = (u32)t;
 
     if(gpu::is_player_entity(entity_id))
-    {
+    {        
         init_player(entities.data[entity_id]);
-        return;
     }
     else if(gpu::is_blue_entity(entity_id))
     {
         init_entity(entities.data[entity_id], gpu::get_blue_offset(entity_id));
     }
     else if(gpu::is_brown_entity(entity_id))
-    {
+    {        
         init_wall(entities.data[entity_id], gpu::get_brown_offset(entity_id));
     }
-
-    
 }
+
+
+GPU_KERNAL
+void gpu_empty_kernel(u32 n_threads)
+{
+
+}
+
 
 
 namespace gpu

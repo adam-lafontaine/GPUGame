@@ -26,8 +26,46 @@ public:
 
     WorldPosition next_position;
 
-    bool is_active;
+    bool is_active = false;
 };
+
+
+class EntitySOA
+{
+public:
+    r32* width;
+    r32* height;
+    Pixel* color;
+
+    WorldPosition* position;
+    Vec2Dr32* dt;
+    r32* speed;
+
+    Vec2Dr32* delta_pos_m;
+
+    WorldPosition* next_position;
+
+    bool* is_active;
+
+
+    u32 n_elements;
+};
+
+
+inline size_t get_size(EntitySOA const& s)
+{
+    auto sz = sizeof(r32);       // width
+    sz += sizeof(r32);           // height;
+    sz += sizeof(Pixel);         // color
+    sz += sizeof(WorldPosition); // position
+    sz += sizeof(Vec2Dr32);      // dt
+    sz += sizeof(r32);           // speed
+    sz += sizeof(Vec2Dr32);      // delta_pos_m
+    sz += sizeof(WorldPosition); // next_position
+    sz += sizeof(bool);          // is_active
+
+    return sz * s.n_elements;
+}
 
 
 using DeviceTileMatrix = DeviceMatrix<DeviceTile>;
@@ -52,6 +90,8 @@ public:
     
     DeviceTileMatrix tilemap;
     DeviceArray<Entity> entities;
+
+    //EntitySOA entity_soa;
 };
 
 

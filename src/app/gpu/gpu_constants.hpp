@@ -14,7 +14,7 @@ constexpr r32 MAX_SCREEN_WIDTH_M = MAX_SCREEN_WIDTH_TILE * TILE_LENGTH_M;
 
 constexpr u32 N_BROWN_ENTITIES = 2 * WORLD_WIDTH_TILE + 2 * WORLD_HEIGHT_TILE - 4;
 
-constexpr u32 N_BLUE_ENTITIES = 1;
+constexpr u32 N_BLUE_ENTITIES = 2;
 
 constexpr u32 N_PLAYERS = 1;
 

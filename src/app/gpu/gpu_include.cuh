@@ -173,8 +173,8 @@ inline Rect2Dr32 make_rect(r32 width, r32 height)
 GPU_FUNCTION
 inline Rect2Dr32 make_rect(Point2Dr32 const& begin, r32 width, r32 height)
 {
-    assert(width >= 0.0f);
-    assert(height >= 0.0f);
+    assert(width > 0.0f);
+    assert(height > 0.0f);
 
     Rect2Dr32 r{};
 
@@ -288,37 +288,41 @@ constexpr auto BROWN_BEGIN = BLUE_END;
 constexpr auto BROWN_END = BROWN_BEGIN + N_BROWN_ENTITIES;
 
 
-GPU_CONSTEXPR_FUNCTION
+GPU_FUNCTION
 inline bool is_player_entity(u32 id)
 {
     return id == PLAYER_ID;
 }
 
 
-GPU_CONSTEXPR_FUNCTION
+GPU_FUNCTION
 inline bool is_blue_entity(u32 id)
 {
     return id >= BLUE_BEGIN && id < BLUE_END;
 }
 
 
-GPU_CONSTEXPR_FUNCTION
+GPU_FUNCTION
 inline bool is_brown_entity(u32 id)
 {
     return id >= BROWN_BEGIN && id < BROWN_END;
 }
 
 
-GPU_CONSTEXPR_FUNCTION
+GPU_FUNCTION
 inline u32 get_blue_offset(u32 id)
 {
+    assert(gpu::is_blue_entity(id));
+
     return id - BLUE_BEGIN;
 }
 
 
-GPU_CONSTEXPR_FUNCTION
+GPU_FUNCTION
 inline u32 get_brown_offset(u32 id)
 {
+    assert(gpu::is_brown_entity(id));
+
     return id - BROWN_BEGIN;
 }
 
