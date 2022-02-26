@@ -27,6 +27,9 @@ public:
     WorldPosition next_position;
 
     bool is_active = false;
+
+    bool inv_x = false;
+    bool inv_y = false;
 };
 
 

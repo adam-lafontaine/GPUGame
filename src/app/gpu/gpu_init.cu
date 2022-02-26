@@ -74,7 +74,7 @@ static void init_entity(Entity& entity, u32 id)
 
     entity.color = gpu::to_pixel(0, 0, 100);
 
-    entity.position.tile = { 6, (i32)id + 1 };
+    entity.position.tile = { 6, (i32)id + 2 };
     entity.position.offset_m = { 0.2f, 0.2f };
 
     entity.next_position = entity.position;
