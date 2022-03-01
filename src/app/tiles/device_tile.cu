@@ -1,5 +1,4 @@
 #include "device_tile.hpp"
-#include "../gpu/gpu_constants.hpp"
 #include "../gpu/gpu_include.cuh"
 
 

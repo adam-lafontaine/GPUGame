@@ -290,63 +290,91 @@ img    := $(code)/libimage
 stb    := $(img)/stb_wrapper
 
 
+# header files
+types_h := $(utils)/types.hpp
+
+stopwatch_h := $(utils)/stopwatch.hpp
+
+stb_resize_h := $(stb)/stb_image_resize.h
+stb_image_h := $(stb)/stb_image.h
+
+stb_include_h := $(stb)/stb_include.hpp
+stb_include_h += $(stb_image_h)
+stb_include_h += $(stb_image_h)
+
+libimage_h := $(img)/libimage.hpp
+libimage_h += $(types_h)
+
+button_state_h := $(input)/button_state.hpp
+button_state_h += $(types_h)
+
+controller_h := $(input)/controller.hpp
+
+keyboard_h := $(input)/keyboard.hpp
+
+mouse_h := $(input)/mouse.hpp
+
+input_h := $(input)/input.hpp
+input_h += $(button_state_h)
+input_h += $(controller_h)
+input_h += $(keyboard_h)
+input_h += $(mouse_h)
+
+input_state_h := $(input)/input_state.hpp
+input_state_h += $(input_h)
+
+sdl_input_h := $(sdl)/sdl_input.hpp
+sdl_input_h += $(input_h)
+
+device_h := $(device)/device.hpp
+device_h += $(types_h)
+
+cuda_def_h := $(device)/cuda_def.cuh
+
+device_tile_h := $(tiles)/device_tile.hpp
+device_tile_h += $(device_h)
+
+app_types_h := $(app)/app_types.hpp
+app_types_h += $(device_tile_h)
+
+gpu_constants_h := $(gpu)/gpu_constants.hpp
+
+gpu_app_h := $(gpu)/gpu_app.hpp
+gpu_app_h += $(gpu_constants_h)
+gpu_app_h += $(app_types_h)
+
+gpu_include_h := $(gpu)/gpu_include.cuh
+gpu_include_h += $(gpu_app_h)
+gpu_include_h += $(cuda_def_h)
+
+app_h := $(app)/app.hpp
+app_h += $(input_h)
+
+
 # main
 main_c        := $(sdl)/sdl_main.cpp
 main_o        := $(build)/main.o
 object_files  := $(main_o)
 
-
-#utils
-stopwatch_h := $(utils)/stopwatch.hpp
-types_h := $(utils)/types.hpp
-
-
-#libimage
-img_h := $(img)/libimage.hpp
-img_h += $(stb)/stb_image_resize.h
-img_h += $(stb)/stb_image.h
-img_h += $(stb)/stb_include.hpp
-
 img_c += $(stb)/stb_libimage.cpp
 img_o := $(build)/img.o
 object_files += $(img_o)
-
-
-# device
-device_h := $(device)/device.hpp
-device_h += $(device)/cuda_def.cuh
 
 device_c     := $(device)/device.cu
 device_o     := $(build)/device.o
 object_files += $(device_o)
 
-
-# input
-input_h := $(input)/input.hpp
-input_h += $(input)/button_state.hpp
-input_h += $(input)/keyboard.hpp
-input_h += $(input)/mouse.hpp
-input_h += $(input)/controller.hpp
-input_h += $(sdl)/sdl_input.hpp
-
 input_c      := $(sdl)/sdl_input.cpp
 input_o      := $(build)/input.o
 object_files += $(input_o)
-
-
-# tiles
-tiles_h := $(tiles)/device_tile.hpp
 
 tiles_c := $(tiles)/device_tile.cu
 tiles_o := $(build)/tiles.o
 object_files += $(tiles_o)
 
-
-# gpu
-gpu_h := $(gpu)/gpu_include.cuh
-gpu_h += $(gpu)/gpu_app.hpp
-gpu_h += $(gpu)/gpu_constants.hpp
-gpu_h += $(tiles_h)
+gpu_init_c := $(gpu)/gpu_init.cu
+gpu_init_o := $(build)/gpu_init.o
+object_files += $(gpu_init_o)
 
 gpu_update_c := $(gpu)/gpu_update.cu
 gpu_update_o := $(build)/gpu_update.o
@@ -355,11 +383,6 @@ object_files += $(gpu_update_o)
 gpu_draw_c := $(gpu)/gpu_draw.cu
 gpu_draw_o := $(build)/gpu_draw.o
 object_files += $(gpu_draw_o)
-
-
-# application
-app_h := $(app)/app.hpp
-app_h += $(app)/app_types.hpp
 
 app_c        := $(app)/app.cpp
 app_o        := $(build)/app.o
@@ -371,42 +394,49 @@ program_exe := $(build)/$(exe_name)
 GPP += -O3
 
 
-$(img_o): $(img_c) $(img_h) $(types_h)
+
+
+$(img_o): $(img_c) $(libimage_h) $(stb_include_h)
 	@echo "\n img"
 	$(GPP) -o $@ -c $<
 
 
-$(device_o): $(device_c) $(device_h) $(types_h)
+$(device_o): $(device_c) $(device_h) $(cuda_def_h)
 	@echo "\n device"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
 
-$(input_o): $(input_c) $(input_h) $(types_h)
+$(input_o): $(input_c) $(sdl_input_h) $(input_state_h)
 	@echo "\n input"
 	$(GPP) -o $@ -c $< $(SDL2)
 
 
-$(tiles_o): $(tiles_c) $(tiles_h) $(device_h) $(types_h) $(gpu_h)
+$(tiles_o): $(tiles_c) $(device_tile_h) $(gpu_include_h)
 	@echo "\n tiles"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
     
 
-$(gpu_update_o): $(gpu_update_c) $(gpu_h) $(device_h) $(types_h) $(tiles_h)
+$(gpu_update_o): $(gpu_update_c) $(gpu_include_h)
 	@echo "\n gpu_update"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
 
-$(gpu_draw_o): $(gpu_draw_c) $(gpu_h) $(device_h) $(types_h) $(tiles_h)
+$(gpu_init_o): $(gpu_init_c) $(gpu_include_h)
+	@echo "\n gpu_init"
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+
+
+$(gpu_draw_o): $(gpu_draw_c) $(gpu_include_h)
 	@echo "\n gpu_draw"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
 
-$(app_o): $(app_c) $(app_h) $(input_h) $(device_h) $(types_h) $(gpu_h)
+$(app_o): $(app_c) $(app_h) $(gpu_app_h) $(libimage_h)
 	@echo "\n app"
 	$(GPP) -o $@ -c $<
 
 
-$(main_o): $(main_c) $(app_h) $(input_h) $(stopwatch_h) $(types_h)
+$(main_o): $(main_c) $(app_h) $(sdl_input_h) $(stopwatch_h)
 	@echo "\n main"
 	$(GPP) -o $@ -c $< $(SDL2)
 

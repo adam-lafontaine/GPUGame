@@ -131,21 +131,27 @@ static void gpu_draw_entities(DrawEntityProps props, u32 n_threads)
         return;
     }
 
-    auto entity_id = (u32)t;
-    auto& entity = props.entities.data[entity_id];
+    auto entity_id = t;
+
+    auto& entity = props.entities.data[entity_id];    
+
+    if(!entity.is_active)
+    {
+        return;
+    }
 
     auto screen_width_px = props.screen_dst.width;
     auto screen_height_px = props.screen_dst.height;
     auto screen_width_m = props.screen_width_m;
     auto screen_height_m = screen_height_px * props.screen_width_m / screen_width_px;
 
-    auto entity_screen_pos_m = gpu::subtract(entity.position, props.screen_pos);
+    auto entity_screen_pos_m = gpu::sub_delta_m(entity.position, props.screen_pos);
 
-    auto entity_rect_m = gpu::get_entity_rect(entity, entity_screen_pos_m);
+    auto entity_rect_m = gpu::get_screen_rect(entity, entity_screen_pos_m);
 
     auto screen_rect_m = gpu::make_rect(screen_width_m, screen_height_m);
     
-    auto is_offscreen = !gpu::rect_intersect(entity_rect_m, screen_rect_m);    
+    auto is_offscreen = !gpu::rect_intersect(entity_rect_m, screen_rect_m);
 
     if(is_offscreen)
     {
@@ -154,7 +160,7 @@ static void gpu_draw_entities(DrawEntityProps props, u32 n_threads)
 
     gpu::clamp_rect(entity_rect_m, screen_rect_m);
 
-    auto entity_rect_px = gpu::to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);    
+    auto entity_rect_px = gpu::to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);
     
     for(u32 y = entity_rect_px.y_begin; y < entity_rect_px.y_end; ++y)
     {

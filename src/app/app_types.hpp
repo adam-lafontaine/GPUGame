@@ -19,8 +19,17 @@ public:
     Pixel color;
 
     WorldPosition position;
-    Vec2Dr32 direction;
+    Vec2Dr32 dt;
     r32 speed;
+
+    Vec2Dr32 delta_pos_m;
+
+    WorldPosition next_position;
+
+    bool is_active = false;
+
+    bool inv_x = false;
+    bool inv_y = false;
 };
 
 
@@ -31,9 +40,9 @@ class TileList
 {
 public:
     DeviceTile grass;
-    DeviceTile white;
-
-    u32 n_tiles = 2;
+    
+    DeviceTile brown;
+    DeviceTile black;
 };
 
 
@@ -42,7 +51,7 @@ class DeviceMemory
 public:
     DeviceBuffer buffer;
 
-    TileList tiles;
+    TileList tile_assets;
     
     DeviceTileMatrix tilemap;
     DeviceArray<Entity> entities;
@@ -76,7 +85,9 @@ public:
     r32 screen_width_m;
 
     WorldPosition screen_position;
-    Vec2Dr32 player_direction;
+    Vec2Dr32 player_dt;
+    
+    bool spawn_blue;
 };
 
 

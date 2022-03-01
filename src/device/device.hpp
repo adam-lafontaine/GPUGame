@@ -107,9 +107,11 @@ template <typename T>
 bool make_device_matrix(DeviceMatrix<T>& matrix, u32 width, u32 height, DeviceBuffer& buffer)
 {
     assert(buffer.data);
-    auto bytes = width * height * sizeof(T);
 
-    bool result = buffer.total_bytes - buffer.offset >= bytes;
+    auto n_elements = width * height;
+    auto bytes = n_elements * sizeof(T);
+    bool result = buffer.offset + bytes <= buffer.total_bytes;
+    
     if(result)
     {
         matrix.width = width;

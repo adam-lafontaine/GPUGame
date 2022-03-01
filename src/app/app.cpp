@@ -25,9 +25,38 @@ static void print(const char* msg)
 constexpr auto GRASS_TILE_PATH = "/home/adam/Repos/GPUGame/assets/tiles/basic_grass.png";
 
 
+constexpr size_t device_memory_sz()
+{
+    u32 n_world_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;  
+    auto tilemap_sz = n_world_tiles * sizeof(DeviceTile);
+
+    auto entity_sz = N_ENTITIES * sizeof(Entity);
+
+    auto tile_asset_sz = N_TILE_BITMAPS * (TILE_HEIGHT_PX * TILE_WIDTH_PX * sizeof(Pixel) + sizeof(Pixel));
+
+    return tilemap_sz + entity_sz + tile_asset_sz;
+}
+
+
+constexpr size_t unified_memory_sz(u32 screen_width_px, u32 screen_height_px)
+{
+    auto const n_pixels = screen_width_px * screen_height_px;
+
+    auto screen_sz = sizeof(pixel_t) * n_pixels;
+
+    return screen_sz;
+}
+
+
 constexpr r32 screen_height_m(r32 screen_width_m)
 {
     return screen_width_m * app::SCREEN_BUFFER_HEIGHT / app::SCREEN_BUFFER_WIDTH;
+}
+
+
+constexpr r32 px_to_m(r32 n_pixels, r32 width_m, u32 width_px)
+{
+    return n_pixels * width_m / width_px;
 }
 
 
@@ -38,10 +67,10 @@ static void init_state_props(StateProps& props)
 
     props.screen_width_m = MIN_SCREEN_WIDTH_M;    
 
-    props.screen_position.tile = { 10, 10 };
+    props.screen_position.tile = { 0, 0 };
     props.screen_position.offset_m = { 0.0f, 0.0f };
     
-    props.player_direction = { 0.0f, 0.0f };
+    props.player_dt = { 0.0f, 0.0f };
 }
 
 
@@ -52,7 +81,7 @@ static bool load_tile_assets(DeviceMemory& device)
     tile_img.width = TILE_WIDTH_PX;
     tile_img.height = TILE_HEIGHT_PX;
 
-    auto& tiles = device.tiles;
+    auto& tiles = device.tile_assets;
 
     if(!make_device_tile(tiles.grass, device.buffer))
     {
@@ -60,9 +89,15 @@ static bool load_tile_assets(DeviceMemory& device)
         return false;
     }
 
-    if(!make_device_tile(tiles.white, device.buffer))
+    if(!make_device_tile(tiles.brown, device.buffer))
     {
-        print("make white tile failed");
+        print("make brown tile failed");
+        return false;
+    }
+
+    if(!make_device_tile(tiles.black, device.buffer))
+    {
+        print("make black tile failed");
         return false;
     }
 
@@ -82,16 +117,30 @@ static bool load_tile_assets(DeviceMemory& device)
         return false;
     }
 
-    // temp make white
-    auto white = to_pixel(255, 255, 255);
+    // temp make brown
+    auto brown = to_pixel(150, 75, 0);
     for(u32 i = 0; i < tile_img.width * tile_img.height; ++i)
     {
-        tile_img.data[i] = white;
+        tile_img.data[i] = brown;
     }
 
-    if(!copy_to_device(tile_img, tiles.white))
+    if(!copy_to_device(tile_img, tiles.brown))
     {
-        print("copy white tile failed");
+        print("copy brown tile failed");
+        cleanup();
+        return false;
+    }
+
+    // temp make black
+    auto black = to_pixel(0, 0, 0);
+    for(u32 i = 0; i < tile_img.width * tile_img.height; ++i)
+    {
+        tile_img.data[i] = black;
+    }
+
+    if(!copy_to_device(tile_img, tiles.brown))
+    {
+        print("copy black tile failed");
         cleanup();
         return false;
     }
@@ -103,26 +152,19 @@ static bool load_tile_assets(DeviceMemory& device)
 
 static bool init_device_memory(DeviceMemory& device, u32 screen_width, u32 screen_height)
 {
-    u32 n_world_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;  
-    auto world_tile_sz = n_world_tiles * sizeof(DeviceTile);
+    if(!device_malloc(device.buffer, device_memory_sz()))
+    {
+        return false;
+    }
 
-    auto entity_sz = N_ENTITIES * sizeof(Entity);
+    // Note: order matters
 
-    auto tile_asset_sz = N_TILE_BITMAPS * (TILE_HEIGHT_PX * TILE_WIDTH_PX * sizeof(Pixel) + sizeof(Pixel));
-
-    auto required_sz = world_tile_sz + entity_sz + tile_asset_sz;
-
-    if(!device_malloc(device.buffer, required_sz))
+    if(!make_device_matrix(device.tilemap, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE, device.buffer))
     {
         return false;
     }
 
     if(!make_device_array(device.entities, N_ENTITIES, device.buffer))
-    {
-        return false;
-    }
-
-    if(!make_device_matrix(device.tilemap, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE, device.buffer))
     {
         return false;
     }
@@ -140,12 +182,7 @@ static bool init_device_memory(DeviceMemory& device, u32 screen_width, u32 scree
 
 static bool init_unified_memory(UnifiedMemory& unified, u32 screen_width, u32 screen_height)
 {
-    auto const n_pixels = screen_width * screen_height;
-
-    auto const screen_sz = sizeof(pixel_t) * n_pixels;
-
-    auto unified_sz = screen_sz;
-    if(!unified_malloc(unified.buffer, unified_sz))
+    if(!unified_malloc(unified.buffer, unified_memory_sz(screen_width, screen_height)))
     {
         return false;
     }
@@ -156,12 +193,6 @@ static bool init_unified_memory(UnifiedMemory& unified, u32 screen_width, u32 sc
     }
 
     return true;
-}
-
-
-constexpr r32 px_to_m(r32 n_pixels, r32 width_m, u32 width_px)
-{
-    return n_pixels * width_m / width_px;
 }
 
 
@@ -208,7 +239,12 @@ static void process_input(Input const& input, AppState& state)
     auto& controller = input.controllers[0];
     auto& keyboard = input.keyboard;
     auto& props = state.props;
-    auto& player_d = state.props.player_direction;
+    auto& player_dt = state.props.player_dt;
+
+    if(controller.button_b.pressed)
+    {
+        platform_signal_stop();
+    }
 
     auto dt = input.dt_frame;
 
@@ -268,40 +304,42 @@ static void process_input(Input const& input, AppState& state)
 
         camera_d_m.x += 0.5f * (old_w - new_w);
         camera_d_m.y += 0.5f * (old_h - new_h);
-    }
+    }    
 
-    auto dist_m = dt * 1.5f;
-    player_d = { 0.0f, 0.0f };
-
+    update_screen_position(props.screen_position, camera_d_m, props.screen_width_m);
+    
+    player_dt = { 0.0f, 0.0f };
     if(controller.dpad_up.is_down)
     {
-        player_d.y -= dist_m;
+        player_dt.y -= dt;
     }
     if(controller.dpad_down.is_down)
     {
-        player_d.y += dist_m;
+        player_dt.y += dt;
     }
     if(controller.dpad_left.is_down)
     {
-        player_d.x -= dist_m;
+        player_dt.x -= dt;
     }
     if(controller.dpad_right.is_down)
     {
-        player_d.x += dist_m;
+        player_dt.x += dt;
     }
 
-    if(player_d.x != 0.0f && player_d.y != 0.0f)
+    if(player_dt.x != 0.0f && player_dt.y != 0.0f)
     {
-        player_d.x *= 0.707107;
-        player_d.y *= 0.707107;
+        player_dt.x *= 0.707107f;
+        player_dt.y *= 0.707107f;
     }
 
-    if(controller.button_b.pressed)
+    if(controller.button_x.pressed)
     {
-        platform_signal_stop();
+        props.spawn_blue = true;
     }
-
-    update_screen_position(props.screen_position, camera_d_m, props.screen_width_m);
+    else
+    {
+        props.spawn_blue = false;
+    }
 }
 
 

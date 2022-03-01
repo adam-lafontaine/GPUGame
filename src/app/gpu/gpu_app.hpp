@@ -12,4 +12,3 @@ namespace gpu
 
     void render(AppState& state);
 }
-
