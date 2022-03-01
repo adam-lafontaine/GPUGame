@@ -84,7 +84,7 @@ static void init_entity(Entity& entity, u32 id)
 
     entity.next_position = entity.position;
 
-    entity.speed = 1.0f;    
+    entity.speed = 3.0f;    
 
     entity.delta_pos_m = { 0.0f, 0.0f };
 
