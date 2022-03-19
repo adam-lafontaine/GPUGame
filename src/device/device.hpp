@@ -164,6 +164,8 @@ public:
     u64 frame_begin;
     u64 frame_end;
     uInput input;
+
+    r32 est_dt_frame;
 };
 
 constexpr uInput INPUT_PLAYER_UP    = 1;

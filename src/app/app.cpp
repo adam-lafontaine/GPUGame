@@ -73,8 +73,6 @@ static void init_state_props(StateProps& props)
 
     props.screen_position.tile = { 0, 0 };
     props.screen_position.offset_m = { 0.0f, 0.0f };
-    
-    props.player_dt = { 0.0f, 0.0f };
 }
 
 
@@ -303,33 +301,6 @@ static void process_player_input(Input const& input, AppState& state)
     auto& input_records = state.unified.frame_inputs;
     //auto& keyboard = input.keyboard;
     auto& props = state.props;
-    auto& player_dt = state.props.player_dt;
-
-    auto dt = input.dt_frame;    
-
-    player_dt = { 0.0f, 0.0f };
-    if(controller.dpad_up.is_down)
-    {
-        player_dt.y -= dt;
-    }
-    if(controller.dpad_down.is_down)
-    {
-        player_dt.y += dt;
-    }
-    if(controller.dpad_left.is_down)
-    {
-        player_dt.x -= dt;
-    }
-    if(controller.dpad_right.is_down)
-    {
-        player_dt.x += dt;
-    }
-
-    if(player_dt.x != 0.0f && player_dt.y != 0.0f)
-    {
-        player_dt.x *= 0.707107f;
-        player_dt.y *= 0.707107f;
-    }
 
     uInput player_input = 0;
 
@@ -356,6 +327,8 @@ static void process_player_input(Input const& input, AppState& state)
         r.frame_begin = props.frame_count;
         r.frame_end = props.frame_count + 1;
         r.input = player_input;
+
+        r.est_dt_frame = input.dt_frame; // avg?
 
         add_input_record(input_records, r);
     };

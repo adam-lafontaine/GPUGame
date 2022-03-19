@@ -85,6 +85,62 @@ static bool entity_will_intersect(Entity const& lhs, Entity const& rhs)
 }
 
 
+GPU_FUNCTION
+static void move_player(Entity& entity, InputRecord const& input)
+{    
+    entity.dt = { 0.0f, 0.0f };
+
+    if(input.input & INPUT_PLAYER_UP)
+    {
+        entity.dt.y -= input.est_dt_frame;
+    }
+
+    if(input.input & INPUT_PLAYER_DOWN)
+    {
+        entity.dt.y += input.est_dt_frame;
+    }
+
+    if(input.input & INPUT_PLAYER_LEFT)
+    {
+        entity.dt.x -= input.est_dt_frame;
+    }
+
+    if(input.input & INPUT_PLAYER_RIGHT)
+    {
+        entity.dt.x += input.est_dt_frame;
+    }
+
+    if(entity.dt.x != 0.0f && entity.dt.y != 0.0f)
+    {
+        entity.dt.x *= 0.707107f;
+        entity.dt.y *= 0.707107f;
+    }
+}
+
+
+GPU_FUNCTION 
+void apply_current_input(Entity& entity, DeviceInputQueue const& inputs, u64 frame)
+{
+    entity.dt = { 0.0f, 0.0f };
+
+    if(inputs.size == 0)
+    {
+        return;
+    }
+
+    auto& last = inputs.data[inputs.size - 1];
+
+    auto is_last = last.frame_begin <= frame && frame < last.frame_end;
+
+    if(!is_last)
+    {
+        return;
+    }
+
+    move_player(entity, last);
+}
+
+
 /*************************/
 }
 
@@ -94,7 +150,9 @@ class MoveEntityProps
 public:
     DeviceArray<Entity> entities;
 
-    Vec2Dr32 player_dt;
+    u64 current_frame;    
+
+    DeviceInputQueue player_input;
 };
 
 
@@ -118,7 +176,7 @@ static void gpu_next_positions(MoveEntityProps props, u32 n_threads)
 
     if(gpu::is_player_entity(entity_id))
     {
-        entity.dt = props.player_dt;
+        gpu::apply_current_input(entity, props.player_input, props.current_frame);
     }
 
     entity.delta_pos_m = gpu::vec_mul(entity.dt, entity.speed);
@@ -133,7 +191,8 @@ static void next_positions(AppState& state)
 
     MoveEntityProps props{};
     props.entities = state.device.entities;
-    props.player_dt = state.props.player_dt;
+    props.player_input = state.unified.frame_inputs;
+    props.current_frame = state.props.frame_count;
 
     bool proc = cuda_no_errors();
     assert(proc);

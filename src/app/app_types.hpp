@@ -90,7 +90,6 @@ public:
     r32 screen_width_m;
 
     WorldPosition screen_position;
-    Vec2Dr32 player_dt;
     
     bool spawn_blue;
 };
