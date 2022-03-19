@@ -350,14 +350,11 @@ static void process_player_input(Input const& input, AppState& state)
         player_input |= INPUT_PLAYER_RIGHT;
     }
 
-    static u32 e_count = 0;
-    static u32 n_count = 0;
-
     auto const create_record = [&]()
     {
         InputRecord r{};
         r.frame_begin = props.frame_count;
-        r.frame_end = 0;
+        r.frame_end = props.frame_count + 1;
         r.input = player_input;
 
         add_input_record(input_records, r);
@@ -374,18 +371,32 @@ static void process_player_input(Input const& input, AppState& state)
     }
 
     auto& last = get_last_input_record(input_records);
-    
-    if(!last.frame_end && player_input != last.input)
+    auto current_frame = props.frame_count;
+
+    // repeat input
+    if(player_input && last.frame_end == current_frame && player_input == last.input)
     {
-        last.frame_end = props.frame_count;
+        ++last.frame_end;
     }
 
-    if(!player_input || player_input == last.input)
+    // change input
+    else if(player_input && last.frame_end == current_frame && player_input != last.input)
+    {
+        ++last.frame_end;
+        create_record();
+    }
+
+    // end input
+    else if(!player_input && last.frame_end == current_frame)
     {
         return;
     }
 
-    create_record();
+    // start input
+    else if(player_input)
+    {
+        create_record();
+    }    
 }
 
 
