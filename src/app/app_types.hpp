@@ -46,22 +46,6 @@ public:
 };
 
 
-using uInput = u8;
-
-class InputRecord
-{
-public:
-    u64 frame_begin;
-    u64 frame_end;
-    uInput input;
-};
-
-constexpr uInput INPUT_PLAYER_UP    = 1;
-constexpr uInput INPUT_PLAYER_DOWN  = 2;
-constexpr uInput INPUT_PLAYER_LEFT  = 4;
-constexpr uInput INPUT_PLAYER_RIGHT = 8;
-
-
 
 class DeviceMemory
 {
@@ -82,7 +66,7 @@ public:
 
     DeviceImage screen_pixels;
 
-    DeviceQueue<InputRecord> frame_inputs;
+    DeviceInputQueue frame_inputs;
 };
 
 

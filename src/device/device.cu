@@ -192,3 +192,52 @@ bool make_device_palette(DeviceColorPalette& palette, u32 n_colors, DeviceBuffer
 
     return result;
 }
+
+
+bool make_device_input_queue(DeviceInputQueue& queue, u32 n_elements, DeviceBuffer& buffer)
+{
+    assert(buffer.data);
+    auto bytes = sizeof(InputRecord) * n_elements;
+
+    bool result = buffer.total_bytes - buffer.offset >= bytes;
+    if(result)
+    {
+        queue.capacity = n_elements;
+        queue.size = 0;
+        queue.index = 0;
+
+        queue.data = (InputRecord*)(buffer.data + buffer.offset);
+        buffer.offset += bytes;
+    }
+
+    return result;
+}
+
+
+void add_input_record(DeviceInputQueue& queue, InputRecord& item)
+{
+    assert(queue.data);
+    assert(queue.size < queue.capacity);
+    assert(item.frame_begin);
+    assert(item.input);
+
+    queue.data[queue.size++] = item;
+}
+
+
+InputRecord& get_next_input_record(DeviceInputQueue& queue)
+{
+    assert(queue.data);
+    assert(queue.index < queue.size);
+
+    return queue.data[queue.index++];
+}
+
+
+InputRecord& get_last_input_record(DeviceInputQueue const& queue)
+{
+    assert(queue.data);
+    assert(queue.size);
+
+    return queue.data[queue.size - 1];
+}

@@ -156,56 +156,37 @@ bool copy_to_device(std::array< std::array<u8, N>, RGB_CHANNELS> const& src, Dev
 }
 
 
-template <typename T>
-class DeviceQueue
+using uInput = u8;
+
+class InputRecord
+{
+public:
+    u64 frame_begin;
+    u64 frame_end;
+    uInput input;
+};
+
+constexpr uInput INPUT_PLAYER_UP    = 1;
+constexpr uInput INPUT_PLAYER_DOWN  = 2;
+constexpr uInput INPUT_PLAYER_LEFT  = 4;
+constexpr uInput INPUT_PLAYER_RIGHT = 8;
+
+
+class DeviceInputQueue
 {
 public:
     u32 capacity;
     u32 size;
-
     u32 index;
 
-    T* data;    
+    InputRecord* data;
 };
 
 
-template <typename T>
-inline bool make_device_queue(DeviceQueue<T>& queue, u32 n_elements, DeviceBuffer& buffer)
-{
-    assert(buffer.data);
+bool make_device_input_queue(DeviceInputQueue& queue, u32 n_elements, DeviceBuffer& buffer);
 
-    auto bytes = n_elements * sizeof(T);
-    bool result = buffer.offset + bytes <= buffer.total_bytes;
+void add_input_record(DeviceInputQueue& queue, InputRecord& item);
 
-    if(result)
-    {
-        queue.capacity = n_elements;
-        queue.size = 0;
-        queue.index = 0;
-        queue.data = (T*)((u8*)buffer.data + buffer.offset);
-        buffer.offset += bytes;
-    }
+InputRecord& get_next_input_record(DeviceInputQueue& queue);
 
-    return result;
-}
-
-
-template <typename T>
-inline void push_back(DeviceQueue<T>& queue, T& item)
-{
-    assert(queue.data);
-    assert(queue.capacity);
-    assert(queue.size <= queue.capacity);
-
-    queue.data[queue.size++] = item;
-}
-
-
-template <typename T>
-inline T& get_next(DeviceQueue<T>& queue)
-{
-    assert(queue.data);
-    assert(queue.index < queue.size);
-
-    return queue.data[queue.index++];
-}
+InputRecord& get_last_input_record(DeviceInputQueue const& queue);

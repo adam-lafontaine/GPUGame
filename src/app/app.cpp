@@ -196,7 +196,7 @@ static bool init_unified_memory(UnifiedMemory& unified, u32 screen_width, u32 sc
         return false;
     }
 
-    if(!make_device_queue(unified.frame_inputs, MAX_INPUT_RECORDS, unified.buffer))
+    if(!make_device_input_queue(unified.frame_inputs, MAX_INPUT_RECORDS, unified.buffer))
     {
         return false;
     }
@@ -300,30 +300,12 @@ static void process_screen_input(Input const& input, AppState& state)
 static void process_player_input(Input const& input, AppState& state)
 {
     auto& controller = input.controllers[0];
-    auto& keyboard = input.keyboard;
+    auto& input_records = state.unified.frame_inputs;
+    //auto& keyboard = input.keyboard;
     auto& props = state.props;
     auto& player_dt = state.props.player_dt;
 
-    auto dt = input.dt_frame;
-
-    uInput player_input = 0;
-
-    if(controller.dpad_up.is_down)
-    {
-        player_input |= INPUT_PLAYER_UP;
-    }
-    if(controller.dpad_down.is_down)
-    {
-        player_input |= INPUT_PLAYER_DOWN;
-    }
-    if(controller.dpad_left.is_down)
-    {
-        player_input |= INPUT_PLAYER_LEFT;
-    }
-    if(controller.dpad_right.is_down)
-    {
-        player_input |= INPUT_PLAYER_RIGHT;
-    }
+    auto dt = input.dt_frame;    
 
     player_dt = { 0.0f, 0.0f };
     if(controller.dpad_up.is_down)
@@ -349,7 +331,61 @@ static void process_player_input(Input const& input, AppState& state)
         player_dt.y *= 0.707107f;
     }
 
+    uInput player_input = 0;
 
+    if(controller.dpad_up.is_down)
+    {
+        player_input |= INPUT_PLAYER_UP;
+    }
+    if(controller.dpad_down.is_down)
+    {
+        player_input |= INPUT_PLAYER_DOWN;
+    }
+    if(controller.dpad_left.is_down)
+    {
+        player_input |= INPUT_PLAYER_LEFT;
+    }
+    if(controller.dpad_right.is_down)
+    {
+        player_input |= INPUT_PLAYER_RIGHT;
+    }
+
+    static u32 e_count = 0;
+    static u32 n_count = 0;
+
+    auto const create_record = [&]()
+    {
+        InputRecord r{};
+        r.frame_begin = props.frame_count;
+        r.frame_end = 0;
+        r.input = player_input;
+
+        add_input_record(input_records, r);
+    };
+
+    if(!input_records.size)
+    {
+        if(player_input)
+        {
+            create_record();
+        }
+
+        return;
+    }
+
+    auto& last = get_last_input_record(input_records);
+    
+    if(!last.frame_end && player_input != last.input)
+    {
+        last.frame_end = props.frame_count;
+    }
+
+    if(!player_input || player_input == last.input)
+    {
+        return;
+    }
+
+    create_record();
 }
 
 
