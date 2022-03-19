@@ -46,6 +46,23 @@ public:
 };
 
 
+using uInput = u8;
+
+class InputRecord
+{
+public:
+    u64 frame_begin;
+    u64 frame_end;
+    uInput input;
+};
+
+constexpr uInput INPUT_PLAYER_UP    = 1;
+constexpr uInput INPUT_PLAYER_DOWN  = 2;
+constexpr uInput INPUT_PLAYER_LEFT  = 4;
+constexpr uInput INPUT_PLAYER_RIGHT = 8;
+
+
+
 class DeviceMemory
 {
 public:
@@ -64,6 +81,8 @@ public:
     DeviceBuffer buffer;
 
     DeviceImage screen_pixels;
+
+    DeviceQueue<InputRecord> frame_inputs;
 };
 
 
@@ -78,6 +97,8 @@ public:
 class StateProps
 {
 public:
+
+    u64 frame_count;
 
     u32 screen_width_px;
     u32 screen_height_px;

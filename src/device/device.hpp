@@ -154,3 +154,58 @@ bool copy_to_device(std::array< std::array<u8, N>, RGB_CHANNELS> const& src, Dev
 
     return true;
 }
+
+
+template <typename T>
+class DeviceQueue
+{
+public:
+    u32 capacity;
+    u32 size;
+
+    u32 index;
+
+    T* data;    
+};
+
+
+template <typename T>
+inline bool make_device_queue(DeviceQueue<T>& queue, u32 n_elements, DeviceBuffer& buffer)
+{
+    assert(buffer.data);
+
+    auto bytes = n_elements * sizeof(T);
+    bool result = buffer.offset + bytes <= buffer.total_bytes;
+
+    if(result)
+    {
+        queue.capacity = n_elements;
+        queue.size = 0;
+        queue.index = 0;
+        queue.data = (T*)((u8*)buffer.data + buffer.offset);
+        buffer.offset += bytes;
+    }
+
+    return result;
+}
+
+
+template <typename T>
+inline void push_back(DeviceQueue<T>& queue, T& item)
+{
+    assert(queue.data);
+    assert(queue.capacity);
+    assert(queue.size <= queue.capacity);
+
+    queue.data[queue.size++] = item;
+}
+
+
+template <typename T>
+inline T& get_next(DeviceQueue<T>& queue)
+{
+    assert(queue.data);
+    assert(queue.index < queue.size);
+
+    return queue.data[queue.index++];
+}

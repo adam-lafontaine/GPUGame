@@ -2,7 +2,7 @@
 
 #include "../input/input.hpp"
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 class SDLInput
 {

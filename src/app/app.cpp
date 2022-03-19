@@ -41,10 +41,12 @@ constexpr size_t device_memory_sz()
 constexpr size_t unified_memory_sz(u32 screen_width_px, u32 screen_height_px)
 {
     auto const n_pixels = screen_width_px * screen_height_px;
-
     auto screen_sz = sizeof(pixel_t) * n_pixels;
 
-    return screen_sz;
+    auto const n_records = MAX_INPUT_RECORDS;
+    auto input_record_sz = sizeof(InputRecord) * n_records;
+
+    return screen_sz + input_record_sz;
 }
 
 
@@ -62,6 +64,8 @@ constexpr r32 px_to_m(r32 n_pixels, r32 width_m, u32 width_px)
 
 static void init_state_props(StateProps& props)
 {
+    props.frame_count = 0;
+
     props.screen_width_px = app::SCREEN_BUFFER_WIDTH;
     props.screen_height_px = app::SCREEN_BUFFER_HEIGHT;
 
@@ -192,6 +196,11 @@ static bool init_unified_memory(UnifiedMemory& unified, u32 screen_width, u32 sc
         return false;
     }
 
+    if(!make_device_queue(unified.frame_inputs, MAX_INPUT_RECORDS, unified.buffer))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -218,33 +227,11 @@ static void apply_delta(WorldPosition& pos, Vec2Dr32 const& delta)
 }
 
 
-static WorldPosition add_delta(WorldPosition const& pos, Vec2Dr32 const& delta)
-{
-    WorldPosition added = pos;
-
-    apply_delta(added, delta);
-
-    return added;
-}
-
-
-static void update_screen_position(WorldPosition& screen_pos, Vec2Dr32 const& delta, r32 screen_width_m)
-{
-    apply_delta(screen_pos, delta);
-}
-
-
-static void process_input(Input const& input, AppState& state)
+static void process_screen_input(Input const& input, AppState& state)
 {
     auto& controller = input.controllers[0];
     auto& keyboard = input.keyboard;
     auto& props = state.props;
-    auto& player_dt = state.props.player_dt;
-
-    if(controller.button_b.pressed)
-    {
-        platform_signal_stop();
-    }
 
     auto dt = input.dt_frame;
 
@@ -292,7 +279,7 @@ static void process_input(Input const& input, AppState& state)
         camera_d_m.x += 0.5f * (old_w - new_w);
         camera_d_m.y += 0.5f * (old_h - new_h);
     }
-    if(props.screen_width_m < MAX_SCREEN_WIDTH_M && controller.stick_right_y.end < -0.5f)
+    else if(props.screen_width_m < MAX_SCREEN_WIDTH_M && controller.stick_right_y.end < -0.5f)
     {
         auto old_w = props.screen_width_m;
         auto old_h = screen_height_m(old_w);
@@ -304,10 +291,40 @@ static void process_input(Input const& input, AppState& state)
 
         camera_d_m.x += 0.5f * (old_w - new_w);
         camera_d_m.y += 0.5f * (old_h - new_h);
-    }    
+    } 
 
-    update_screen_position(props.screen_position, camera_d_m, props.screen_width_m);
-    
+    apply_delta(props.screen_position, camera_d_m);
+}
+
+
+static void process_player_input(Input const& input, AppState& state)
+{
+    auto& controller = input.controllers[0];
+    auto& keyboard = input.keyboard;
+    auto& props = state.props;
+    auto& player_dt = state.props.player_dt;
+
+    auto dt = input.dt_frame;
+
+    uInput player_input = 0;
+
+    if(controller.dpad_up.is_down)
+    {
+        player_input |= INPUT_PLAYER_UP;
+    }
+    if(controller.dpad_down.is_down)
+    {
+        player_input |= INPUT_PLAYER_DOWN;
+    }
+    if(controller.dpad_left.is_down)
+    {
+        player_input |= INPUT_PLAYER_LEFT;
+    }
+    if(controller.dpad_right.is_down)
+    {
+        player_input |= INPUT_PLAYER_RIGHT;
+    }
+
     player_dt = { 0.0f, 0.0f };
     if(controller.dpad_up.is_down)
     {
@@ -332,6 +349,24 @@ static void process_input(Input const& input, AppState& state)
         player_dt.y *= 0.707107f;
     }
 
+
+}
+
+
+static void process_input(Input const& input, AppState& state)
+{
+    process_screen_input(input, state);
+    process_player_input(input, state);
+
+    auto& controller = input.controllers[0];
+    auto& keyboard = input.keyboard;
+    auto& props = state.props;
+
+    if(controller.button_b.pressed)
+    {
+        platform_signal_stop();
+    }
+
     if(controller.button_x.pressed)
     {
         props.spawn_blue = true;
@@ -340,6 +375,12 @@ static void process_input(Input const& input, AppState& state)
     {
         props.spawn_blue = false;
     }
+}
+
+
+static void next_frame(AppState& state)
+{
+    ++state.props.frame_count;
 }
 
 
@@ -413,6 +454,8 @@ namespace app
 		}
 
 		auto& state = get_state(memory);
+        next_frame(state);
+
         process_input(input, state); 
 
         gpu::update(state);
