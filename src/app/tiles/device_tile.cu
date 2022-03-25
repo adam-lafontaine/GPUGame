@@ -26,7 +26,7 @@ static Pixel get_avg_color(image_t const& image)
     g /= div;
     b /= div;
 
-    return gpu::to_pixel((u8)r, (u8)g, (u8)b);
+    return to_pixel((u8)r, (u8)g, (u8)b);
 }
 
 

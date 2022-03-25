@@ -14,7 +14,7 @@ constexpr int calc_thread_blocks(u32 n_threads)
 }
 
 
-namespace gpu
+namespace gpuf
 {
 
     /***********************/
@@ -65,7 +65,7 @@ inline u32 m_to_px(r32 dist_m, r32 length_m, u32 length_px)
         px = 0.0f;
     }
 
-    return (u32)gpu::ceil_r32_to_i32(px);
+    return (u32)gpuf::ceil_r32_to_i32(px);
 }
 
 
@@ -86,13 +86,13 @@ GPU_FUNCTION
 inline void update_position(WorldPosition& pos, Vec2Dr32 const& delta)
 {
     r32 dist_m = pos.offset_m.x + delta.x;
-    i32 delta_tile = gpu::floor_r32_to_i32(dist_m / TILE_LENGTH_M);
+    i32 delta_tile = gpuf::floor_r32_to_i32(dist_m / TILE_LENGTH_M);
     
     pos.tile.x = pos.tile.x + delta_tile;
     pos.offset_m.x = dist_m - (r32)delta_tile * TILE_LENGTH_M;
 
     dist_m = pos.offset_m.y + delta.y;
-    delta_tile = gpu::floor_r32_to_i32(dist_m / TILE_LENGTH_M);
+    delta_tile = gpuf::floor_r32_to_i32(dist_m / TILE_LENGTH_M);
     
     pos.tile.y = pos.tile.y + delta_tile;
     pos.offset_m.y = dist_m - (r32)delta_tile * TILE_LENGTH_M;
@@ -104,7 +104,7 @@ inline WorldPosition add_delta(WorldPosition const& pos, Vec2Dr32 const& delta)
 {
     WorldPosition added = pos;
 
-    gpu::update_position(added, delta);
+    gpuf::update_position(added, delta);
 
     return added; 
 }
@@ -264,7 +264,7 @@ inline void clamp_rect(Rect2Dr32& rect, Rect2Dr32 const& boundary)
 GPU_FUNCTION
 inline Rect2Du32 to_pixel_rect(Rect2Dr32 const& rect_m, r32 length_m, u32 length_px)
 {
-    auto const to_px = [&](r32 m){ return gpu::m_to_px(m, length_m, length_px); };
+    auto const to_px = [&](r32 m){ return gpuf::m_to_px(m, length_m, length_px); };
 
     Rect2Du32 rect_px{};
     rect_px.x_begin = to_px(rect_m.x_begin);
@@ -319,7 +319,7 @@ inline bool is_brown_entity(u32 id)
 GPU_FUNCTION
 inline u32 get_blue_offset(u32 id)
 {
-    assert(gpu::is_blue_entity(id));
+    assert(gpuf::is_blue_entity(id));
 
     return id - BLUE_BEGIN;
 }
@@ -328,7 +328,7 @@ inline u32 get_blue_offset(u32 id)
 GPU_FUNCTION
 inline u32 get_brown_offset(u32 id)
 {
-    assert(gpu::is_brown_entity(id));
+    assert(gpuf::is_brown_entity(id));
 
     return id - BROWN_BEGIN;
 }
