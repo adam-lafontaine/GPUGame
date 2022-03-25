@@ -368,7 +368,7 @@ input_c      := $(sdl)/sdl_input.cpp
 input_o      := $(build)/input.o
 object_files += $(input_o)
 
-tiles_c := $(tiles)/device_tile.cu
+tiles_c := $(tiles)/device_tile.cpp
 tiles_o := $(build)/tiles.o
 object_files += $(tiles_o)
 
@@ -411,9 +411,9 @@ $(input_o): $(input_c) $(sdl_input_h) $(input_state_h)
 	$(GPP) -o $@ -c $< $(SDL2)
 
 
-$(tiles_o): $(tiles_c) $(device_tile_h) $(gpu_include_h)
+$(tiles_o): $(tiles_c) $(device_tile_h) $(gpu_app_h)
 	@echo "\n tiles"
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+	$(GPP) -o $@ -c $<
     
 
 $(gpu_update_o): $(gpu_update_c) $(gpu_include_h)

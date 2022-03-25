@@ -1,5 +1,5 @@
 #include "device_tile.hpp"
-#include "../gpu/gpu_include.cuh"
+#include "../gpu/gpu_app.hpp"
 
 
 static Pixel get_avg_color(image_t const& image)

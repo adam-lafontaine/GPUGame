@@ -17,7 +17,7 @@ constexpr int calc_thread_blocks(u32 n_threads)
 namespace gpuf
 {
 
-    /***********************/
+/***********************/
 
 GPU_CONSTEXPR_FUNCTION
 inline i32 floor_r32_to_i32(r32 value)
