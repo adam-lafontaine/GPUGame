@@ -183,12 +183,3 @@ public:
 
     InputRecord* data;
 };
-
-
-//bool make_device_input_list(DeviceInputList& list, u32 n_elements, DeviceBuffer& buffer);
-
-DeviceInputList* make_device_input_list(u32 n_elements, DeviceBuffer& buffer);
-
-void add_input_record(DeviceInputList& list, InputRecord& item);
-
-InputRecord& get_last_input_record(DeviceInputList const& list);

@@ -34,7 +34,10 @@ constexpr size_t device_memory_sz()
 
     auto tile_asset_sz = N_TILE_BITMAPS * (TILE_HEIGHT_PX * TILE_WIDTH_PX * sizeof(Pixel) + sizeof(Pixel));
 
-    return tilemap_sz + entity_sz + tile_asset_sz;
+    auto const n_records = MAX_INPUT_RECORDS;
+    auto input_record_sz = sizeof(InputRecord) * n_records + sizeof(DeviceInputList);
+
+    return tilemap_sz + entity_sz + tile_asset_sz + input_record_sz;
 }
 
 
@@ -47,6 +50,67 @@ constexpr size_t unified_memory_sz(u32 screen_width_px, u32 screen_height_px)
     auto input_record_sz = sizeof(InputRecord) * n_records + sizeof(DeviceInputList);
 
     return screen_sz + input_record_sz;
+}
+
+
+bool set_device_input_list(DeviceInputList*& list_ptr, DeviceBuffer& buffer)
+{
+    assert(buffer.data);
+
+    auto bytes = sizeof(DeviceInputList);
+    bool result = buffer.total_bytes - buffer.offset >= bytes;
+    if(result)
+    {
+        list_ptr = (DeviceInputList*)(buffer.data + buffer.offset);
+        buffer.offset += bytes;
+    }
+
+    return result;
+}
+
+
+bool make_unified_input_list(DeviceInputList*& list_ptr, DeviceBuffer& buffer)
+{
+    if(!set_device_input_list(list_ptr, buffer))
+    {
+        return false;
+    }
+
+    auto bytes = sizeof(InputRecord) * MAX_INPUT_RECORDS;
+    auto result = buffer.total_bytes - buffer.offset >= bytes;
+    if(result)
+    {
+        auto& list = *list_ptr;
+
+        list.data = (InputRecord*)(buffer.data + buffer.offset);
+        buffer.offset += bytes;
+
+        list.capacity = MAX_INPUT_RECORDS;
+        list.size = 0;
+        list.read_index = 0;
+    }
+
+    return result;
+}
+
+
+void add_input_record(DeviceInputList& list, InputRecord& item)
+{
+    assert(list.data);
+    assert(list.size < list.capacity);
+    assert(item.frame_begin);
+    assert(item.input);
+
+    list.data[list.size++] = item;
+}
+
+
+InputRecord& get_last_input_record(DeviceInputList const& list)
+{
+    assert(list.data);
+    assert(list.size);
+
+    return list.data[list.size - 1];
 }
 
 
@@ -175,6 +239,11 @@ static bool init_device_memory(DeviceMemory& device, u32 screen_width, u32 scree
     {
         return false;
     }
+    
+    if(!set_device_input_list(device.previous_inputs, device.buffer))
+    {
+        return false;
+    }    
 
     gpu::init_device_memory(device);
 
@@ -194,16 +263,10 @@ static bool init_unified_memory(UnifiedMemory& unified, u32 screen_width, u32 sc
         return false;
     }
 
-    unified.current_inputs = make_device_input_list(MAX_INPUT_RECORDS, unified.buffer);
-    if(!unified.current_inputs)
+    if(!make_unified_input_list(unified.current_inputs, unified.buffer))
     {
         return false;
     }
-    /*
-    if(!make_device_input_list(unified.current_inputs, MAX_INPUT_RECORDS, unified.buffer))
-    {
-        return false;
-    }*/
 
     return true;
 }

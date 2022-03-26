@@ -224,6 +224,35 @@ void gpu_init_entities(DeviceArray<Entity> entities, u32 n_threads)
 }
 
 
+GPU_KERNAL
+void gpu_init_input_records(DeviceInputList* input_lists, DeviceBuffer buffer, u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
+    }
+
+    auto list_id = t;
+    
+    auto bytes = sizeof(InputRecord) * MAX_INPUT_RECORDS;
+    auto result = buffer.total_bytes - buffer.offset >= bytes;
+    if(result)
+    {
+        auto& list = input_lists[list_id];
+
+        list.data = (InputRecord*)(buffer.data + buffer.offset);
+        buffer.offset += bytes;
+
+        list.capacity = MAX_INPUT_RECORDS;
+        list.size = 0;
+        list.read_index = 0;
+    }
+
+    assert(result);
+}
+
+
 namespace gpu
 {
     void init_device_memory(DeviceMemory const& device)
@@ -239,6 +268,12 @@ namespace gpu
 
         n_threads = device.entities.n_elements;
         gpu_init_entities<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(device.entities, n_threads);
+
+        proc &= cuda_launch_success();
+        assert(proc);
+        
+        n_threads = 1;
+        gpu_init_input_records<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(device.previous_inputs, device.buffer, n_threads);
 
         proc &= cuda_launch_success();
         assert(proc);

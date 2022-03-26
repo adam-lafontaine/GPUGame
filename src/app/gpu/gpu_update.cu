@@ -144,14 +144,25 @@ void apply_current_input(Entity& entity, DeviceInputList const& inputs, u64 fram
 GPU_FUNCTION
 void update_device_inputs(DeviceInputList const& src, DeviceInputList& dst)
 {
-    if(src.size == dst.size)
+    assert(src.data);
+    assert(dst.data);
+
+    if(src.size == 0 && dst.size == 0)
     {
         return;
     }
-
-    assert(src.size == dst.size + 1);
-
-    dst.data[dst.size++] = src.data[src.size - 1];
+    if(src.size == dst.size + 1)
+    {
+        dst.data[dst.size++] = src.data[src.size - 1];
+    }
+    else if(src.size == dst.size)
+    {
+        dst.data[dst.size - 1] = src.data[src.size - 1];
+    }
+    else
+    {
+        assert(false);
+    }    
 }
 
 
@@ -333,6 +344,8 @@ public:
     u64 current_frame;    
 
     DeviceInputList* player_inputs;
+
+    DeviceInputList* recorded_inputs;
 };
 
 
@@ -351,7 +364,7 @@ static void gpu_next_positions(MoveEntityProps props, u32 n_threads)
 
     if(gpuf::can_copy_input(entity_id))
     {
-
+        gpuf::update_device_inputs(*props.player_inputs, *props.recorded_inputs);
         return;
     }
 
@@ -380,6 +393,7 @@ static void next_positions(AppState& state)
     MoveEntityProps props{};
     props.entities = state.device.entities;
     props.player_inputs = state.unified.current_inputs;
+    props.recorded_inputs = state.device.previous_inputs;
     props.current_frame = state.props.frame_count;
 
     bool proc = cuda_no_errors();

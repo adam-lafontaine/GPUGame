@@ -57,7 +57,7 @@ public:
     DeviceTileMatrix tilemap;
     DeviceArray<Entity> entities;
 
-    //DeviceInputList previous_inputs;
+    DeviceInputList* previous_inputs;
 };
 
 
