@@ -194,7 +194,8 @@ bool make_device_palette(DeviceColorPalette& palette, u32 n_colors, DeviceBuffer
 }
 
 
-bool make_device_input_queue(DeviceInputQueue& queue, u32 n_elements, DeviceBuffer& buffer)
+/*
+bool make_device_input_list(DeviceInputList& list, u32 n_elements, DeviceBuffer& buffer)
 {
     assert(buffer.data);
     auto bytes = sizeof(InputRecord) * n_elements;
@@ -202,42 +203,68 @@ bool make_device_input_queue(DeviceInputQueue& queue, u32 n_elements, DeviceBuff
     bool result = buffer.total_bytes - buffer.offset >= bytes;
     if(result)
     {
-        queue.capacity = n_elements;
-        queue.size = 0;
-        queue.index = 0;
+        list.capacity = n_elements;
+        list.size = 0;
+        list.read_index = 0;
 
-        queue.data = (InputRecord*)(buffer.data + buffer.offset);
+        list.data = (InputRecord*)(buffer.data + buffer.offset);
         buffer.offset += bytes;
     }
 
     return result;
 }
+*/
 
 
-void add_input_record(DeviceInputQueue& queue, InputRecord& item)
+DeviceInputList* make_device_input_list(u32 n_elements, DeviceBuffer& buffer)
 {
-    assert(queue.data);
-    assert(queue.size < queue.capacity);
+    assert(buffer.data);
+
+    auto bytes = sizeof(DeviceInputList);
+    bool result = buffer.total_bytes - buffer.offset >= bytes;
+    if(!result)
+    {
+        return 0;
+    }
+
+    auto list_ptr = (DeviceInputList*)(buffer.data + buffer.offset);
+    buffer.offset += bytes;
+
+    bytes = sizeof(InputRecord) * n_elements;
+    result = buffer.total_bytes - buffer.offset >= bytes;
+    if(!result)
+    {
+        return 0;
+    }
+
+    auto& list = *list_ptr;
+
+    list.capacity = n_elements;
+    list.size = 0;
+    list.read_index = 0;
+
+    list.data = (InputRecord*)(buffer.data + buffer.offset);
+    buffer.offset += bytes;
+
+    return list_ptr;
+}
+
+
+void add_input_record(DeviceInputList& list, InputRecord& item)
+{
+    assert(list.data);
+    assert(list.size < list.capacity);
     assert(item.frame_begin);
     assert(item.input);
 
-    queue.data[queue.size++] = item;
+    list.data[list.size++] = item;
 }
 
 
-InputRecord& get_next_input_record(DeviceInputQueue& queue)
+InputRecord& get_last_input_record(DeviceInputList const& list)
 {
-    assert(queue.data);
-    assert(queue.index < queue.size);
+    assert(list.data);
+    assert(list.size);
 
-    return queue.data[queue.index++];
-}
-
-
-InputRecord& get_last_input_record(DeviceInputQueue const& queue)
-{
-    assert(queue.data);
-    assert(queue.size);
-
-    return queue.data[queue.size - 1];
+    return list.data[list.size - 1];
 }

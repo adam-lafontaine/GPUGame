@@ -187,14 +187,12 @@ static void gpu_draw_entities(DrawEntityProps props, u32 n_threads)
 
 static void draw_entities(AppState& state)
 {
-    auto& dst = state.unified.screen_pixels;
-
     auto n_threads = state.device.entities.n_elements;
 
 
     DrawEntityProps props{};
     props.entities = state.device.entities;
-    props.screen_dst = dst;
+    props.screen_dst = state.unified.screen_pixels;
     props.screen_pos = state.props.screen_position;
     props.screen_width_m = state.props.screen_width_m;
 

@@ -56,6 +56,8 @@ public:
     
     DeviceTileMatrix tilemap;
     DeviceArray<Entity> entities;
+
+    //DeviceInputList previous_inputs;
 };
 
 
@@ -66,7 +68,9 @@ public:
 
     DeviceImage screen_pixels;
 
-    DeviceInputQueue frame_inputs;
+    DeviceInputList* current_inputs;
+
+    
 };
 
 

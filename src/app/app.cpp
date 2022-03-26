@@ -44,7 +44,7 @@ constexpr size_t unified_memory_sz(u32 screen_width_px, u32 screen_height_px)
     auto screen_sz = sizeof(pixel_t) * n_pixels;
 
     auto const n_records = MAX_INPUT_RECORDS;
-    auto input_record_sz = sizeof(InputRecord) * n_records;
+    auto input_record_sz = sizeof(InputRecord) * n_records + sizeof(DeviceInputList);
 
     return screen_sz + input_record_sz;
 }
@@ -194,10 +194,16 @@ static bool init_unified_memory(UnifiedMemory& unified, u32 screen_width, u32 sc
         return false;
     }
 
-    if(!make_device_input_queue(unified.frame_inputs, MAX_INPUT_RECORDS, unified.buffer))
+    unified.current_inputs = make_device_input_list(MAX_INPUT_RECORDS, unified.buffer);
+    if(!unified.current_inputs)
     {
         return false;
     }
+    /*
+    if(!make_device_input_list(unified.current_inputs, MAX_INPUT_RECORDS, unified.buffer))
+    {
+        return false;
+    }*/
 
     return true;
 }
@@ -298,7 +304,7 @@ static void process_screen_input(Input const& input, AppState& state)
 static void process_player_input(Input const& input, AppState& state)
 {
     auto& controller = input.controllers[0];
-    auto& input_records = state.unified.frame_inputs;
+    auto& input_records = *state.unified.current_inputs;
     //auto& keyboard = input.keyboard;
     auto& props = state.props;
 

@@ -119,7 +119,7 @@ static void move_player(Entity& entity, InputRecord const& input)
 
 
 GPU_FUNCTION 
-void apply_current_input(Entity& entity, DeviceInputQueue const& inputs, u64 frame)
+void apply_current_input(Entity& entity, DeviceInputList const& inputs, u64 frame)
 {
     entity.dt = { 0.0f, 0.0f };
 
@@ -138,6 +138,20 @@ void apply_current_input(Entity& entity, DeviceInputQueue const& inputs, u64 fra
     }
 
     move_player(entity, last);
+}
+
+
+GPU_FUNCTION
+void update_device_inputs(DeviceInputList const& src, DeviceInputList& dst)
+{
+    if(src.size == dst.size)
+    {
+        return;
+    }
+
+    assert(src.size == dst.size + 1);
+
+    dst.data[dst.size++] = src.data[src.size - 1];
 }
 
 
@@ -301,6 +315,11 @@ static void player_blue(Entity const& player, Entity& blue)
 }
 
 
+GPU_FUNCTION
+static bool can_copy_input(u32 entity_id)
+{
+    return entity_id == gpuf::BROWN_BEGIN;
+}
 
 /*************************/
 }
@@ -313,7 +332,7 @@ public:
 
     u64 current_frame;    
 
-    DeviceInputQueue player_input;
+    DeviceInputList* player_inputs;
 };
 
 
@@ -326,7 +345,15 @@ static void gpu_next_positions(MoveEntityProps props, u32 n_threads)
         return;
     }
 
+    assert(n_threads == props.entities.n_elements);
+
     auto entity_id = (u32)t;
+
+    if(gpuf::can_copy_input(entity_id))
+    {
+
+        return;
+    }
 
     if(gpuf::is_brown_entity(entity_id))
     {
@@ -337,7 +364,7 @@ static void gpu_next_positions(MoveEntityProps props, u32 n_threads)
 
     if(gpuf::is_player_entity(entity_id))
     {
-        gpuf::apply_current_input(entity, props.player_input, props.current_frame);
+        gpuf::apply_current_input(entity, *props.player_inputs, props.current_frame);
     }
 
     entity.delta_pos_m = gpuf::vec_mul(entity.dt, entity.speed);
@@ -352,7 +379,7 @@ static void next_positions(AppState& state)
 
     MoveEntityProps props{};
     props.entities = state.device.entities;
-    props.player_input = state.unified.frame_inputs;
+    props.player_inputs = state.unified.current_inputs;
     props.current_frame = state.props.frame_count;
 
     bool proc = cuda_no_errors();

@@ -174,21 +174,21 @@ constexpr uInput INPUT_PLAYER_LEFT  = 4;
 constexpr uInput INPUT_PLAYER_RIGHT = 8;
 
 
-class DeviceInputQueue
+class DeviceInputList
 {
 public:
     u32 capacity;
     u32 size;
-    u32 index;
+    u32 read_index;
 
     InputRecord* data;
 };
 
 
-bool make_device_input_queue(DeviceInputQueue& queue, u32 n_elements, DeviceBuffer& buffer);
+//bool make_device_input_list(DeviceInputList& list, u32 n_elements, DeviceBuffer& buffer);
 
-void add_input_record(DeviceInputQueue& queue, InputRecord& item);
+DeviceInputList* make_device_input_list(u32 n_elements, DeviceBuffer& buffer);
 
-InputRecord& get_next_input_record(DeviceInputQueue& queue);
+void add_input_record(DeviceInputList& list, InputRecord& item);
 
-InputRecord& get_last_input_record(DeviceInputQueue const& queue);
+InputRecord& get_last_input_record(DeviceInputList const& list);
