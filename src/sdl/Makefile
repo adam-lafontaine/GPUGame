@@ -350,14 +350,19 @@ gpu_include_h += $(cuda_def_h)
 app_h := $(app)/app.hpp
 app_h += $(input_h)
 
+app_include_h := $(app)/app_include.hpp
+app_include_h += $(app_h)
+app_include_h += $(gpu_app_h)
+app_include_h += $(libimage_h)
+
 
 # main
-main_c        := $(sdl)/sdl_main.cpp
-main_o        := $(build)/main.o
-object_files  := $(main_o)
+main_c       := $(sdl)/sdl_main.cpp
+main_o       := $(build)/main.o
+object_files := $(main_o)
 
-img_c += $(stb)/stb_libimage.cpp
-img_o := $(build)/img.o
+img_c        := $(stb)/stb_libimage.cpp
+img_o        := $(build)/img.o
 object_files += $(img_o)
 
 device_c     := $(device)/device.cu
@@ -368,20 +373,20 @@ input_c      := $(sdl)/sdl_input.cpp
 input_o      := $(build)/input.o
 object_files += $(input_o)
 
-tiles_c := $(tiles)/device_tile.cpp
-tiles_o := $(build)/tiles.o
+tiles_c      := $(tiles)/device_tile.cpp
+tiles_o      := $(build)/tiles.o
 object_files += $(tiles_o)
 
-gpu_init_c := $(gpu)/gpu_init.cu
-gpu_init_o := $(build)/gpu_init.o
+gpu_init_c   := $(gpu)/gpu_init.cu
+gpu_init_o   := $(build)/gpu_init.o
 object_files += $(gpu_init_o)
 
 gpu_update_c := $(gpu)/gpu_update.cu
 gpu_update_o := $(build)/gpu_update.o
 object_files += $(gpu_update_o)
 
-gpu_draw_c := $(gpu)/gpu_draw.cu
-gpu_draw_o := $(build)/gpu_draw.o
+gpu_draw_c   := $(gpu)/gpu_draw.cu
+gpu_draw_o   := $(build)/gpu_draw.o
 object_files += $(gpu_draw_o)
 
 app_c        := $(app)/app.cpp
@@ -392,8 +397,6 @@ object_files += $(app_o)
 program_exe := $(build)/$(exe_name)
 
 GPP += -O3
-
-
 
 
 $(img_o): $(img_c) $(libimage_h) $(stb_include_h)
@@ -431,7 +434,7 @@ $(gpu_draw_o): $(gpu_draw_c) $(gpu_include_h)
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
 
-$(app_o): $(app_c) $(app_h) $(gpu_app_h) $(libimage_h)
+$(app_o): $(app_c) $(app_include_h) 
 	@echo "\n app"
 	$(GPP) -o $@ -c $<
 
