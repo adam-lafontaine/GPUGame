@@ -538,55 +538,7 @@ static void update_positions(AppState& state)
 }
 
 
-class SpawnEntityProps
-{
-public:
-    DeviceArray<Entity> entities;
 
-    bool spawn_blue;
-};
-
-
-GPU_KERNAL
-static void gpu_spawn_entities(SpawnEntityProps props, u32 n_threads)
-{
-    int t = blockDim.x * blockIdx.x + threadIdx.x;
-    if (t >= n_threads)
-    {
-        return;
-    }
-
-    auto entity_id = (u32)t;
-
-    if(!gpuf::is_blue_entity(entity_id))
-    {
-        return;
-    }
-
-    auto& entity = props.entities.data[entity_id];
-    if(props.spawn_blue && !entity.is_active)
-    {
-        entity.is_active = true;
-    }
-}
-
-
-static void spawn_entities(AppState& state)
-{
-    auto n_threads = state.device.entities.n_elements;
-
-    SpawnEntityProps props{};
-    props.entities = state.device.entities;
-    props.spawn_blue = state.props.spawn_blue;
-
-    bool proc = cuda_no_errors();
-    assert(proc);
-
-    gpu_spawn_entities<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
-
-    proc &= cuda_launch_success();
-    assert(proc);
-}
 
 
 namespace gpu
@@ -598,7 +550,5 @@ namespace gpu
         collisions(state);
 
         update_positions(state);
-
-        spawn_entities(state);
     }
 }

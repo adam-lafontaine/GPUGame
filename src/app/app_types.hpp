@@ -87,6 +87,7 @@ class StateProps
 public:
 
     u64 frame_count;
+    bool reset_frame_count;
 
     u32 screen_width_px;
     u32 screen_height_px;
@@ -94,8 +95,6 @@ public:
     r32 screen_width_m;
 
     WorldPosition screen_position;
-    
-    bool spawn_blue;
 };
 
 
