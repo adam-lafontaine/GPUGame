@@ -1,21 +1,35 @@
 #include "app_include.hpp"
 
 
-bool make_unified_input_list(DeviceInputList& list, DeviceBuffer& buffer)
+DeviceInputList* make_device_input_list(DeviceBuffer& buffer)
 {
-    auto bytes = sizeof(InputRecord) * MAX_INPUT_RECORDS;
+    auto data_bytes = sizeof(InputRecord) * MAX_INPUT_RECORDS;
+    auto class_bytes = sizeof(DeviceInputList);
+    auto bytes = data_bytes + class_bytes;
     auto result = buffer.total_bytes - buffer.offset >= bytes;
-    if(result)
+    if(!result)
     {
-        list.data = (InputRecord*)(buffer.data + buffer.offset);
-        buffer.offset += bytes;
-
-        list.capacity = MAX_INPUT_RECORDS;
-        list.size = 0;
-        list.read_index = 0;
+        return nullptr;
     }
 
-    return result;
+    DeviceInputList list;
+
+    list.data = (InputRecord*)(buffer.data + buffer.offset);
+    buffer.offset += data_bytes;
+
+    list.capacity = MAX_INPUT_RECORDS;
+    list.size = 0;
+    list.read_index = 0;
+
+    auto device_dst = (DeviceInputList*)(buffer.data + buffer.offset);
+    buffer.offset += class_bytes;
+
+    if(!cuda_memcpy_to_device(&list, device_dst, class_bytes))
+    {
+        return nullptr;
+    }
+
+    return device_dst;
 }
 
 
@@ -154,6 +168,14 @@ static bool init_device_memory(DeviceBuffer& buffer, DeviceMemory& device, u32 s
         return false;
     }
 
+    auto device_previous_inputs = make_device_input_list(buffer);
+    if(!device_previous_inputs)
+    {
+        return false;
+    }
+
+    device.previous_inputs = device_previous_inputs;
+
     gpu::init_device_memory(device, buffer);
 
     return true;
@@ -172,15 +194,13 @@ static bool init_unified_memory(DeviceBuffer& buffer, UnifiedMemory& unified, u3
         return false;
     }
 
-    if(!make_unified_input_list(unified.current_inputs, buffer))
+    auto unified_current_inputs = make_device_input_list(buffer);
+    if(!unified_current_inputs)
     {
         return false;
     }
 
-    if(!make_unified_input_list(unified.previous_inputs, buffer))
-    {
-        return false;
-    }
+    unified.current_inputs = unified_current_inputs;
 
     return true;
 }
@@ -281,7 +301,7 @@ static void process_screen_input(Input const& input, AppState& state)
 static void process_player_input(Input const& input, AppState& state)
 {
     auto& controller = input.controllers[0];
-    auto& input_records = state.unified->current_inputs;
+    auto& input_records = *state.unified.current_inputs;
     //auto& keyboard = input.keyboard;
     auto& props = state.props;
 
@@ -440,25 +460,12 @@ namespace app
 
         auto& state = get_initial_state(memory);
 
-        UnifiedMemory unified;
-
-        if(!init_unified_memory(state.unified_buffer, unified, screen.width, screen.height))
+        if(!init_unified_memory(state.unified_buffer, state.unified, screen.width, screen.height))
 		{
 			return false;
 		}        
 
-        screen.memory = unified.screen_pixels.data;
-
-        auto bytes = sizeof(UnifiedMemory);
-        auto result = state.unified_buffer.total_bytes - state.unified_buffer.offset >= bytes;
-        if(!result)
-        {
-            return false;
-        }
-
-        state.unified = (UnifiedMemory*)(state.unified_buffer.data + state.unified_buffer.offset);
-
-        cuda_memcpy_to_device(&unified, state.unified, sizeof(UnifiedMemory));
+        screen.memory = state.unified.screen_pixels.data;        
 
         if(!init_device_memory(state.device_buffer, state.device, screen.width, screen.height))
         {

@@ -96,7 +96,7 @@ static void gpu_draw_tiles(TileProps props, u32 n_threads)
 
 static void draw_tiles(AppState& state)
 {
-    auto& dst = state.unified->screen_pixels;
+    auto& dst = state.unified.screen_pixels;
 
     u32 width = dst.width;
     u32 height = dst.height;
@@ -125,8 +125,8 @@ class DrawEntityProps
 {
 public:
     DeviceArray<Entity> entities;
-
     DeviceImage screen_dst;
+    
     r32 screen_width_m;
 
     WorldPosition screen_pos;
@@ -151,8 +151,10 @@ static void gpu_draw_entities(DrawEntityProps props, u32 n_threads)
         return;
     }
 
-    auto screen_width_px = props.screen_dst.width;
-    auto screen_height_px = props.screen_dst.height;
+    auto& screen_dst = props.screen_dst;
+
+    auto screen_width_px = screen_dst.width;
+    auto screen_height_px = screen_dst.height;
     auto screen_width_m = props.screen_width_m;
     auto screen_height_m = screen_height_px * props.screen_width_m / screen_width_px;
 
@@ -175,7 +177,7 @@ static void gpu_draw_entities(DrawEntityProps props, u32 n_threads)
     
     for(u32 y = entity_rect_px.y_begin; y < entity_rect_px.y_end; ++y)
     {
-        auto row = props.screen_dst.data + y * screen_width_px;
+        auto row = screen_dst.data + y * screen_width_px;
         for(u32 x = entity_rect_px.x_begin; x < entity_rect_px.x_end; ++x)
         {
             row[x] = entity.color;
@@ -189,10 +191,9 @@ static void draw_entities(AppState& state)
 {
     auto n_threads = state.device.entities.n_elements;
 
-
     DrawEntityProps props{};
     props.entities = state.device.entities;
-    props.screen_dst = state.unified->screen_pixels;
+    props.screen_dst = state.unified.screen_pixels;
     props.screen_pos = state.props.screen_position;
     props.screen_width_m = state.props.screen_width_m;
 

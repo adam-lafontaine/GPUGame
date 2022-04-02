@@ -340,13 +340,15 @@ class MoveEntityProps
 {
 public:
     DeviceArray<Entity> entities;
+    DeviceInputList* player_inputs;
+    DeviceInputList* recorded_inputs;
 
     u64 current_frame;
 };
 
 
 GPU_KERNAL
-static void gpu_next_positions(MoveEntityProps props, UnifiedMemory* unified, u32 n_threads)
+static void gpu_next_positions(MoveEntityProps props, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -356,8 +358,8 @@ static void gpu_next_positions(MoveEntityProps props, UnifiedMemory* unified, u3
 
     assert(n_threads == props.entities.n_elements);
 
-    auto& player_inputs = unified->current_inputs;
-    auto& recorded_inputs = unified->previous_inputs;
+    auto& player_inputs = *props.player_inputs;
+    auto& recorded_inputs = *props.recorded_inputs;
 
     auto entity_id = (u32)t;
 
@@ -391,12 +393,14 @@ static void next_positions(AppState& state)
 
     MoveEntityProps props{};
     props.entities = state.device.entities;
+    props.player_inputs = state.unified.current_inputs;
+    props.recorded_inputs = state.device.previous_inputs;
     props.current_frame = state.props.frame_count;
 
     bool proc = cuda_no_errors();
     assert(proc);
 
-    gpu_next_positions<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, state.unified, n_threads);
+    gpu_next_positions<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
 
     proc &= cuda_launch_success();
     assert(proc);

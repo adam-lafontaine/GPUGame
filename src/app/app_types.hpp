@@ -56,7 +56,8 @@ public:
     DeviceTileMatrix tilemap;
     DeviceArray<Entity> entities;
 
-    //DeviceInputList* previous_inputs;
+    DeviceInputList* previous_inputs;
+
 };
 
 
@@ -65,9 +66,9 @@ class UnifiedMemory
 public:    
 
     DeviceImage screen_pixels;
-
-    DeviceInputList current_inputs;  
-    DeviceInputList previous_inputs;  
+    
+    DeviceInputList* current_inputs;
+    
 };
 
 
@@ -103,7 +104,7 @@ public:
     DeviceBuffer unified_buffer;
     
     DeviceMemory device;
-    UnifiedMemory* unified;
+    UnifiedMemory unified;
 
     HostMemory host;
 
