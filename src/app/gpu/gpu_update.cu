@@ -341,16 +341,12 @@ class MoveEntityProps
 public:
     DeviceArray<Entity> entities;
 
-    u64 current_frame;    
-
-    DeviceInputList* player_inputs;
-
-    DeviceInputList* recorded_inputs;
+    u64 current_frame;
 };
 
 
 GPU_KERNAL
-static void gpu_next_positions(MoveEntityProps props, u32 n_threads)
+static void gpu_next_positions(MoveEntityProps props, UnifiedMemory* unified, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -360,11 +356,14 @@ static void gpu_next_positions(MoveEntityProps props, u32 n_threads)
 
     assert(n_threads == props.entities.n_elements);
 
+    auto& player_inputs = unified->current_inputs;
+    auto& recorded_inputs = unified->previous_inputs;
+
     auto entity_id = (u32)t;
 
     if(gpuf::can_copy_input(entity_id))
     {
-        gpuf::update_device_inputs(*props.player_inputs, *props.recorded_inputs);
+        gpuf::update_device_inputs(player_inputs, recorded_inputs);
         return;
     }
 
@@ -377,7 +376,7 @@ static void gpu_next_positions(MoveEntityProps props, u32 n_threads)
 
     if(gpuf::is_player_entity(entity_id))
     {
-        gpuf::apply_current_input(entity, *props.player_inputs, props.current_frame);
+        gpuf::apply_current_input(entity, player_inputs, props.current_frame);
     }
 
     entity.delta_pos_m = gpuf::vec_mul(entity.dt, entity.speed);
@@ -392,14 +391,12 @@ static void next_positions(AppState& state)
 
     MoveEntityProps props{};
     props.entities = state.device.entities;
-    props.player_inputs = state.unified.current_inputs;
-    props.recorded_inputs = state.device.previous_inputs;
     props.current_frame = state.props.frame_count;
 
     bool proc = cuda_no_errors();
     assert(proc);
 
-    gpu_next_positions<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
+    gpu_next_positions<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, state.unified, n_threads);
 
     proc &= cuda_launch_success();
     assert(proc);

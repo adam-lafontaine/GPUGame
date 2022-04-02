@@ -6,7 +6,7 @@
 
 namespace gpu
 {
-    void init_device_memory(DeviceMemory const& device);
+    void init_device_memory(DeviceMemory const& device, DeviceBuffer const& not_buffer);
 
     void update(AppState& state);
 

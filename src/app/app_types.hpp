@@ -49,28 +49,25 @@ public:
 
 class DeviceMemory
 {
-public:
-    DeviceBuffer buffer;
+public:    
 
     TileList tile_assets;
     
     DeviceTileMatrix tilemap;
     DeviceArray<Entity> entities;
 
-    DeviceInputList* previous_inputs;
+    //DeviceInputList* previous_inputs;
 };
 
 
 class UnifiedMemory
 {
-public:
-    DeviceBuffer buffer;
+public:    
 
     DeviceImage screen_pixels;
 
-    DeviceInputList* current_inputs;
-
-    
+    DeviceInputList current_inputs;  
+    DeviceInputList previous_inputs;  
 };
 
 
@@ -82,7 +79,7 @@ public:
 };
 
 
-class StateProps
+class StateProps // TODO: move to unified memory
 {
 public:
 
@@ -101,9 +98,12 @@ public:
 class AppState
 {
 public:
+
+    DeviceBuffer device_buffer;
+    DeviceBuffer unified_buffer;
     
     DeviceMemory device;
-    UnifiedMemory unified;
+    UnifiedMemory* unified;
 
     HostMemory host;
 

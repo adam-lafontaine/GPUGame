@@ -56,10 +56,15 @@ constexpr size_t device_memory_sz()
 constexpr size_t unified_memory_sz(u32 screen_width_px, u32 screen_height_px)
 {
     auto const n_pixels = screen_width_px * screen_height_px;
-    auto screen_sz = sizeof(pixel_t) * n_pixels;
+    auto screen_pixels_data_sz = sizeof(pixel_t) * n_pixels;
+
+    auto screen_pixels_sz = screen_pixels_data_sz + sizeof(DeviceImage);
 
     auto const n_records = MAX_INPUT_RECORDS;
-    auto input_record_sz = sizeof(InputRecord) * n_records + sizeof(DeviceInputList);
+    auto current_inputs_data_sz = sizeof(InputRecord) * n_records;
 
-    return screen_sz + input_record_sz;
+    auto current_inputs_sz = current_inputs_data_sz + sizeof(DeviceInputList);
+    auto previous_inputs_sz = current_inputs_data_sz;
+
+    return screen_pixels_sz + current_inputs_sz + previous_inputs_sz + sizeof(UnifiedMemory);
 }
