@@ -37,6 +37,15 @@ constexpr r32 px_to_m(r32 n_pixels, r32 width_m, u32 width_px)
 }
 
 
+constexpr size_t host_memory_sz()
+{
+    // HostImage screen_pixels;
+    auto screen_pixels_data_sz = app::SCREEN_BUFFER_WIDTH * app::SCREEN_BUFFER_HEIGHT * sizeof(Pixel);
+
+    return screen_pixels_data_sz;
+}
+
+
 constexpr size_t device_memory_sz()
 {
     // TileList tile_assets;
@@ -53,25 +62,26 @@ constexpr size_t device_memory_sz()
     auto entities_data_sz = N_ENTITIES * sizeof(Entity);
     auto entities_sz = entities_data_sz;
 
+    // DeviceImage screen_pixels;
+    auto const n_pixels = app::SCREEN_BUFFER_WIDTH * app::SCREEN_BUFFER_HEIGHT;
+    auto screen_pixels_data_sz = sizeof(pixel_t) * n_pixels;
+    auto screen_pixels_sz = screen_pixels_data_sz;
+
     // DeviceInputList* previous_inputs;
     auto const n_records = MAX_INPUT_RECORDS;
     auto previous_inputs_data_sz = sizeof(InputRecord) * n_records;
     auto previous_inputs_sz = previous_inputs_data_sz + sizeof(DeviceInputList);
     
-    return tile_assets_sz + tilemap_sz + entities_sz + previous_inputs_sz;
+    return tile_assets_sz + tilemap_sz + entities_sz + screen_pixels_sz + previous_inputs_sz;
 }
 
 
-constexpr size_t unified_memory_sz(u32 screen_width_px, u32 screen_height_px)
+constexpr size_t unified_memory_sz()
 {
-    // DeviceImage screen_pixels;
-    auto const n_pixels = screen_width_px * screen_height_px;
-    auto screen_pixels_data_sz = sizeof(pixel_t) * n_pixels;
-    auto screen_pixels_sz = screen_pixels_data_sz;
-
+    // DeviceInputList* current_inputs;
     auto const n_records = MAX_INPUT_RECORDS;
     auto current_inputs_data_sz = sizeof(InputRecord) * n_records;
     auto current_inputs_sz = current_inputs_data_sz + sizeof(DeviceInputList);
 
-    return screen_pixels_sz + current_inputs_sz;
+    return current_inputs_sz;
 }

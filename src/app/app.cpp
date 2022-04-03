@@ -144,7 +144,7 @@ static bool load_tile_assets(DeviceBuffer& buffer, DeviceMemory& device)
 }
 
 
-static bool init_device_memory(DeviceBuffer& buffer, DeviceMemory& device, u32 screen_width, u32 screen_height)
+static bool init_device_memory(DeviceBuffer& buffer, DeviceMemory& device)
 {
     if(!device_malloc(buffer, device_memory_sz()))
     {
@@ -168,6 +168,11 @@ static bool init_device_memory(DeviceBuffer& buffer, DeviceMemory& device, u32 s
         return false;
     }
 
+    if(!make_device_image(device.screen_pixels, app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT, buffer))
+    {
+        return false;
+    }
+
     auto device_previous_inputs = make_device_input_list(buffer);
     if(!device_previous_inputs)
     {
@@ -182,14 +187,9 @@ static bool init_device_memory(DeviceBuffer& buffer, DeviceMemory& device, u32 s
 }
 
 
-static bool init_unified_memory(DeviceBuffer& buffer, UnifiedMemory& unified, u32 screen_width, u32 screen_height)
+static bool init_unified_memory(DeviceBuffer& buffer, UnifiedMemory& unified)
 {
-    if(!unified_malloc(buffer, unified_memory_sz(screen_width, screen_height)))
-    {
-        return false;
-    }
-
-    if(!make_device_image(unified.screen_pixels, screen_width, screen_height, buffer))
+    if(!unified_malloc(buffer, unified_memory_sz()))
     {
         return false;
     }
@@ -429,24 +429,24 @@ namespace app
     static AppState& get_initial_state(AppMemory& memory)
     {
         auto state_sz = sizeof(AppState);
-        
-        u32 n_elements = 128; // just because
-        auto elements_sz = n_elements * sizeof(u32);
 
-        auto required_sz = state_sz + elements_sz;
+        auto required_sz = state_sz + host_memory_sz();
 
         assert(required_sz <= memory.permanent_storage_size);
 
         auto& state = get_state(memory);
-
-        auto mem = (u8*)memory.permanent_storage + state_sz;
-
-        state.host.elements = (u32*)mem;
-        state.host.n_elements = n_elements;
-
-        mem += elements_sz;
-
         init_state_props(state.props);
+
+        auto mem = (u8*)memory.permanent_storage;
+        auto offset = state_sz;
+
+        auto& screen = state.host.screen_pixels;
+
+        screen.width = state.props.screen_width_px; // needed?
+        screen.height = state.props.screen_height_px;        
+        screen.data = (Pixel*)(mem + offset);
+        
+        offset += screen.width * screen.height * sizeof(Pixel);
 
         return state;
     }
@@ -460,17 +460,17 @@ namespace app
 
         auto& state = get_initial_state(memory);
 
-        if(!init_unified_memory(state.unified_buffer, state.unified, screen.width, screen.height))
+        if(!init_unified_memory(state.unified_buffer, state.unified))
 		{
 			return false;
-		}        
+		}
 
-        screen.memory = state.unified.screen_pixels.data;        
-
-        if(!init_device_memory(state.device_buffer, state.device, screen.width, screen.height))
+        if(!init_device_memory(state.device_buffer, state.device))
         {
             return false;
-        }
+        }      
+
+        screen.memory = state.host.screen_pixels.data;    
 
         memory.is_app_initialized = true;
         return true;
@@ -490,7 +490,7 @@ namespace app
         process_input(input, state); 
 
         gpu::update(state);
-        gpu::render(state);
+        gpu::render(state);        
     }
 
 	

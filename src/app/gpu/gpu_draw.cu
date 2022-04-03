@@ -96,7 +96,7 @@ static void gpu_draw_tiles(TileProps props, u32 n_threads)
 
 static void draw_tiles(AppState& state)
 {
-    auto& dst = state.unified.screen_pixels;
+    auto& dst = state.device.screen_pixels;
 
     u32 width = dst.width;
     u32 height = dst.height;
@@ -193,7 +193,7 @@ static void draw_entities(AppState& state)
 
     DrawEntityProps props{};
     props.entities = state.device.entities;
-    props.screen_dst = state.unified.screen_pixels;
+    props.screen_dst = state.device.screen_pixels;
     props.screen_pos = state.props.screen_position;
     props.screen_width_m = state.props.screen_width_m;
 
@@ -213,5 +213,8 @@ namespace gpu
     {
         draw_tiles(state);
         draw_entities(state);
+
+        auto const screen_bytes = state.props.screen_width_px * state.props.screen_height_px * sizeof(Pixel);
+        cuda_memcpy_to_host(state.device.screen_pixels.data, state.host.screen_pixels.data, screen_bytes);
     }
 }
