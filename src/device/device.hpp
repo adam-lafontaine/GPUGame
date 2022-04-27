@@ -12,24 +12,9 @@ bool cuda_memcpy_to_device(const void* host_src, void* device_dst, size_t n_byte
 bool cuda_memcpy_to_host(const void* device_src, void* host_dst, size_t n_bytes);
 
 
-bool cuda_no_errors();
+bool cuda_no_errors(cstr label);
 
-bool cuda_launch_success();
-
-
-class DeviceBuffer
-{
-public:
-    u8* data = nullptr;
-    u32 total_bytes = 0;
-    u32 offset = 0;
-};
-
-bool device_malloc(DeviceBuffer& buffer, size_t n_bytes);
-
-bool unified_malloc(DeviceBuffer& buffer, size_t n_bytes);
-
-bool device_free(DeviceBuffer& buffer);
+bool cuda_launch_success(cstr label);
 
 
 template <typename T>
@@ -39,25 +24,6 @@ public:
     T* data = nullptr;
     u32 n_elements = 0;
 };
-
-
-template <typename T>
-bool make_device_array(DeviceArray<T>& arr, u32 n_elements, DeviceBuffer& buffer)
-{
-    assert(buffer.data);
-
-    auto bytes = n_elements * sizeof(T);
-    bool result = buffer.offset + bytes <= buffer.total_bytes;
-
-    if(result)
-    {
-        arr.n_elements = n_elements;
-        arr.data = (T*)((u8*)buffer.data + buffer.offset);
-        buffer.offset += bytes;
-    }
-
-    return result;
-}
 
 
 template <class T, size_t N>
@@ -84,9 +50,6 @@ public:
 };
 
 
-
-bool make_device_image(DeviceImage& image, u32 width, u32 height, DeviceBuffer& buffer);
-
 bool copy_to_device(image_t const& src, DeviceImage const& dst);
 
 bool copy_to_host(DeviceImage const& src, image_t const& dst);
@@ -103,27 +66,6 @@ public:
 };
 
 
-template <typename T>
-bool make_device_matrix(DeviceMatrix<T>& matrix, u32 width, u32 height, DeviceBuffer& buffer)
-{
-    assert(buffer.data);
-
-    auto n_elements = width * height;
-    auto bytes = n_elements * sizeof(T);
-    bool result = buffer.offset + bytes <= buffer.total_bytes;
-    
-    if(result)
-    {
-        matrix.width = width;
-        matrix.height = height;
-        matrix.data = (T*)((u8*)buffer.data + buffer.offset);
-        buffer.offset += bytes;
-    }
-
-    return result;
-}
-
-
 class DeviceColorPalette
 {
 public:
@@ -131,9 +73,6 @@ public:
 
     u32 n_colors = 0;
 };
-
-
-bool make_device_palette(DeviceColorPalette& palette, u32 n_colors, DeviceBuffer& buffer);
 
 
 template <size_t N>
@@ -183,3 +122,69 @@ public:
 
     InputRecord* data;
 };
+
+
+namespace device
+{
+    using u8 = uint8_t;
+
+    class MemoryBuffer
+    {
+    public:
+        u8* data = nullptr;
+        size_t capacity = 0;
+        size_t size = 0;
+    };
+
+
+    bool malloc(MemoryBuffer& buffer, size_t n_bytes);
+
+    bool unified_malloc(MemoryBuffer& buffer, size_t n_bytes);
+
+    bool free(MemoryBuffer& buffer);
+
+    u8* push_bytes(MemoryBuffer& buffer, size_t n_bytes);
+
+    bool pop_bytes(MemoryBuffer& buffer, size_t n_bytes);
+
+    bool push_device_image(MemoryBuffer& buffer, DeviceImage& image, u32 width, u32 height);
+
+    bool push_device_palette(MemoryBuffer& buffer, DeviceColorPalette& palette, u32 n_colors);
+
+
+    template <typename T>
+    inline bool push_device_array(MemoryBuffer& buffer, DeviceArray<T>& arr, u32 n_elements)
+    {
+        auto data = push_bytes(buffer, n_elements * sizeof(T));
+
+        if(data)
+        {
+            arr.n_elements = n_elements;
+            arr.data = (T*)data;
+
+            return true;
+        }
+
+        return false;
+    }
+
+
+    template <typename T>
+    inline bool push_device_matrix(MemoryBuffer& buffer, DeviceMatrix<T>& matrix, u32 width, u32 height)
+    {
+        auto n_bytes = sizeof(T) * width * height;
+        auto data = push_bytes(buffer, n_bytes);
+
+        if(data)
+        {
+            matrix.width = width;
+            matrix.height = height;
+            matrix.data = (T*)data;
+
+            return true;
+        }
+
+        return false;
+    }
+
+}

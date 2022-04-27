@@ -103,8 +103,8 @@ class AppState
 {
 public:
 
-    DeviceBuffer device_buffer;
-    DeviceBuffer unified_buffer;
+    device::MemoryBuffer device_buffer;
+    device::MemoryBuffer unified_buffer;
     
     DeviceMemory device;
     UnifiedMemory unified;

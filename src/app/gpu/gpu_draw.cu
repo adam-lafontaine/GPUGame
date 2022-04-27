@@ -111,12 +111,12 @@ static void draw_tiles(AppState& state)
     props.screen_width_m = state.props.screen_width_m;
     props.screen_pos = state.props.screen_position;
 
-    bool proc = cuda_no_errors();
+    bool proc = cuda_no_errors("draw_tiles");
     assert(proc);
 
     gpu_draw_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
 
-    proc &= cuda_launch_success();
+    proc &= cuda_launch_success("gpu_draw_tiles");
     assert(proc);
 }
 
@@ -197,12 +197,12 @@ static void draw_entities(AppState& state)
     props.screen_pos = state.props.screen_position;
     props.screen_width_m = state.props.screen_width_m;
 
-    bool proc = cuda_no_errors();
+    bool proc = cuda_no_errors("draw_entities");
     assert(proc);
 
     gpu_draw_entities<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
 
-    proc &= cuda_launch_success();
+    proc &= cuda_launch_success("gpu_draw_entities");
     assert(proc);
 }
 

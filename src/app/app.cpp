@@ -1,28 +1,31 @@
 #include "app_include.hpp"
 
 
-DeviceInputList* make_device_input_list(DeviceBuffer& buffer)
+DeviceInputList* make_device_input_list(device::MemoryBuffer& buffer)
 {
     auto data_bytes = sizeof(InputRecord) * MAX_INPUT_RECORDS;
     auto class_bytes = sizeof(DeviceInputList);
-    auto bytes = data_bytes + class_bytes;
-    auto result = buffer.total_bytes - buffer.offset >= bytes;
-    if(!result)
+    
+    auto input_record_data = device::push_bytes(buffer, data_bytes);
+    if(!input_record_data)
     {
         return nullptr;
     }
 
+    auto class_data = device::push_bytes(buffer, class_bytes);
+    if(!class_data)
+    {
+        device::pop_bytes(buffer, data_bytes);
+        return nullptr;
+    }
+
     DeviceInputList list;
-
-    list.data = (InputRecord*)(buffer.data + buffer.offset);
-    buffer.offset += data_bytes;
-
     list.capacity = MAX_INPUT_RECORDS;
     list.size = 0;
     list.read_index = 0;
+    list.data = (InputRecord*)input_record_data;    
 
-    auto device_dst = (DeviceInputList*)(buffer.data + buffer.offset);
-    buffer.offset += class_bytes;
+    auto device_dst = (DeviceInputList*)class_data;
 
     if(!cuda_memcpy_to_device(&list, device_dst, class_bytes))
     {
@@ -68,7 +71,7 @@ static void init_state_props(StateProps& props)
 }
 
 
-static bool load_tile_assets(DeviceBuffer& buffer, DeviceMemory& device)
+static bool load_tile_assets(device::MemoryBuffer& buffer, DeviceMemory& device)
 {    
     Image read_img;
     Image tile_img{};
@@ -77,19 +80,19 @@ static bool load_tile_assets(DeviceBuffer& buffer, DeviceMemory& device)
 
     auto& tiles = device.tile_assets;
 
-    if(!make_device_tile(tiles.grass, buffer))
+    if(!device::push_device_tile(buffer, tiles.grass))
     {
         print("make grass tile failed");
         return false;
     }
-
-    if(!make_device_tile(tiles.brown, buffer))
+    
+    if(!device::push_device_tile(buffer, tiles.brown))
     {
         print("make brown tile failed");
         return false;
     }
 
-    if(!make_device_tile(tiles.black, buffer))
+    if(!device::push_device_tile(buffer, tiles.black))
     {
         print("make black tile failed");
         return false;
@@ -144,21 +147,21 @@ static bool load_tile_assets(DeviceBuffer& buffer, DeviceMemory& device)
 }
 
 
-static bool init_device_memory(DeviceBuffer& buffer, DeviceMemory& device)
+static bool init_device_memory(device::MemoryBuffer& buffer, DeviceMemory& device)
 {
-    if(!device_malloc(buffer, device_memory_sz()))
+    if(!device::malloc(buffer, device_memory_sz()))
     {
         return false;
     }
 
     // Note: order matters
 
-    if(!make_device_matrix(device.tilemap, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE, buffer))
+    if(!device::push_device_matrix(buffer, device.tilemap, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE))
     {
         return false;
     }
 
-    if(!make_device_array(device.entities, N_ENTITIES, buffer))
+    if(!device::push_device_array(buffer, device.entities, N_ENTITIES))
     {
         return false;
     }
@@ -168,7 +171,7 @@ static bool init_device_memory(DeviceBuffer& buffer, DeviceMemory& device)
         return false;
     }
 
-    if(!make_device_image(device.screen_pixels, app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT, buffer))
+    if(!device::push_device_image(buffer, device.screen_pixels, app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT))
     {
         return false;
     }
@@ -181,15 +184,15 @@ static bool init_device_memory(DeviceBuffer& buffer, DeviceMemory& device)
 
     device.previous_inputs = device_previous_inputs;
 
-    gpu::init_device_memory(device, buffer);
+    gpu::init_device_memory(device);
 
     return true;
 }
 
 
-static bool init_unified_memory(DeviceBuffer& buffer, UnifiedMemory& unified)
+static bool init_unified_memory(device::MemoryBuffer& buffer, UnifiedMemory& unified)
 {
-    if(!unified_malloc(buffer, unified_memory_sz()))
+    if(!device::unified_malloc(buffer, unified_memory_sz()))
     {
         return false;
     }
@@ -498,7 +501,7 @@ namespace app
     {
         auto& state = get_state(memory);
 
-        device_free(state.device_buffer);
-		device_free(state.unified_buffer);
+        device::free(state.device_buffer);
+		device::free(state.unified_buffer);
     }
 }

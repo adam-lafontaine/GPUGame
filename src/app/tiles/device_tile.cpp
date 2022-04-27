@@ -30,32 +30,6 @@ static Pixel get_avg_color(image_t const& image)
 }
 
 
-bool make_device_tile(DeviceTile& tile, DeviceBuffer& buffer)
-{
-    assert(buffer.data);
-
-    auto width = TILE_WIDTH_PX;
-    auto height = TILE_HEIGHT_PX;
-
-    auto bitmap_data_sz = width * height * sizeof(pixel_t);
-    auto avg_color_sz = sizeof(pixel_t);
-
-    auto bytes = bitmap_data_sz + avg_color_sz;
-
-    bool result = buffer.total_bytes - buffer.offset >= bytes;
-    if(result)
-    {
-        tile.bitmap_data = (pixel_t*)(buffer.data + buffer.offset);
-        buffer.offset += bitmap_data_sz;
-
-        tile.avg_color = (pixel_t*)(buffer.data + buffer.offset);
-        buffer.offset += avg_color_sz;
-    }
-
-    return result;
-}
-
-
 bool copy_to_device(image_t const& src, DeviceTile const& dst)
 {
     assert(src.data);
@@ -78,4 +52,35 @@ bool copy_to_device(image_t const& src, DeviceTile const& dst)
     bytes = sizeof(pixel_t);
 
     return cuda_memcpy_to_device(&avg, dst.avg_color, bytes);    
+}
+
+
+namespace device
+{
+    bool push_device_tile(device::MemoryBuffer& buffer, DeviceTile& tile)
+    {
+        auto width = TILE_WIDTH_PX;
+        auto height = TILE_HEIGHT_PX;
+
+        auto bitmap_data_sz = width * height * sizeof(pixel_t);
+        auto avg_color_sz = sizeof(pixel_t);
+
+        auto bitmap_data = push_bytes(buffer, bitmap_data_sz);
+        if(!bitmap_data)
+        {
+            return false;
+        }
+
+        auto avg_color_data = push_bytes(buffer, avg_color_sz);
+        if(!avg_color_data)
+        {
+            pop_bytes(buffer, bitmap_data_sz);
+            return false;
+        }
+
+        tile.bitmap_data = (pixel_t*)bitmap_data;
+        tile.avg_color = (pixel_t*)avg_color_data;
+
+        return true;
+    }
 }

@@ -18,6 +18,8 @@ using r64 = double;
 
 using b32 = uint32_t;
 
+using cstr = const char*;
+
 #define ArrayCount(arr) (sizeof(arr) / sizeof((arr)[0]))
 #define Kilobytes(value) ((value) * 1024LL)
 #define Megabytes(value) (Kilobytes(value) * 1024LL)

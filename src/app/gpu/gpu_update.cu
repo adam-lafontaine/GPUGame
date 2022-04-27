@@ -397,12 +397,12 @@ static void next_positions(AppState& state)
     props.recorded_inputs = state.device.previous_inputs;
     props.current_frame = state.props.frame_count;
 
-    bool proc = cuda_no_errors();
+    bool proc = cuda_no_errors("next_positions");
     assert(proc);
 
     gpu_next_positions<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
 
-    proc &= cuda_launch_success();
+    proc &= cuda_launch_success("gpu_next_positions");
     assert(proc);
 }
 
@@ -483,12 +483,12 @@ static void collisions(AppState& state)
 {
     auto n_threads = N_COLLISIONS;
 
-    bool proc = cuda_no_errors();
+    bool proc = cuda_no_errors("collisions");
     assert(proc);
 
     gpu_collisions<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device.entities, n_threads);
 
-    proc &= cuda_launch_success();
+    proc &= cuda_launch_success("gpu_collisions");
     assert(proc);
 }
 
@@ -529,12 +529,12 @@ static void update_positions(AppState& state)
 {
     auto n_threads = state.device.entities.n_elements;
 
-    bool proc = cuda_no_errors();
+    bool proc = cuda_no_errors("update_positions");
     assert(proc);
 
     gpu_update_positions<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device.entities, n_threads);
 
-    proc &= cuda_launch_success();
+    proc &= cuda_launch_success("gpu_update_positions");
     assert(proc);
 }
 

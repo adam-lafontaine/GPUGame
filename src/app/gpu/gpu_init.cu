@@ -226,21 +226,21 @@ void gpu_init_entities(DeviceArray<Entity> entities, u32 n_threads)
 
 namespace gpu
 {
-    void init_device_memory(DeviceMemory const& device, DeviceBuffer const& not_buffer)
+    void init_device_memory(DeviceMemory const& device)
     {
-        bool proc = cuda_no_errors();
+        bool proc = cuda_no_errors("init_device_memory");
         assert(proc);
 
         u32 n_threads = device.tilemap.width * device.tilemap.height;
         gpu_init_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(device.tilemap, device.tile_assets, n_threads);
 
-        proc &= cuda_launch_success();
+        proc &= cuda_launch_success("gpu_init_tiles");
         assert(proc);
 
         n_threads = device.entities.n_elements;
         gpu_init_entities<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(device.entities, n_threads);
 
-        proc &= cuda_launch_success();
+        proc &= cuda_launch_success("gpu_init_entities");
         assert(proc);
     }
 }
