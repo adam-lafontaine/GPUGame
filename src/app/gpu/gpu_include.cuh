@@ -287,7 +287,7 @@ inline Vec2Dr32 vec_mul(Vec2Dr32 const& vec, r32 scale)
 }
 
 
-constexpr auto PLAYER_BEGIN = 0;
+constexpr auto PLAYER_BEGIN = 0U;
 constexpr auto PLAYER_END = N_PLAYERS;
 constexpr auto BLUE_BEGIN = PLAYER_END;
 constexpr auto BLUE_END = BLUE_BEGIN + N_BLUE_ENTITIES;

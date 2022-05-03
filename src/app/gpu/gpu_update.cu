@@ -14,7 +14,8 @@ namespace gpuf
 /*************************/
 
 
-constexpr auto PLAYER_WALL_BEGIN = 0;
+// collision offsets
+constexpr auto PLAYER_WALL_BEGIN = 0U;
 constexpr auto PLAYER_WALL_END = PLAYER_WALL_BEGIN + N_PLAYER_WALL_COLLISIONS;
 constexpr auto BLUE_WALL_BEGIN = PLAYER_WALL_END;
 constexpr auto BLUE_WALL_END = BLUE_WALL_BEGIN + N_BLUE_WALL_COLLISIONS;
@@ -25,30 +26,30 @@ constexpr auto BLUE_BLUE_END = BLUE_BLUE_BEGIN + N_BLUE_BLUE_COLLISIONS;
 
 
 GPU_FUNCTION
-static bool is_player_wall(u32 offset)
+static bool is_player_wall(u32 collision_offset)
 {
-    return /*offset >= PLAYER_WALL_BEGIN &&*/ offset < PLAYER_WALL_END;
+    return /*offset >= PLAYER_WALL_BEGIN &&*/ collision_offset < PLAYER_WALL_END;
 }
 
 
 GPU_FUNCTION
-static bool is_blue_wall(u32 offset)
+static bool is_blue_wall(u32 collision_offset)
 {
-    return offset >= BLUE_WALL_BEGIN && offset < BLUE_WALL_END;
+    return collision_offset >= BLUE_WALL_BEGIN && collision_offset < BLUE_WALL_END;
 }
 
 
 GPU_FUNCTION
-static bool is_player_blue(u32 offset)
+static bool is_player_blue(u32 collision_offset)
 {
-    return offset >= PLAYER_BLUE_BEGIN && offset < PLAYER_BLUE_END;
+    return collision_offset >= PLAYER_BLUE_BEGIN && collision_offset < PLAYER_BLUE_END;
 }
 
 
 GPU_FUNCTION
-static bool is_blue_blue(u32 offset)
+static bool is_blue_blue(u32 collision_offset)
 {
-    return offset >= BLUE_BLUE_BEGIN && offset < BLUE_BLUE_END;
+    return collision_offset >= BLUE_BLUE_BEGIN && collision_offset < BLUE_BLUE_END;
 }
 
 
@@ -326,11 +327,7 @@ static void player_blue(Entity const& player, Entity& blue)
 }
 
 
-GPU_FUNCTION
-static bool can_copy_input(u32 entity_id)
-{
-    return entity_id == gpuf::BROWN_BEGIN;
-}
+
 
 /*************************/
 }
@@ -358,19 +355,18 @@ static void gpu_next_positions(MoveEntityProps props, u32 n_threads)
 
     assert(n_threads == props.entities.n_elements);
 
-    auto& player_inputs = *props.player_inputs;
-    auto& recorded_inputs = *props.recorded_inputs;
+    auto& player_inputs = *props.player_inputs;    
 
-    auto entity_id = (u32)t;
-
-    if(gpuf::can_copy_input(entity_id))
-    {
-        gpuf::update_device_inputs(player_inputs, recorded_inputs);
-        return;
-    }
+    auto entity_id = (u32)t;    
 
     if(gpuf::is_brown_entity(entity_id))
     {
+        if(entity_id == gpuf::BROWN_BEGIN)
+        {
+            auto& recorded_inputs = *props.recorded_inputs;
+            gpuf::update_device_inputs(player_inputs, recorded_inputs);
+        }
+
         return;
     }
 
@@ -405,7 +401,6 @@ static void next_positions(AppState& state)
     proc &= cuda_launch_success("gpu_next_positions");
     assert(proc);
 }
-
 
 
 GPU_KERNAL
@@ -514,7 +509,7 @@ static void gpu_update_positions(DeviceArray<Entity> entities, u32 n_threads)
     {
         entity.delta_pos_m.y = 0.0f;
         entity.dt.y *= -1.0f;
-    }    
+    }
 
     entity.position = gpuf::add_delta(entity.position, entity.delta_pos_m);
 
