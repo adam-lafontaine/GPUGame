@@ -1,67 +1,66 @@
-#include "app.hpp"
-#include "gpu/gpu_app.hpp"
-#include "../libimage/libimage.hpp"
+#include "app_include.hpp"
 
-namespace img = libimage;
 
-#include <cassert>
-#include <cmath>
-
-#define PRINT
-
-#ifdef PRINT
-#include <cstdio>
-#endif
-
-static void print(const char* msg)
+DeviceInputList* make_device_input_list(device::MemoryBuffer& buffer)
 {
-#ifdef PRINT
+    auto data_bytes = sizeof(InputRecord) * MAX_INPUT_RECORDS;
+    auto class_bytes = sizeof(DeviceInputList);
+    
+    auto input_record_data = device::push_bytes(buffer, data_bytes);
+    if(!input_record_data)
+    {
+        return nullptr;
+    }
 
-    printf("* %s *\n", msg);
+    auto class_data = device::push_bytes(buffer, class_bytes);
+    if(!class_data)
+    {
+        device::pop_bytes(buffer, data_bytes);
+        return nullptr;
+    }
 
-#endif
-}
+    DeviceInputList list;
+    list.capacity = MAX_INPUT_RECORDS;
+    list.size = 0;
+    list.read_index = 0;
+    list.data = (InputRecord*)input_record_data;    
 
-constexpr auto GRASS_TILE_PATH = "/home/adam/Repos/GPUGame/assets/tiles/basic_grass.png";
+    auto device_dst = (DeviceInputList*)class_data;
 
+    if(!cuda_memcpy_to_device(&list, device_dst, class_bytes))
+    {
+        return nullptr;
+    }
 
-constexpr size_t device_memory_sz()
-{
-    u32 n_world_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;  
-    auto tilemap_sz = n_world_tiles * sizeof(DeviceTile);
-
-    auto entity_sz = N_ENTITIES * sizeof(Entity);
-
-    auto tile_asset_sz = N_TILE_BITMAPS * (TILE_HEIGHT_PX * TILE_WIDTH_PX * sizeof(Pixel) + sizeof(Pixel));
-
-    return tilemap_sz + entity_sz + tile_asset_sz;
-}
-
-
-constexpr size_t unified_memory_sz(u32 screen_width_px, u32 screen_height_px)
-{
-    auto const n_pixels = screen_width_px * screen_height_px;
-
-    auto screen_sz = sizeof(pixel_t) * n_pixels;
-
-    return screen_sz;
+    return device_dst;
 }
 
 
-constexpr r32 screen_height_m(r32 screen_width_m)
+void add_input_record(DeviceInputList& list, InputRecord& item)
 {
-    return screen_width_m * app::SCREEN_BUFFER_HEIGHT / app::SCREEN_BUFFER_WIDTH;
+    assert(list.data);
+    assert(list.size < list.capacity);
+    assert(item.frame_begin);
+    assert(item.input);
+
+    list.data[list.size++] = item;
 }
 
 
-constexpr r32 px_to_m(r32 n_pixels, r32 width_m, u32 width_px)
+InputRecord& get_last_input_record(DeviceInputList const& list)
 {
-    return n_pixels * width_m / width_px;
+    assert(list.data);
+    assert(list.size);
+
+    return list.data[list.size - 1];
 }
 
 
 static void init_state_props(StateProps& props)
 {
+    props.frame_count = 0;
+    props.reset_frame_count = false;
+
     props.screen_width_px = app::SCREEN_BUFFER_WIDTH;
     props.screen_height_px = app::SCREEN_BUFFER_HEIGHT;
 
@@ -69,12 +68,10 @@ static void init_state_props(StateProps& props)
 
     props.screen_position.tile = { 0, 0 };
     props.screen_position.offset_m = { 0.0f, 0.0f };
-    
-    props.player_dt = { 0.0f, 0.0f };
 }
 
 
-static bool load_tile_assets(DeviceMemory& device)
+static bool load_tile_assets(device::MemoryBuffer& buffer, DeviceMemory& device)
 {    
     Image read_img;
     Image tile_img{};
@@ -83,19 +80,19 @@ static bool load_tile_assets(DeviceMemory& device)
 
     auto& tiles = device.tile_assets;
 
-    if(!make_device_tile(tiles.grass, device.buffer))
+    if(!device::push_device_tile(buffer, tiles.grass))
     {
         print("make grass tile failed");
         return false;
     }
-
-    if(!make_device_tile(tiles.brown, device.buffer))
+    
+    if(!device::push_device_tile(buffer, tiles.brown))
     {
         print("make brown tile failed");
         return false;
     }
 
-    if(!make_device_tile(tiles.black, device.buffer))
+    if(!device::push_device_tile(buffer, tiles.black))
     {
         print("make black tile failed");
         return false;
@@ -150,29 +147,42 @@ static bool load_tile_assets(DeviceMemory& device)
 }
 
 
-static bool init_device_memory(DeviceMemory& device, u32 screen_width, u32 screen_height)
+static bool init_device_memory(device::MemoryBuffer& buffer, DeviceMemory& device)
 {
-    if(!device_malloc(device.buffer, device_memory_sz()))
+    if(!device::malloc(buffer, device_memory_sz()))
     {
         return false;
     }
 
     // Note: order matters
 
-    if(!make_device_matrix(device.tilemap, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE, device.buffer))
+    if(!device::push_device_matrix(buffer, device.tilemap, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE))
     {
         return false;
     }
 
-    if(!make_device_array(device.entities, N_ENTITIES, device.buffer))
+    if(!device::push_device_array(buffer, device.entities, N_ENTITIES))
     {
         return false;
     }
 
-    if(!load_tile_assets(device))
+    if(!load_tile_assets(buffer, device))
     {
         return false;
     }
+
+    if(!device::push_device_image(buffer, device.screen_pixels, app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT))
+    {
+        return false;
+    }
+
+    auto device_previous_inputs = make_device_input_list(buffer);
+    if(!device_previous_inputs)
+    {
+        return false;
+    }
+
+    device.previous_inputs = device_previous_inputs;
 
     gpu::init_device_memory(device);
 
@@ -180,17 +190,20 @@ static bool init_device_memory(DeviceMemory& device, u32 screen_width, u32 scree
 }
 
 
-static bool init_unified_memory(UnifiedMemory& unified, u32 screen_width, u32 screen_height)
+static bool init_unified_memory(device::MemoryBuffer& buffer, UnifiedMemory& unified)
 {
-    if(!unified_malloc(unified.buffer, unified_memory_sz(screen_width, screen_height)))
+    if(!device::unified_malloc(buffer, unified_memory_sz()))
     {
         return false;
     }
 
-    if(!make_device_image(unified.screen_pixels, screen_width, screen_height, unified.buffer))
+    auto unified_current_inputs = make_device_input_list(buffer);
+    if(!unified_current_inputs)
     {
         return false;
     }
+
+    unified.current_inputs = unified_current_inputs;
 
     return true;
 }
@@ -218,33 +231,11 @@ static void apply_delta(WorldPosition& pos, Vec2Dr32 const& delta)
 }
 
 
-static WorldPosition add_delta(WorldPosition const& pos, Vec2Dr32 const& delta)
-{
-    WorldPosition added = pos;
-
-    apply_delta(added, delta);
-
-    return added;
-}
-
-
-static void update_screen_position(WorldPosition& screen_pos, Vec2Dr32 const& delta, r32 screen_width_m)
-{
-    apply_delta(screen_pos, delta);
-}
-
-
-static void process_input(Input const& input, AppState& state)
+static void process_screen_input(Input const& input, AppState& state)
 {
     auto& controller = input.controllers[0];
     auto& keyboard = input.keyboard;
     auto& props = state.props;
-    auto& player_dt = state.props.player_dt;
-
-    if(controller.button_b.pressed)
-    {
-        platform_signal_stop();
-    }
 
     auto dt = input.dt_frame;
 
@@ -292,7 +283,7 @@ static void process_input(Input const& input, AppState& state)
         camera_d_m.x += 0.5f * (old_w - new_w);
         camera_d_m.y += 0.5f * (old_h - new_h);
     }
-    if(props.screen_width_m < MAX_SCREEN_WIDTH_M && controller.stick_right_y.end < -0.5f)
+    else if(props.screen_width_m < MAX_SCREEN_WIDTH_M && controller.stick_right_y.end < -0.5f)
     {
         auto old_w = props.screen_width_m;
         auto old_h = screen_height_m(old_w);
@@ -304,42 +295,126 @@ static void process_input(Input const& input, AppState& state)
 
         camera_d_m.x += 0.5f * (old_w - new_w);
         camera_d_m.y += 0.5f * (old_h - new_h);
-    }    
+    } 
 
-    update_screen_position(props.screen_position, camera_d_m, props.screen_width_m);
-    
-    player_dt = { 0.0f, 0.0f };
+    apply_delta(props.screen_position, camera_d_m);
+}
+
+
+static void process_player_input(Input const& input, AppState& state)
+{
+    auto& controller = input.controllers[0];
+    auto& input_records = *state.unified.current_inputs;
+    //auto& keyboard = input.keyboard;
+    auto& props = state.props;
+
+    uInput player_input = 0;
+
     if(controller.dpad_up.is_down)
     {
-        player_dt.y -= dt;
+        player_input |= INPUT_PLAYER_UP;
     }
     if(controller.dpad_down.is_down)
     {
-        player_dt.y += dt;
+        player_input |= INPUT_PLAYER_DOWN;
     }
     if(controller.dpad_left.is_down)
     {
-        player_dt.x -= dt;
+        player_input |= INPUT_PLAYER_LEFT;
     }
     if(controller.dpad_right.is_down)
     {
-        player_dt.x += dt;
+        player_input |= INPUT_PLAYER_RIGHT;
     }
 
-    if(player_dt.x != 0.0f && player_dt.y != 0.0f)
+    auto const create_record = [&]()
     {
-        player_dt.x *= 0.707107f;
-        player_dt.y *= 0.707107f;
+        InputRecord r{};
+        r.frame_begin = props.frame_count;
+        r.frame_end = props.frame_count + 1;
+        r.input = player_input;
+
+        r.est_dt_frame = input.dt_frame; // avg?
+
+        add_input_record(input_records, r);
+    };
+
+    if(!input_records.size)
+    {
+        if(player_input)
+        {
+            create_record();
+        }
+
+        return;
+    }
+
+    auto& last = get_last_input_record(input_records);
+    auto current_frame = props.frame_count;
+
+    // repeat input
+    if(player_input && last.frame_end == current_frame && player_input == last.input)
+    {
+        ++last.frame_end;
+    }
+
+    // change input
+    else if(player_input && last.frame_end == current_frame && player_input != last.input)
+    {
+        ++last.frame_end;
+        create_record();
+    }
+
+    // end input
+    else if(!player_input && last.frame_end == current_frame)
+    {
+        return;
+    }
+
+    // start input
+    else if(player_input)
+    {
+        create_record();
+    }    
+}
+
+
+static void process_input(Input const& input, AppState& state)
+{
+    process_screen_input(input, state);
+    process_player_input(input, state);
+
+    auto& controller = input.controllers[0];
+    auto& keyboard = input.keyboard;
+    auto& props = state.props;
+
+    if(controller.button_b.pressed)
+    {
+        platform_signal_stop();
     }
 
     if(controller.button_x.pressed)
     {
-        props.spawn_blue = true;
+        
     }
     else
     {
-        props.spawn_blue = false;
+        
     }
+}
+
+
+static void next_frame(AppState& state)
+{
+    auto& props = state.props;
+
+    if(props.reset_frame_count)
+    {
+        props.frame_count = 0;
+        props.reset_frame_count = false;
+    }
+
+    ++props.frame_count;
 }
 
 
@@ -357,24 +432,24 @@ namespace app
     static AppState& get_initial_state(AppMemory& memory)
     {
         auto state_sz = sizeof(AppState);
-        
-        u32 n_elements = 128; // just because
-        auto elements_sz = n_elements * sizeof(u32);
 
-        auto required_sz = state_sz + elements_sz;
+        auto required_sz = state_sz + host_memory_sz();
 
         assert(required_sz <= memory.permanent_storage_size);
 
         auto& state = get_state(memory);
-
-        auto mem = (u8*)memory.permanent_storage + state_sz;
-
-        state.host.elements = (u32*)mem;
-        state.host.n_elements = n_elements;
-
-        mem += elements_sz;
-
         init_state_props(state.props);
+
+        auto mem = (u8*)memory.permanent_storage;
+        auto offset = state_sz;
+
+        auto& screen = state.host.screen_pixels;
+
+        screen.width = state.props.screen_width_px; // needed?
+        screen.height = state.props.screen_height_px;        
+        screen.data = (Pixel*)(mem + offset);
+        
+        offset += screen.width * screen.height * sizeof(Pixel);
 
         return state;
     }
@@ -386,19 +461,19 @@ namespace app
 
         memory.is_app_initialized = false;
 
-        auto& state = get_initial_state(memory);        
+        auto& state = get_initial_state(memory);
 
-        if(!init_unified_memory(state.unified, screen.width, screen.height))
+        if(!init_unified_memory(state.unified_buffer, state.unified))
 		{
 			return false;
-		}        
+		}
 
-        screen.memory = state.unified.screen_pixels.data;
-
-        if(!init_device_memory(state.device, screen.width, screen.height))
+        if(!init_device_memory(state.device_buffer, state.device))
         {
             return false;
-        }
+        }      
+
+        screen.memory = state.host.screen_pixels.data;    
 
         memory.is_app_initialized = true;
         return true;
@@ -413,10 +488,12 @@ namespace app
 		}
 
 		auto& state = get_state(memory);
+        next_frame(state);
+
         process_input(input, state); 
 
         gpu::update(state);
-        gpu::render(state);
+        gpu::render(state);        
     }
 
 	
@@ -424,7 +501,7 @@ namespace app
     {
         auto& state = get_state(memory);
 
-        device_free(state.device.buffer);
-		device_free(state.unified.buffer);
+        device::free(state.device_buffer);
+		device::free(state.unified_buffer);
     }
 }

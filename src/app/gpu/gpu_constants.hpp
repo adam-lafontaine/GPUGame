@@ -27,3 +27,5 @@ constexpr u32 PLAYER_ID = 0;
 constexpr u32 TILE_WIDTH_PX = 64;
 constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;
 constexpr u32 N_TILE_BITMAPS = 3;
+
+constexpr u32 MAX_INPUT_RECORDS = 5000;

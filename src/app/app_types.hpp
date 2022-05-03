@@ -46,32 +46,40 @@ public:
 };
 
 
+
 class DeviceMemory
 {
-public:
-    DeviceBuffer buffer;
+public:    
 
     TileList tile_assets;
     
     DeviceTileMatrix tilemap;
     DeviceArray<Entity> entities;
+
+    DeviceImage screen_pixels;
+
+    DeviceInputList* previous_inputs;
+
 };
 
 
 class UnifiedMemory
 {
 public:
-    DeviceBuffer buffer;
-
-    DeviceImage screen_pixels;
+    
+    DeviceInputList* current_inputs;
+    
 };
+
+
+using HostImage = Image;
 
 
 class HostMemory
 {
 public:
-    u32* elements; // just because
-    u32 n_elements;
+
+    HostImage screen_pixels;
 };
 
 
@@ -79,21 +87,24 @@ class StateProps
 {
 public:
 
+    u64 frame_count;
+    bool reset_frame_count;
+
     u32 screen_width_px;
     u32 screen_height_px;
 
     r32 screen_width_m;
 
     WorldPosition screen_position;
-    Vec2Dr32 player_dt;
-    
-    bool spawn_blue;
 };
 
 
 class AppState
 {
 public:
+
+    device::MemoryBuffer device_buffer;
+    device::MemoryBuffer unified_buffer;
     
     DeviceMemory device;
     UnifiedMemory unified;
