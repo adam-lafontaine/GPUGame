@@ -19,15 +19,6 @@ constexpr size_t device_image_data_size(u32 width, u32 height)
     return width * height * sizeof(Pixel);
 }
 
-/*
-constexpr size_t device_image_total_size(u32 width, u32 height)
-{
-    return
-        sizeof(DeviceImage)
-        + device_image_data_size(width, height);
-}
-*/
-
 inline bool make_device_image(DeviceImage& image, device::MemoryBuffer& buffer, u32 width, u32 height)
 {
     auto data_size = device_image_data_size(width, height);

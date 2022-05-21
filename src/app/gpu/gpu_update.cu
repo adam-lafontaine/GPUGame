@@ -373,19 +373,6 @@ static void gpu_next_positions(DeviceMemory* device, UnifiedMemory* unified, u64
     entity.next_position = gpuf::add_delta(entity.position, entity.delta_pos_m);
 }
 
-/*
-static void next_positions(AppState& state)
-{
-    bool result = cuda_no_errors("next_positions");
-    assert(result);
-
-    auto n_threads = N_ENTITIES;
-    gpu_next_positions<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device, state.unified, state.props.frame_count, n_threads);
-
-    result &= cuda_launch_success("gpu_next_positions");
-    assert(result);
-}
-*/
 
 GPU_KERNAL
 static void gpu_collisions(DeviceMemory* device, u32 n_threads)
@@ -461,19 +448,6 @@ static void gpu_collisions(DeviceMemory* device, u32 n_threads)
     }
 }
 
-/*
-static void collisions(AppState& state)
-{
-    bool result = cuda_no_errors("collisions");
-    assert(result);
-
-    auto n_threads = N_COLLISIONS;
-    gpu_collisions<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device, n_threads);
-
-    result &= cuda_launch_success("gpu_collisions");
-    assert(result);
-}
-*/
 
 GPU_KERNAL
 static void gpu_update_positions(DeviceMemory* device, u32 n_threads)
@@ -509,23 +483,6 @@ static void gpu_update_positions(DeviceMemory* device, u32 n_threads)
     entity.inv_x = false;
     entity.inv_y = false;
 }
-
-/*
-static void update_positions(AppState& state)
-{
-    
-
-    bool result = cuda_no_errors("update_positions");
-    assert(result);
-
-    auto n_threads = N_ENTITIES;
-    gpu_update_positions<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device, n_threads);
-
-    result &= cuda_launch_success("gpu_update_positions");
-    assert(result);
-}
-
-*/
 
 
 

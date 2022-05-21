@@ -53,34 +53,3 @@ bool copy_to_device(image_t const& src, DeviceTile const& dst)
 
     return cuda_memcpy_to_device(&avg, dst.avg_color, bytes);    
 }
-
-
-/*
-namespace device
-{
-    bool push_device_tile(device::MemoryBuffer& buffer, DeviceTile& tile)
-    {
-        auto bitmap_data_sz = device_tile_bitmap_data_size();
-        auto avg_color_sz = device_tile_avg_color_size();
-
-        auto bitmap_data = push_bytes(buffer, bitmap_data_sz);
-        if(!bitmap_data)
-        {
-            return false;
-        }
-
-        auto avg_color_data = push_bytes(buffer, avg_color_sz);
-        if(!avg_color_data)
-        {
-            pop_bytes(buffer, bitmap_data_sz);
-            return false;
-        }
-
-        tile.bitmap_data = (pixel_t*)bitmap_data;
-        tile.avg_color = (pixel_t*)avg_color_data;
-
-        return true;
-    }
-}
-
-*/

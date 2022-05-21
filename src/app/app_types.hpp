@@ -43,15 +43,6 @@ constexpr size_t device_entity_array_data_size(u32 n_elements)
     return n_elements * sizeof(Entity);
 }
 
-/*
-constexpr size_t device_entity_array_total_size(u32 n_elements)
-{
-    return
-        sizeof(DeviceEntityArray)
-        + device_entity_array_data_size(n_elements);
-}
-*/
-
 
 inline bool make_device_entity_array(DeviceEntityArray& array, device::MemoryBuffer& buffer, u32 n_elements)
 {
@@ -78,15 +69,6 @@ constexpr size_t device_tile_matrix_data_size(u32 n_tiles)
 {
     return n_tiles * sizeof(DeviceTile);
 }
-
-/*
-constexpr size_t device_tile_matrix_total_size(u32 n_tiles)
-{
-    return 
-        sizeof(DeviceTileMatrix) 
-        + device_tile_matrix_data_size(n_tiles);
-}
-*/
 
 
 inline bool make_device_tile_matrix(DeviceTileMatrix& tilemap, device::MemoryBuffer& buffer, u32 width, u32 height)
