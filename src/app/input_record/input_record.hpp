@@ -39,14 +39,14 @@ constexpr size_t device_input_list_data_size()
     return sizeof(InputRecord) * MAX_INPUT_RECORDS;
 }
 
-
+/*
 constexpr size_t device_input_list_total_size()
 {
     return 
         sizeof(DeviceInputList)
         + device_input_list_data_size();
 }
-
+*/
 
 inline bool make_device_input_list(DeviceInputList& list, device::MemoryBuffer& buffer)
 {

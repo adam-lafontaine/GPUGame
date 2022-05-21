@@ -154,6 +154,8 @@ static bool init_unified_memory(device::MemoryBuffer& buffer, AppState& state)
         return false;
     }
 
+    assert(buffer.size == buffer.capacity);
+
     state.unified = (UnifiedMemory*)device_dst;
 
     return true;
