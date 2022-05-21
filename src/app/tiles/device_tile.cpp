@@ -59,11 +59,8 @@ namespace device
 {
     bool push_device_tile(device::MemoryBuffer& buffer, DeviceTile& tile)
     {
-        auto width = TILE_WIDTH_PX;
-        auto height = TILE_HEIGHT_PX;
-
-        auto bitmap_data_sz = width * height * sizeof(pixel_t);
-        auto avg_color_sz = sizeof(pixel_t);
+        auto bitmap_data_sz = device_tile_bitmap_data_size();
+        auto avg_color_sz = device_tile_avg_color_size();
 
         auto bitmap_data = push_bytes(buffer, bitmap_data_sz);
         if(!bitmap_data)

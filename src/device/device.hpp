@@ -95,36 +95,6 @@ bool copy_to_device(std::array< std::array<u8, N>, RGB_CHANNELS> const& src, Dev
 }
 
 
-using uInput = u8;
-
-constexpr uInput INPUT_PLAYER_UP    = 0b00000001;
-constexpr uInput INPUT_PLAYER_DOWN  = 0b00000010;
-constexpr uInput INPUT_PLAYER_LEFT  = 0b00000100;
-constexpr uInput INPUT_PLAYER_RIGHT = 0b00001000;
-
-
-class InputRecord
-{
-public:
-    u64 frame_begin;
-    u64 frame_end;
-    uInput input;
-
-    r32 est_dt_frame;
-};
-
-
-class DeviceInputList
-{
-public:
-    u32 capacity;
-    u32 size;
-    u32 read_index;
-
-    InputRecord* data;
-};
-
-
 namespace device
 {
     using u8 = uint8_t;

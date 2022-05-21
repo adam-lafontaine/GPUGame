@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tiles/device_tile.hpp"
+#include "input_record/input_record.hpp"
 
 
 class WorldPosition
@@ -36,14 +37,7 @@ public:
 using DeviceTileMatrix = DeviceMatrix<DeviceTile>;
 
 
-class TileList
-{
-public:
-    DeviceTile grass;
-    
-    DeviceTile brown;
-    DeviceTile black;
-};
+
 
 
 

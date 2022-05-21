@@ -68,9 +68,7 @@ constexpr size_t device_memory_sz()
     auto screen_pixels_sz = screen_pixels_data_sz;
 
     // DeviceInputList* previous_inputs;
-    auto const n_records = MAX_INPUT_RECORDS;
-    auto previous_inputs_data_sz = sizeof(InputRecord) * n_records;
-    auto previous_inputs_sz = previous_inputs_data_sz + sizeof(DeviceInputList);
+    auto previous_inputs_sz = device_input_list_total_size();
     
     return tile_assets_sz + tilemap_sz + entities_sz + screen_pixels_sz + previous_inputs_sz;
 }

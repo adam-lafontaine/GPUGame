@@ -279,6 +279,8 @@ exe_name := gpu_game_sdl
 # directories
 build  := ../../build/sdl
 code   := ..
+img    := $(code)/libimage
+stb    := $(img)/stb_wrapper
 sdl    := $(code)/sdl
 input  := $(code)/input
 utils  := $(code)/utils
@@ -286,8 +288,8 @@ device := $(code)/device
 app    := $(code)/app
 gpu    := $(app)/gpu
 tiles  := $(app)/tiles
-img    := $(code)/libimage
-stb    := $(img)/stb_wrapper
+input_record := $(app)/input_record
+
 
 
 # header files
@@ -334,8 +336,12 @@ cuda_def_h := $(device)/cuda_def.cuh
 device_tile_h := $(tiles)/device_tile.hpp
 device_tile_h += $(device_h)
 
+input_record_h := $(input_record)/input_record.hpp
+input_record_h += $(device_h)
+
 app_types_h := $(app)/app_types.hpp
 app_types_h += $(device_tile_h)
+app_types_h += $(input_record_h)
 
 gpu_constants_h := $(gpu)/gpu_constants.hpp
 
@@ -377,6 +383,10 @@ tiles_c      := $(tiles)/device_tile.cpp
 tiles_o      := $(build)/tiles.o
 object_files += $(tiles_o)
 
+input_record_c := $(input_record)/input_record.cpp
+input_record_o := $(build)/input_record.o
+object_files += $(input_record_o)
+
 gpu_init_c   := $(gpu)/gpu_init.cu
 gpu_init_o   := $(build)/gpu_init.o
 object_files += $(gpu_init_o)
@@ -417,7 +427,10 @@ $(input_o): $(input_c) $(sdl_input_h) $(input_state_h)
 $(tiles_o): $(tiles_c) $(device_tile_h) $(gpu_app_h)
 	@echo "\n tiles"
 	$(GPP) -o $@ -c $<
-    
+
+$(input_record_o): $(input_record_c) $(input_record_h)
+	@echo "\n input_record"
+	$(GPP) -o $@ -c $<    
 
 $(gpu_update_o): $(gpu_update_c) $(gpu_include_h)
 	@echo "\n gpu_update"
