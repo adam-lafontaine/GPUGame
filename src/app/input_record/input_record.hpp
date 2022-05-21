@@ -48,4 +48,21 @@ constexpr size_t device_input_list_total_size()
 }
 
 
-DeviceInputList* make_device_input_list(device::MemoryBuffer& buffer);
+inline bool make_device_input_list(DeviceInputList& list, device::MemoryBuffer& buffer)
+{
+    auto data_size = device_input_list_data_size();
+
+    auto input_record_data = device::push_bytes(buffer, data_size);
+    if(!input_record_data)
+    {
+        assert("make_device_input_list" && false);
+        return false;
+    }
+
+    list.capacity = MAX_INPUT_RECORDS;
+    list.size = 0;
+    list.read_index = 0;
+    list.data = (InputRecord*)input_record_data;
+
+    return true;
+}

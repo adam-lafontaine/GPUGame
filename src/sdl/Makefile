@@ -349,6 +349,7 @@ input_record_h := $(input_record)/input_record.hpp
 input_record_h += $(device_h)
 
 app_types_h := $(app)/app_types.hpp
+app_types_h += $(device_image_h)
 app_types_h += $(device_tile_h)
 app_types_h += $(input_record_h)
 
@@ -389,17 +390,9 @@ device_c     := $(device)/device.cu
 device_o     := $(build_app)/device.o
 object_files += $(device_o)
 
-device_image_c  := $(device_image)/device_image.cpp
-device_image_o  := $(build_app)/device_image.o
-object_files    += $(device_image_o)
-
 tiles_c      := $(tiles)/device_tile.cpp
 tiles_o      := $(build_app)/tiles.o
 object_files += $(tiles_o)
-
-input_record_c := $(input_record)/input_record.cpp
-input_record_o := $(build_app)/input_record.o
-object_files   += $(input_record_o)
 
 gpu_init_c   := $(gpu)/gpu_init.cu
 gpu_init_o   := $(build_app)/gpu_init.o
@@ -435,17 +428,9 @@ $(input_o): $(input_c) $(sdl_input_h) $(input_state_h)
 	@echo "\n input"
 	$(GPP) -o $@ -c $< $(SDL2)
 
-$(device_image_o): $(device_image_c) $(device_image_h)
-	@echo "\n device_image"
-	$(GPP) -o $@ -c $< 
-
 $(tiles_o): $(tiles_c) $(device_tile_h) $(gpu_app_h)
 	@echo "\n tiles"
 	$(GPP) -o $@ -c $<
-
-$(input_record_o): $(input_record_c) $(input_record_h)
-	@echo "\n input_record"
-	$(GPP) -o $@ -c $<    
 
 $(gpu_update_o): $(gpu_update_c) $(gpu_include_h)
 	@echo "\n gpu_update"

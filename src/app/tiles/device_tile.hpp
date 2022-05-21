@@ -29,34 +29,46 @@ constexpr size_t device_tile_avg_color_size()
 }
 
 
-constexpr size_t device_tile_total_size()
+constexpr size_t device_tile_data_size()
 {
     return 
-        sizeof(DeviceTile) 
-        + device_tile_bitmap_data_size()
-        + device_tile_avg_color_size();
+        device_tile_avg_color_size()
+        + device_tile_bitmap_data_size();
 }
 
 
-class TileList
-{
-public:
-    DeviceTile grass;
-    
-    DeviceTile brown;
-    DeviceTile black;
-};
+inline bool make_device_tile(DeviceTile& tile, device::MemoryBuffer& buffer)
+{    
+    auto bitmap_data = device::push_bytes(buffer, device_tile_bitmap_data_size());
+    if(!bitmap_data)
+    {
+        assert("make_device_tile: bitmap_data" && false);
+        return false;
+    }
 
+    auto avg_color_data = device::push_bytes(buffer, device_tile_avg_color_size());
+    if(!avg_color_data)
+    {
+        assert("make_device_tile: avg_color" && false);
+    }
 
-constexpr size_t tile_list_total_size()
-{
-    return sizeof(TileList) + N_TILE_BITMAPS * device_tile_total_size();
+    tile.bitmap_data = (Pixel*)bitmap_data;
+    tile.avg_color = (Pixel*)avg_color_data;
+
+    return true;
 }
+
+
+
 
 
 bool copy_to_device(image_t const& src, DeviceTile const& dst);
 
+
+/*
 namespace device
 {
     bool push_device_tile(device::MemoryBuffer& buffer, DeviceTile& tile);
 }
+
+*/

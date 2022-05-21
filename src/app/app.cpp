@@ -36,32 +36,14 @@ static void init_state_props(StateProps& props)
 }
 
 
-static bool load_tile_assets(device::MemoryBuffer& buffer, DeviceMemory& device)
+static bool load_tile_assets(AppState& state)
 {    
-    Image read_img;
+    Image read_img{};
     Image tile_img{};
     tile_img.width = TILE_WIDTH_PX;
     tile_img.height = TILE_HEIGHT_PX;
-
-    auto& tiles = device.tile_assets;
-
-    if(!device::push_device_tile(buffer, tiles.grass))
-    {
-        print("make grass tile failed");
-        return false;
-    }
     
-    if(!device::push_device_tile(buffer, tiles.brown))
-    {
-        print("make brown tile failed");
-        return false;
-    }
-
-    if(!device::push_device_tile(buffer, tiles.black))
-    {
-        print("make black tile failed");
-        return false;
-    }
+    auto& device_assets = state.device_assets;
 
     auto const cleanup = [&]()
     {
@@ -72,7 +54,7 @@ static bool load_tile_assets(device::MemoryBuffer& buffer, DeviceMemory& device)
     img::read_image_from_file(GRASS_TILE_PATH, read_img);
     img::resize_image(read_img, tile_img);
 
-    if(!copy_to_device(tile_img, tiles.grass))
+    if(!copy_to_device(tile_img, device_assets.grass_tile))
     {
         print("copy grass tile failed");
         cleanup();
@@ -86,7 +68,7 @@ static bool load_tile_assets(device::MemoryBuffer& buffer, DeviceMemory& device)
         tile_img.data[i] = brown;
     }
 
-    if(!copy_to_device(tile_img, tiles.brown))
+    if(!copy_to_device(tile_img, device_assets.brown_tile))
     {
         print("copy brown tile failed");
         cleanup();
@@ -100,7 +82,7 @@ static bool load_tile_assets(device::MemoryBuffer& buffer, DeviceMemory& device)
         tile_img.data[i] = black;
     }
 
-    if(!copy_to_device(tile_img, tiles.brown))
+    if(!copy_to_device(tile_img, device_assets.black_tile))
     {
         print("copy black tile failed");
         cleanup();
@@ -112,63 +94,67 @@ static bool load_tile_assets(device::MemoryBuffer& buffer, DeviceMemory& device)
 }
 
 
-static bool init_device_memory(device::MemoryBuffer& buffer, DeviceMemory& device)
+static bool init_device_memory(device::MemoryBuffer& buffer, AppState& state)
 {
-    if(!device::malloc(buffer, device_memory_sz()))
+    if(!device::malloc(buffer, device_memory_total_size(N_ENTITIES, WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE)))
     {
         return false;
     }
 
-    // Note: order matters
+    DeviceMemory device{};
 
-    if(!device::push_device_matrix(buffer, device.tilemap, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE))
+    if(!make_device_memory(device, buffer, N_ENTITIES, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE))
     {
         return false;
     }
 
-    if(!device::push_device_array(buffer, device.entities, N_ENTITIES))
+    auto struct_size = sizeof(DeviceMemory);
+
+    auto device_dst = device::push_bytes(buffer, struct_size);
+    if(!device_dst)
     {
         return false;
     }
 
-    if(!load_tile_assets(buffer, device))
+    assert(buffer.size == buffer.capacity);
+
+    if(!cuda_memcpy_to_device(&device, device_dst, struct_size))
     {
         return false;
     }
 
-    if(!device::push_device_image(buffer, device.screen_pixels, app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT))
-    {
-        return false;
-    }
+    state.device = (DeviceMemory*)device_dst;
 
-    auto device_previous_inputs = make_device_input_list(buffer);
-    if(!device_previous_inputs)
-    {
-        return false;
-    }
-
-    device.previous_inputs = device_previous_inputs;
-
-    gpu::init_device_memory(device);
+    state.device_assets = device.assets;
 
     return true;
 }
 
 
-static bool init_unified_memory(device::MemoryBuffer& buffer, UnifiedMemory& unified)
+static bool init_unified_memory(device::MemoryBuffer& buffer, AppState& state)
 {
-    if(!device::unified_malloc(buffer, unified_memory_sz()))
+    if(!device::unified_malloc(buffer, unified_memory_total_size(app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT)))
     {
         return false;
     }
 
-    auto unified_current_inputs = make_device_input_list(buffer);
-    if(!unified_current_inputs)
+    UnifiedMemory unified{};
+
+    if(!make_unified_memory(unified, buffer, app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT))
+    {        
+        return false;
+    }
+
+    auto struct_size = sizeof(UnifiedMemory);
+
+    auto device_dst = device::push_bytes(buffer, struct_size);
+
+    if(!cuda_memcpy_to_device(&unified, device_dst, struct_size))
     {
         return false;
     }
 
-    unified.current_inputs = unified_current_inputs;
+    state.unified = (UnifiedMemory*)device_dst;
 
     return true;
 }
@@ -269,7 +255,7 @@ static void process_screen_input(Input const& input, AppState& state)
 static void process_player_input(Input const& input, AppState& state)
 {
     auto& controller = input.controllers[0];
-    auto& input_records = *state.unified.current_inputs;
+    auto& input_records = state.unified->current_inputs;
     //auto& keyboard = input.keyboard;
     auto& props = state.props;
 
@@ -428,15 +414,22 @@ namespace app
 
         auto& state = get_initial_state(memory);
 
-        if(!init_unified_memory(state.unified_buffer, state.unified))
+        if(!init_unified_memory(state.unified_buffer, state))
 		{
 			return false;
 		}
 
-        if(!init_device_memory(state.device_buffer, state.device))
+        if(!init_device_memory(state.device_buffer, state))
         {
             return false;
-        }      
+        }
+
+        if(!load_tile_assets(state))
+        {
+            return false;
+        }
+
+        gpu::init_device_memory(state);
 
         screen.memory = state.host.screen_pixels.data;    
 

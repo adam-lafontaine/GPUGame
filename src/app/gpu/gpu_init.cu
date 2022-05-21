@@ -159,7 +159,7 @@ static void init_wall(Entity& wall, u32 wall_id)
 
 
 GPU_KERNAL
-void gpu_init_tiles(DeviceTileMatrix world_tiles, TileList tiles, u32 n_threads)
+void gpu_init_tiles(DeviceMemory* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -167,13 +167,17 @@ void gpu_init_tiles(DeviceTileMatrix world_tiles, TileList tiles, u32 n_threads)
         return;
     }
 
+    auto& device = *device_ptr;
+
+    auto& world_tiles = device.tilemap;
+    auto& assets = device.assets;
+
+    assert(n_threads == world_tiles.width * world_tiles.height);
+    assert(world_tiles.data);
+
     auto world_tile_id = (u32)t;
 
-    assert(world_tile_id < world_tiles.width * world_tiles.height);
-
-    //auto& world_tile = world_tiles.data[world_tile_id];
-
-    world_tiles.data[world_tile_id] = tiles.grass;
+    world_tiles.data[world_tile_id] = assets.grass_tile;
 
     /*
 
@@ -196,7 +200,7 @@ void gpu_init_tiles(DeviceTileMatrix world_tiles, TileList tiles, u32 n_threads)
 
 
 GPU_KERNAL
-void gpu_init_entities(DeviceArray<Entity> entities, u32 n_threads)
+void gpu_init_entities(DeviceMemory* device, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -204,9 +208,11 @@ void gpu_init_entities(DeviceArray<Entity> entities, u32 n_threads)
         return;
     }
 
+    auto& entities = device->entities;
+
     assert(n_threads == entities.n_elements);
 
-    auto entity_id = (u32)t;
+    auto entity_id = (u32)t;    
 
     if(gpuf::is_player_entity(entity_id))
     {        
@@ -226,21 +232,23 @@ void gpu_init_entities(DeviceArray<Entity> entities, u32 n_threads)
 
 namespace gpu
 {
-    void init_device_memory(DeviceMemory const& device)
+    void init_device_memory(AppState const& state)
     {
-        bool proc = cuda_no_errors("init_device_memory");
-        assert(proc);
+        assert(state.device);
 
-        u32 n_threads = device.tilemap.width * device.tilemap.height;
-        gpu_init_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(device.tilemap, device.tile_assets, n_threads);
+        bool result = cuda_no_errors("init_device_memory");
+        assert(result);
 
-        proc &= cuda_launch_success("gpu_init_tiles");
-        assert(proc);
+        u32 n_threads = N_WORLD_TILES;
+        gpu_init_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device, n_threads);
 
-        n_threads = device.entities.n_elements;
-        gpu_init_entities<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(device.entities, n_threads);
+        result = cuda_launch_success("gpu_init_tiles");
+        assert(result);
 
-        proc &= cuda_launch_success("gpu_init_entities");
-        assert(proc);
+        n_threads = N_ENTITIES;
+        gpu_init_entities<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device, n_threads);
+
+        result = cuda_launch_success("gpu_init_entities");
+        assert(result);
     }
 }

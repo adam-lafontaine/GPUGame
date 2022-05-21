@@ -47,7 +47,7 @@ public:
 	u32 width;
 	u32 height;
 
-	T* data;
+	T* data = nullptr;
 };
 
 

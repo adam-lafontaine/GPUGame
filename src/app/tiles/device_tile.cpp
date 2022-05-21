@@ -55,6 +55,7 @@ bool copy_to_device(image_t const& src, DeviceTile const& dst)
 }
 
 
+/*
 namespace device
 {
     bool push_device_tile(device::MemoryBuffer& buffer, DeviceTile& tile)
@@ -81,3 +82,5 @@ namespace device
         return true;
     }
 }
+
+*/
