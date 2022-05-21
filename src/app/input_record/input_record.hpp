@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../../device/device.hpp"
 
 constexpr u32 MAX_INPUT_RECORDS = 5000;

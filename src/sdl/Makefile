@@ -293,6 +293,7 @@ app    := $(code)/app
 gpu    := $(app)/gpu
 tiles  := $(app)/tiles
 input_record := $(app)/input_record
+device_image := $(app)/device_image
 
 
 
@@ -337,6 +338,10 @@ device_h += $(types_h)
 
 cuda_def_h := $(device)/cuda_def.cuh
 
+
+device_image_h := $(device_image)/device_image.hpp
+device_image_h += $(device_h)
+
 device_tile_h := $(tiles)/device_tile.hpp
 device_tile_h += $(device_h)
 
@@ -346,6 +351,7 @@ input_record_h += $(device_h)
 app_types_h := $(app)/app_types.hpp
 app_types_h += $(device_tile_h)
 app_types_h += $(input_record_h)
+
 
 gpu_constants_h := $(gpu)/gpu_constants.hpp
 
@@ -383,13 +389,17 @@ device_c     := $(device)/device.cu
 device_o     := $(build_app)/device.o
 object_files += $(device_o)
 
+device_image_c  := $(device_image)/device_image.cpp
+device_image_o  := $(build_app)/device_image.o
+object_files    += $(device_image_o)
+
 tiles_c      := $(tiles)/device_tile.cpp
 tiles_o      := $(build_app)/tiles.o
 object_files += $(tiles_o)
 
 input_record_c := $(input_record)/input_record.cpp
 input_record_o := $(build_app)/input_record.o
-object_files += $(input_record_o)
+object_files   += $(input_record_o)
 
 gpu_init_c   := $(gpu)/gpu_init.cu
 gpu_init_o   := $(build_app)/gpu_init.o
@@ -424,6 +434,10 @@ $(device_o): $(device_c) $(device_h) $(cuda_def_h)
 $(input_o): $(input_c) $(sdl_input_h) $(input_state_h)
 	@echo "\n input"
 	$(GPP) -o $@ -c $< $(SDL2)
+
+$(device_image_o): $(device_image_c) $(device_image_h)
+	@echo "\n device_image"
+	$(GPP) -o $@ -c $< 
 
 $(tiles_o): $(tiles_c) $(device_tile_h) $(gpu_app_h)
 	@echo "\n tiles"

@@ -2,6 +2,7 @@
 
 #include "tiles/device_tile.hpp"
 #include "input_record/input_record.hpp"
+#include "device_image/device_image.hpp"
 
 
 class WorldPosition
@@ -35,9 +36,6 @@ public:
 
 
 using DeviceTileMatrix = DeviceMatrix<DeviceTile>;
-
-
-
 
 
 

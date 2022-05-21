@@ -39,21 +39,6 @@ bool copy_to_device(std::array<T, N> const& src, DeviceArray<T>& dst)
 }
 
 
-class DeviceImage
-{
-public:
-
-    u32 width;
-    u32 height;
-
-    pixel_t* data;
-};
-
-
-bool copy_to_device(image_t const& src, DeviceImage const& dst);
-
-bool copy_to_host(DeviceImage const& src, image_t const& dst);
-
 
 template <typename T>
 class DeviceMatrix
@@ -117,8 +102,6 @@ namespace device
     u8* push_bytes(MemoryBuffer& buffer, size_t n_bytes);
 
     bool pop_bytes(MemoryBuffer& buffer, size_t n_bytes);
-
-    bool push_device_image(MemoryBuffer& buffer, DeviceImage& image, u32 width, u32 height);
 
     bool push_device_palette(MemoryBuffer& buffer, DeviceColorPalette& palette, u32 n_colors);
 

@@ -68,34 +68,7 @@ bool cuda_launch_success(cstr label)
 }
 
 
-bool copy_to_device(image_t const& src, DeviceImage const& dst)
-{
-    assert(src.data);
-    assert(src.width);
-    assert(src.height);
-    assert(dst.data);
-    assert(dst.width == src.width);
-    assert(dst.height == src.height);
 
-    auto bytes = src.width * src.height * sizeof(pixel_t);
-
-    return cuda_memcpy_to_device(src.data, dst.data, bytes);
-}
-
-
-bool copy_to_host(DeviceImage const& src, image_t const& dst)
-{
-    assert(src.data);
-    assert(src.width);
-    assert(src.height);
-    assert(dst.data);
-    assert(dst.width == src.width);
-    assert(dst.height == src.height);
-
-    auto bytes = src.width * src.height * sizeof(pixel_t);
-
-    return cuda_memcpy_to_host(src.data, dst.data, bytes);
-}
 
 
 namespace device
@@ -219,21 +192,7 @@ namespace device
     }
 
 
-    bool push_device_image(MemoryBuffer& buffer, DeviceImage& image, u32 width, u32 height)
-    {
-        auto data = push_bytes(buffer, width * height * sizeof(Pixel));
-
-        if(data)
-        {
-            image.width = width;
-            image.height = height;
-            image.data = (pixel_t*)data;
-
-            return true;
-        }
-
-        return false;
-    }
+    
 
 
     bool push_device_palette(MemoryBuffer& buffer, DeviceColorPalette& palette, u32 n_colors)

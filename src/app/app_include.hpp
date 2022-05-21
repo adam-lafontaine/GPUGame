@@ -63,9 +63,9 @@ constexpr size_t device_memory_sz()
     auto entities_sz = entities_data_sz;
 
     // DeviceImage screen_pixels;
-    auto const n_pixels = app::SCREEN_BUFFER_WIDTH * app::SCREEN_BUFFER_HEIGHT;
-    auto screen_pixels_data_sz = sizeof(pixel_t) * n_pixels;
-    auto screen_pixels_sz = screen_pixels_data_sz;
+    //auto const n_pixels = app::SCREEN_BUFFER_WIDTH * app::SCREEN_BUFFER_HEIGHT;
+    //auto screen_pixels_data_sz = sizeof(pixel_t) * n_pixels;
+    auto screen_pixels_sz = device_image_total_size(app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT);
 
     // DeviceInputList* previous_inputs;
     auto previous_inputs_sz = device_input_list_total_size();
@@ -77,9 +77,7 @@ constexpr size_t device_memory_sz()
 constexpr size_t unified_memory_sz()
 {
     // DeviceInputList* current_inputs;
-    auto const n_records = MAX_INPUT_RECORDS;
-    auto current_inputs_data_sz = sizeof(InputRecord) * n_records;
-    auto current_inputs_sz = current_inputs_data_sz + sizeof(DeviceInputList);
+    auto current_inputs_sz = device_input_list_total_size();
 
     return current_inputs_sz;
 }
