@@ -51,35 +51,6 @@ public:
 };
 
 
-class DeviceColorPalette
-{
-public:
-    u8* channels[RGB_CHANNELS];
-
-    u32 n_colors = 0;
-};
-
-
-template <size_t N>
-bool copy_to_device(std::array< std::array<u8, N>, RGB_CHANNELS> const& src, DeviceColorPalette& dst)
-{
-    assert(dst.channels[0]);
-    assert(dst.n_colors);
-    assert(dst.n_colors == src[0].size());
-
-    auto bytes = src[0].size() * sizeof(u8);
-    for(u32 c = 0; c < RGB_CHANNELS; ++c)
-    {
-        if(!cuda_memcpy_to_device(src[c].data(), dst.channels[c], bytes))
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-
 namespace device
 {
     using u8 = uint8_t;
@@ -102,43 +73,4 @@ namespace device
     u8* push_bytes(MemoryBuffer& buffer, size_t n_bytes);
 
     bool pop_bytes(MemoryBuffer& buffer, size_t n_bytes);
-
-    bool push_device_palette(MemoryBuffer& buffer, DeviceColorPalette& palette, u32 n_colors);
-
-
-    template <typename T>
-    inline bool push_device_array(MemoryBuffer& buffer, DeviceArray<T>& arr, u32 n_elements)
-    {
-        auto data = push_bytes(buffer, n_elements * sizeof(T));
-
-        if(data)
-        {
-            arr.n_elements = n_elements;
-            arr.data = (T*)data;
-
-            return true;
-        }
-
-        return false;
-    }
-
-
-    template <typename T>
-    inline bool push_device_matrix(MemoryBuffer& buffer, DeviceMatrix<T>& matrix, u32 width, u32 height)
-    {
-        auto n_bytes = sizeof(T) * width * height;
-        auto data = push_bytes(buffer, n_bytes);
-
-        if(data)
-        {
-            matrix.width = width;
-            matrix.height = height;
-            matrix.data = (T*)data;
-
-            return true;
-        }
-
-        return false;
-    }
-
 }

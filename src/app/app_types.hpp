@@ -258,6 +258,4 @@ public:
     StateProps props;
 
     DeviceAssets device_assets;
-
-    UnifiedMemory shared;
 };

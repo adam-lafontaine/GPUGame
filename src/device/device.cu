@@ -190,38 +190,4 @@ namespace device
 
         return false;
     }
-
-
-    
-
-
-    bool push_device_palette(MemoryBuffer& buffer, DeviceColorPalette& palette, u32 n_colors)
-    {
-        auto bytes_per_channel = sizeof(u8) * n_colors;
-        size_t bytes_allocated = 0;
-
-        for(u32 c = 0; c < RGB_CHANNELS; ++c)
-        {
-            auto data = push_bytes(buffer, bytes_per_channel);
-            if(!data)
-            {
-                break;                
-            }
-
-            bytes_allocated += bytes_per_channel;
-            palette.channels[c] = (u8*)data;
-        }
-
-        if(bytes_allocated == RGB_CHANNELS * bytes_per_channel)
-        {
-            palette.n_colors = n_colors;
-            return true;
-        }
-        else if (bytes_allocated > 0)
-        {
-            pop_bytes(buffer, bytes_allocated);            
-        }
-
-        return false;
-    }
 }

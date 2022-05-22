@@ -94,8 +94,10 @@ static bool load_tile_assets(AppState& state)
 }
 
 
-static bool init_device_memory(device::MemoryBuffer& buffer, AppState& state)
+static bool init_device_memory(AppState& state)
 {
+    auto& buffer = state.device_buffer;
+
     if(!device::malloc(buffer, device_memory_total_size(N_ENTITIES, WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE)))
     {
         return false;
@@ -131,8 +133,10 @@ static bool init_device_memory(device::MemoryBuffer& buffer, AppState& state)
 }
 
 
-static bool init_unified_memory(device::MemoryBuffer& buffer, AppState& state)
+static bool init_unified_memory(AppState& state)
 {
+    auto& buffer = state.unified_buffer;
+
     if(!device::unified_malloc(buffer, unified_memory_total_size(app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT)))
     {
         return false;
@@ -157,7 +161,6 @@ static bool init_unified_memory(device::MemoryBuffer& buffer, AppState& state)
     assert(buffer.size == buffer.capacity);
 
     state.unified = (UnifiedMemory*)device_dst;
-    state.shared = unified;
 
     return true;
 }
@@ -185,7 +188,7 @@ static void apply_delta(WorldPosition& pos, Vec2Dr32 const& delta)
 }
 
 
-static void process_screen_input(Input const& input, AppState& state)
+static void process_camera_input(Input const& input, AppState& state)
 {
     auto& controller = input.controllers[0];
     auto& keyboard = input.keyboard;
@@ -335,7 +338,7 @@ static void process_player_input(Input const& input, AppState& state)
 
 static void process_input(Input const& input, AppState& state)
 {
-    process_screen_input(input, state);
+    process_camera_input(input, state);
     process_player_input(input, state);
 
     auto& controller = input.controllers[0];
@@ -394,19 +397,6 @@ namespace app
         auto& state = get_state(memory);
         init_state_props(state.props);
 
-        /*
-        auto mem = (u8*)memory.permanent_storage;
-        auto offset = state_sz;
-
-        auto& screen = state.host.screen_pixels;
-
-        screen.width = state.props.screen_width_px; // needed?
-        screen.height = state.props.screen_height_px;        
-        screen.data = (Pixel*)(mem + offset);
-        
-        offset += screen.width * screen.height * sizeof(Pixel);
-        */
-
         return state;
     }
 
@@ -419,12 +409,12 @@ namespace app
 
         auto& state = get_initial_state(memory);
 
-        if(!init_unified_memory(state.unified_buffer, state))
+        if(!init_unified_memory(state))
 		{
 			return false;
 		}
 
-        if(!init_device_memory(state.device_buffer, state))
+        if(!init_device_memory(state))
         {
             return false;
         }
@@ -436,7 +426,7 @@ namespace app
 
         gpu::init_device_memory(state);
 
-        screen.memory = state.shared.screen_pixels.data;
+        screen.memory = state.unified->screen_pixels.data;
 
         memory.is_app_initialized = true;
         return true;
