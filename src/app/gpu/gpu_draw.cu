@@ -7,8 +7,8 @@ class DrawProps
 {
 public:
 
-    DeviceMemory* device;
-    UnifiedMemory* unified;
+    DeviceMemory* device_ptr;
+    UnifiedMemory* unified_ptr;
 
     WorldPosition screen_pos;
     u32 screen_width_px;
@@ -67,8 +67,11 @@ static void gpu_draw_tiles(DrawProps props, u32 n_threads)
         return;
     }
 
-    auto& screen_dst = props.unified->screen_pixels;
-    auto& tiles = props.device->tilemap;
+    auto& device = *props.device_ptr;
+    auto& unified = *props.unified_ptr;
+
+    auto& screen_dst = unified.screen_pixels;
+    auto& tiles = device.tilemap;
 
     assert(n_threads == screen_dst.width * screen_dst.height);
 
@@ -108,7 +111,10 @@ static void gpu_draw_entities(DrawProps props, u32 n_threads)
         return;
     }
 
-    auto& entities = props.device->entities;
+    auto& device = *props.device_ptr;
+    auto& unified = *props.unified_ptr;
+
+    auto& entities = device.entities;
 
     assert(n_threads == entities.n_elements);
 
@@ -121,7 +127,7 @@ static void gpu_draw_entities(DrawProps props, u32 n_threads)
         return;
     }
 
-    auto& screen_dst = props.unified->screen_pixels;
+    auto& screen_dst = unified.screen_pixels;
 
     auto screen_width_px = screen_dst.width;
     auto screen_height_px = screen_dst.height;
@@ -164,8 +170,8 @@ namespace gpu
         u32 n_pixels = state.props.screen_width_px * state.props.screen_height_px;
 
         DrawProps props{};
-        props.device = state.device;
-        props.unified = state.unified;
+        props.device_ptr = state.device;
+        props.unified_ptr = state.unified;
         props.screen_width_px = state.props.screen_width_px;
         props.screen_width_m = state.props.screen_width_m;
         props.screen_pos = state.props.screen_position;

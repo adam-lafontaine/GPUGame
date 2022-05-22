@@ -334,7 +334,7 @@ static void player_blue(Entity const& player, Entity& blue)
 
 
 GPU_KERNAL
-static void gpu_next_positions(DeviceMemory* device, UnifiedMemory* unified, u64 current_frame, u32 n_threads)
+static void gpu_next_positions(DeviceMemory* device_ptr, UnifiedMemory* unified_ptr, u64 current_frame, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -342,19 +342,22 @@ static void gpu_next_positions(DeviceMemory* device, UnifiedMemory* unified, u64
         return;
     }
 
-    auto& entities = device->entities;
+    auto& device = *device_ptr;
+    auto& unified = *unified_ptr;
+
+    auto& entities = device.entities;
 
     assert(n_threads == entities.n_elements);
 
     auto entity_id = (u32)t;    
 
-    auto& player_inputs = unified->current_inputs;
+    auto& player_inputs = unified.current_inputs;
 
     if(gpuf::is_brown_entity(entity_id))
     {
         if(entity_id == gpuf::BROWN_BEGIN)
         {
-            auto& recorded_inputs = unified->previous_inputs;
+            auto& recorded_inputs = unified.previous_inputs;
             gpuf::update_device_inputs(player_inputs, recorded_inputs);
         }
 
@@ -375,7 +378,7 @@ static void gpu_next_positions(DeviceMemory* device, UnifiedMemory* unified, u64
 
 
 GPU_KERNAL
-static void gpu_collisions(DeviceMemory* device, u32 n_threads)
+static void gpu_collisions(DeviceMemory* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -385,7 +388,9 @@ static void gpu_collisions(DeviceMemory* device, u32 n_threads)
 
     assert(n_threads == N_COLLISIONS);
 
-    auto& entities = device->entities;
+    auto& device = *device_ptr;
+
+    auto& entities = device.entities;
 
     auto collision_offset = (u32)t;
 
@@ -450,7 +455,7 @@ static void gpu_collisions(DeviceMemory* device, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_update_positions(DeviceMemory* device, u32 n_threads)
+static void gpu_update_positions(DeviceMemory* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -458,7 +463,9 @@ static void gpu_update_positions(DeviceMemory* device, u32 n_threads)
         return;
     }
 
-    auto& entities = device->entities;
+    auto& device = *device_ptr;
+
+    auto& entities = device.entities;
 
     assert(n_threads == entities.n_elements);
 

@@ -222,7 +222,7 @@ class HostMemory
 {
 public:
 
-    HostImage screen_pixels;
+    //HostImage screen_pixels;
 
     
 };
@@ -249,14 +249,15 @@ class AppState
 public:
 
     device::MemoryBuffer device_buffer;
-    device::MemoryBuffer unified_buffer;    
+    device::MemoryBuffer unified_buffer;
 
     DeviceMemory* device;
     UnifiedMemory* unified;
 
+    HostMemory host;
+    StateProps props;
+
     DeviceAssets device_assets;
 
-    HostMemory host;
-
-    StateProps props;    
+    UnifiedMemory shared;
 };

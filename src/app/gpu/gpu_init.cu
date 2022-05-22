@@ -200,7 +200,7 @@ void gpu_init_tiles(DeviceMemory* device_ptr, u32 n_threads)
 
 
 GPU_KERNAL
-void gpu_init_entities(DeviceMemory* device, u32 n_threads)
+void gpu_init_entities(DeviceMemory* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -208,7 +208,9 @@ void gpu_init_entities(DeviceMemory* device, u32 n_threads)
         return;
     }
 
-    auto& entities = device->entities;
+    auto& device = *device_ptr;
+
+    auto& entities = device.entities;
 
     assert(n_threads == entities.n_elements);
 

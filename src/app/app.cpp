@@ -157,6 +157,7 @@ static bool init_unified_memory(device::MemoryBuffer& buffer, AppState& state)
     assert(buffer.size == buffer.capacity);
 
     state.unified = (UnifiedMemory*)device_dst;
+    state.shared = unified;
 
     return true;
 }
@@ -393,6 +394,7 @@ namespace app
         auto& state = get_state(memory);
         init_state_props(state.props);
 
+        /*
         auto mem = (u8*)memory.permanent_storage;
         auto offset = state_sz;
 
@@ -403,6 +405,7 @@ namespace app
         screen.data = (Pixel*)(mem + offset);
         
         offset += screen.width * screen.height * sizeof(Pixel);
+        */
 
         return state;
     }
@@ -433,7 +436,7 @@ namespace app
 
         gpu::init_device_memory(state);
 
-        screen.memory = state.host.screen_pixels.data;    
+        screen.memory = state.shared.screen_pixels.data;
 
         memory.is_app_initialized = true;
         return true;
