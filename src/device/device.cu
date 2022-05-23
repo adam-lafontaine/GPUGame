@@ -32,70 +32,49 @@ static void check_error(cudaError_t err, cstr label = "")
 }
 
 
-bool cuda_memcpy_to_device(const void* host_src, void* device_dst, size_t n_bytes)
+namespace cuda
 {
-    cudaError_t err = cudaMemcpy(device_dst, host_src, n_bytes, cudaMemcpyHostToDevice);
-    check_error(err, "cuda_memcpy_to_device");
+    bool memcpy_to_device(const void* host_src, void* device_dst, size_t n_bytes)
+    {
+        cudaError_t err = cudaMemcpy(device_dst, host_src, n_bytes, cudaMemcpyHostToDevice);
+        check_error(err, "cuda_memcpy_to_device");
 
-    return err == cudaSuccess;
+        return err == cudaSuccess;
+    }
+
+
+    bool memcpy_to_host(const void* device_src, void* host_dst, size_t n_bytes)
+    {
+        cudaError_t err = cudaMemcpy(host_dst, device_src, n_bytes, cudaMemcpyDeviceToHost);
+        check_error(err, "cuda_memcpy_to_host");
+
+        return err == cudaSuccess;
+    }
+
+
+    bool no_errors(cstr label)
+    {
+        cudaError_t err = cudaGetLastError();
+        check_error(err, label);
+
+        return err == cudaSuccess;
+    }
+
+
+    bool launch_success(cstr label)
+    {
+        cudaError_t err = cudaDeviceSynchronize();
+        check_error(err, label);
+
+        return err == cudaSuccess;
+    }
 }
 
 
-bool cuda_memcpy_to_host(const void* device_src, void* host_dst, size_t n_bytes)
-{
-    cudaError_t err = cudaMemcpy(host_dst, device_src, n_bytes, cudaMemcpyDeviceToHost);
-    check_error(err, "cuda_memcpy_to_host");
-
-    return err == cudaSuccess;
-}
 
 
-bool cuda_no_errors(cstr label)
-{
-    cudaError_t err = cudaGetLastError();
-    check_error(err, label);
-
-    return err == cudaSuccess;
-}
 
 
-bool cuda_launch_success(cstr label)
-{
-    cudaError_t err = cudaDeviceSynchronize();
-    check_error(err, label);
-
-    return err == cudaSuccess;
-}
-
-
-bool copy_to_device(image_t const& src, DeviceImage const& dst)
-{
-    assert(src.data);
-    assert(src.width);
-    assert(src.height);
-    assert(dst.data);
-    assert(dst.width == src.width);
-    assert(dst.height == src.height);
-
-    auto bytes = src.width * src.height * sizeof(pixel_t);
-
-    return cuda_memcpy_to_device(src.data, dst.data, bytes);
-}
-
-
-bool copy_to_host(DeviceImage const& src, image_t const& dst)
-{
-    assert(src.data);
-    assert(src.width);
-    assert(src.height);
-    assert(dst.data);
-    assert(dst.width == src.width);
-    assert(dst.height == src.height);
-
-    auto bytes = src.width * src.height * sizeof(pixel_t);
-
-    return cuda_memcpy_to_host(src.data, dst.data, bytes);
-}
 
 
 namespace device
@@ -213,54 +192,6 @@ namespace device
         {
             buffer.size -= n_bytes;
             return true;
-        }
-
-        return false;
-    }
-
-
-    bool push_device_image(MemoryBuffer& buffer, DeviceImage& image, u32 width, u32 height)
-    {
-        auto data = push_bytes(buffer, width * height * sizeof(Pixel));
-
-        if(data)
-        {
-            image.width = width;
-            image.height = height;
-            image.data = (pixel_t*)data;
-
-            return true;
-        }
-
-        return false;
-    }
-
-
-    bool push_device_palette(MemoryBuffer& buffer, DeviceColorPalette& palette, u32 n_colors)
-    {
-        auto bytes_per_channel = sizeof(u8) * n_colors;
-        size_t bytes_allocated = 0;
-
-        for(u32 c = 0; c < RGB_CHANNELS; ++c)
-        {
-            auto data = push_bytes(buffer, bytes_per_channel);
-            if(!data)
-            {
-                break;                
-            }
-
-            bytes_allocated += bytes_per_channel;
-            palette.channels[c] = (u8*)data;
-        }
-
-        if(bytes_allocated == RGB_CHANNELS * bytes_per_channel)
-        {
-            palette.n_colors = n_colors;
-            return true;
-        }
-        else if (bytes_allocated > 0)
-        {
-            pop_bytes(buffer, bytes_allocated);            
         }
 
         return false;

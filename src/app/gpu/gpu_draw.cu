@@ -3,12 +3,12 @@
 #include <cassert>
 
 
-class TileProps
+class DrawProps
 {
 public:
 
-    DeviceTileMatrix tiles;
-    DeviceImage screen_dst;
+    DeviceMemory* device_ptr;
+    UnifiedMemory* unified_ptr;
 
     WorldPosition screen_pos;
     u32 screen_width_px;
@@ -59,13 +59,21 @@ Pixel get_tile_color(DeviceTile const& tile, Point2Dr32 const& offset_m, r32 scr
 
 
 GPU_KERNAL
-static void gpu_draw_tiles(TileProps props, u32 n_threads)
+static void gpu_draw_tiles(DrawProps props, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
     {
         return;
-    }   
+    }
+
+    auto& device = *props.device_ptr;
+    auto& unified = *props.unified_ptr;
+
+    auto& screen_dst = unified.screen_pixels;
+    auto& tiles = device.tilemap;
+
+    assert(n_threads == screen_dst.width * screen_dst.height);
 
     auto pixel_id = (u32)t;
 
@@ -84,57 +92,18 @@ static void gpu_draw_tiles(TileProps props, u32 n_threads)
 
     if(tile_x < 0 || tile_y < 0 || tile_x >= WORLD_WIDTH_TILE || tile_y >= WORLD_HEIGHT_TILE)
     {
-        props.screen_dst.data[pixel_id] = black;
+        screen_dst.data[pixel_id] = black;
         return;
     }
 
-    auto& tile =  props.tiles.data[tile_y * WORLD_WIDTH_TILE + tile_x];
+    auto& tile =  tiles.data[tile_y * WORLD_WIDTH_TILE + tile_x];
 
-    props.screen_dst.data[pixel_id] = gpuf::get_tile_color(tile, pixel_pos.offset_m, props.screen_width_m, props.screen_width_px);
+    screen_dst.data[pixel_id] = gpuf::get_tile_color(tile, pixel_pos.offset_m, props.screen_width_m, props.screen_width_px);
 }
-
-
-static void draw_tiles(AppState& state)
-{
-    auto& dst = state.device.screen_pixels;
-
-    u32 width = dst.width;
-    u32 height = dst.height;
-    u32 n_pixels = width * height;
-
-    auto n_threads = n_pixels;
-
-    TileProps props{};
-    props.tiles = state.device.tilemap;
-    props.screen_dst = dst;
-    props.screen_width_px = state.props.screen_width_px;
-    props.screen_width_m = state.props.screen_width_m;
-    props.screen_pos = state.props.screen_position;
-
-    bool proc = cuda_no_errors("draw_tiles");
-    assert(proc);
-
-    gpu_draw_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
-
-    proc &= cuda_launch_success("gpu_draw_tiles");
-    assert(proc);
-}
-
-
-class DrawEntityProps
-{
-public:
-    DeviceArray<Entity> entities;
-    DeviceImage screen_dst;
-    
-    r32 screen_width_m;
-
-    WorldPosition screen_pos;
-};
 
 
 GPU_KERNAL
-static void gpu_draw_entities(DrawEntityProps props, u32 n_threads)
+static void gpu_draw_entities(DrawProps props, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -142,16 +111,23 @@ static void gpu_draw_entities(DrawEntityProps props, u32 n_threads)
         return;
     }
 
-    auto entity_id = t;
+    auto& device = *props.device_ptr;
+    auto& unified = *props.unified_ptr;
 
-    auto& entity = props.entities.data[entity_id];    
+    auto& entities = device.entities;
+
+    assert(n_threads == entities.n_elements);
+
+    auto entity_id = (u32)t;
+
+    auto& entity = entities.data[entity_id];    
 
     if(!entity.is_active)
     {
         return;
     }
 
-    auto& screen_dst = props.screen_dst;
+    auto& screen_dst = unified.screen_pixels;
 
     auto screen_width_px = screen_dst.width;
     auto screen_height_px = screen_dst.height;
@@ -187,34 +163,32 @@ static void gpu_draw_entities(DrawEntityProps props, u32 n_threads)
 }
 
 
-static void draw_entities(AppState& state)
-{
-    auto n_threads = state.device.entities.n_elements;
-
-    DrawEntityProps props{};
-    props.entities = state.device.entities;
-    props.screen_dst = state.device.screen_pixels;
-    props.screen_pos = state.props.screen_position;
-    props.screen_width_m = state.props.screen_width_m;
-
-    bool proc = cuda_no_errors("draw_entities");
-    assert(proc);
-
-    gpu_draw_entities<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
-
-    proc &= cuda_launch_success("gpu_draw_entities");
-    assert(proc);
-}
-
-
 namespace gpu
 {
     void render(AppState& state)
     {
-        draw_tiles(state);
-        draw_entities(state);
+        u32 n_pixels = state.props.screen_width_px * state.props.screen_height_px;
 
-        auto const screen_bytes = state.props.screen_width_px * state.props.screen_height_px * sizeof(Pixel);
-        cuda_memcpy_to_host(state.device.screen_pixels.data, state.host.screen_pixels.data, screen_bytes);
+        DrawProps props{};
+        props.device_ptr = state.device;
+        props.unified_ptr = state.unified;
+        props.screen_width_px = state.props.screen_width_px;
+        props.screen_width_m = state.props.screen_width_m;
+        props.screen_pos = state.props.screen_position;
+
+        bool result = cuda::no_errors("gpu::render");
+        assert(result);
+
+        auto n_threads = n_pixels;
+        gpu_draw_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
+
+        result = cuda::launch_success("gpu_draw_tiles");
+        assert(result);
+
+        n_threads = N_ENTITIES;
+        gpu_draw_entities<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
+
+        result = cuda::launch_success("gpu_draw_entities");
+        assert(result);
     }
 }

@@ -277,8 +277,14 @@ SDL2 := `sdl2-config --cflags --libs`
 exe_name := gpu_game_sdl
 
 # directories
-build  := ../../build/sdl
-code   := ..
+root   := ../..
+build  := $(root)/build/sdl
+build_lib := $(build)/lib
+build_app := $(build)/app
+
+code   := $(root)/src
+img    := $(code)/libimage
+stb    := $(img)/stb_wrapper
 sdl    := $(code)/sdl
 input  := $(code)/input
 utils  := $(code)/utils
@@ -286,8 +292,9 @@ device := $(code)/device
 app    := $(code)/app
 gpu    := $(app)/gpu
 tiles  := $(app)/tiles
-img    := $(code)/libimage
-stb    := $(img)/stb_wrapper
+input_record := $(app)/input_record
+device_image := $(app)/device_image
+
 
 
 # header files
@@ -331,11 +338,17 @@ device_h += $(types_h)
 
 cuda_def_h := $(device)/cuda_def.cuh
 
+
 device_tile_h := $(tiles)/device_tile.hpp
 device_tile_h += $(device_h)
 
+input_record_h := $(input_record)/input_record.hpp
+input_record_h += $(device_h)
+
 app_types_h := $(app)/app_types.hpp
 app_types_h += $(device_tile_h)
+app_types_h += $(input_record_h)
+
 
 gpu_constants_h := $(gpu)/gpu_constants.hpp
 
@@ -358,39 +371,39 @@ app_include_h += $(libimage_h)
 
 # main
 main_c       := $(sdl)/sdl_main.cpp
-main_o       := $(build)/main.o
+main_o       := $(build_app)/main.o
 object_files := $(main_o)
 
 img_c        := $(stb)/stb_libimage.cpp
-img_o        := $(build)/img.o
+img_o        := $(build_lib)/img.o
 object_files += $(img_o)
 
-device_c     := $(device)/device.cu
-device_o     := $(build)/device.o
-object_files += $(device_o)
-
 input_c      := $(sdl)/sdl_input.cpp
-input_o      := $(build)/input.o
+input_o      := $(build_lib)/input.o
 object_files += $(input_o)
 
+device_c     := $(device)/device.cu
+device_o     := $(build_app)/device.o
+object_files += $(device_o)
+
 tiles_c      := $(tiles)/device_tile.cpp
-tiles_o      := $(build)/tiles.o
+tiles_o      := $(build_app)/tiles.o
 object_files += $(tiles_o)
 
 gpu_init_c   := $(gpu)/gpu_init.cu
-gpu_init_o   := $(build)/gpu_init.o
+gpu_init_o   := $(build_app)/gpu_init.o
 object_files += $(gpu_init_o)
 
 gpu_update_c := $(gpu)/gpu_update.cu
-gpu_update_o := $(build)/gpu_update.o
+gpu_update_o := $(build_app)/gpu_update.o
 object_files += $(gpu_update_o)
 
 gpu_draw_c   := $(gpu)/gpu_draw.cu
-gpu_draw_o   := $(build)/gpu_draw.o
+gpu_draw_o   := $(build_app)/gpu_draw.o
 object_files += $(gpu_draw_o)
 
 app_c        := $(app)/app.cpp
-app_o        := $(build)/app.o
+app_o        := $(build_app)/app.o
 object_files += $(app_o)
 
 
@@ -403,46 +416,37 @@ $(img_o): $(img_c) $(libimage_h) $(stb_include_h)
 	@echo "\n img"
 	$(GPP) -o $@ -c $<
 
-
 $(device_o): $(device_c) $(device_h) $(cuda_def_h)
 	@echo "\n device"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
-
 
 $(input_o): $(input_c) $(sdl_input_h) $(input_state_h)
 	@echo "\n input"
 	$(GPP) -o $@ -c $< $(SDL2)
 
-
 $(tiles_o): $(tiles_c) $(device_tile_h) $(gpu_app_h)
 	@echo "\n tiles"
 	$(GPP) -o $@ -c $<
-    
 
 $(gpu_update_o): $(gpu_update_c) $(gpu_include_h)
 	@echo "\n gpu_update"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
-
 $(gpu_init_o): $(gpu_init_c) $(gpu_include_h)
 	@echo "\n gpu_init"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
-
 
 $(gpu_draw_o): $(gpu_draw_c) $(gpu_include_h)
 	@echo "\n gpu_draw"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
-
 $(app_o): $(app_c) $(app_include_h) 
 	@echo "\n app"
 	$(GPP) -o $@ -c $<
 
-
 $(main_o): $(main_c) $(app_h) $(sdl_input_h) $(stopwatch_h)
 	@echo "\n main"
 	$(GPP) -o $@ -c $< $(SDL2)
-
 
 $(program_exe): $(object_files)
 	@echo "\n $(exe_name)"
@@ -455,8 +459,12 @@ run: build
 	$(program_exe)
 	@echo "\n"
 
-clean:
+clean_all:
 	rm -rfv $(build)/*
 
+clean:
+	rm -rfv $(build_app)/*
+
 setup:
-	mkdir -p $(build)
+	mkdir -p $(build_lib)
+	mkdir -p $(build_app)
