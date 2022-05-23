@@ -47,7 +47,6 @@ inline bool make_device_input_list(DeviceInputList& list, device::MemoryBuffer& 
     auto input_record_data = device::push_bytes(buffer, data_size);
     if(!input_record_data)
     {
-        assert("make_device_input_list" && false);
         return false;
     }
 

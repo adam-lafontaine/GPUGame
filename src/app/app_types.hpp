@@ -2,7 +2,6 @@
 
 #include "tiles/device_tile.hpp"
 #include "input_record/input_record.hpp"
-#include "device_image/device_image.hpp"
 
 
 class WorldPosition
@@ -51,7 +50,6 @@ inline bool make_device_entity_array(DeviceEntityArray& array, device::MemoryBuf
     auto entity_data = device::push_bytes(buffer, data_size);
     if(!entity_data)
     {
-        assert("make_device_entity_array" && false);
         return false;
     }
 
@@ -71,19 +69,18 @@ constexpr size_t device_tile_matrix_data_size(u32 n_tiles)
 }
 
 
-inline bool make_device_tile_matrix(DeviceTileMatrix& tilemap, device::MemoryBuffer& buffer, u32 width, u32 height)
+inline bool make_device_tile_matrix(DeviceTileMatrix& tilemap, device::MemoryBuffer& buffer, u32 width_tile, u32 height_tile)
 {
-    auto data_size = device_tile_matrix_data_size(width * height);
+    auto data_size = device_tile_matrix_data_size(width_tile * height_tile);
 
     auto tile_data = device::push_bytes(buffer, data_size);
     if(!tile_data)
     {
-        assert("" && false);
         return false;
     }
 
-    tilemap.width = width;
-    tilemap.height = height;
+    tilemap.width = width_tile;
+    tilemap.height = height_tile;
     tilemap.data = (DeviceTile*)tile_data;
 
     return true;
@@ -150,7 +147,7 @@ constexpr size_t device_memory_total_size(u32 n_entities, u32 n_tiles)
 }
 
 
-inline bool make_device_memory(DeviceMemory& memory, device::MemoryBuffer& buffer, u32 n_entities, u32 n_tile_width, u32 n_tile_height)
+inline bool make_device_memory(DeviceMemory& memory, device::MemoryBuffer& buffer, u32 n_entities, u32 width_tile, u32 height_tile)
 {
     if(!make_device_assets(memory.assets, buffer))
     {
@@ -162,7 +159,7 @@ inline bool make_device_memory(DeviceMemory& memory, device::MemoryBuffer& buffe
         return false;
     }
 
-    if(!make_device_tile_matrix(memory.tilemap, buffer, n_tile_width, n_tile_height))
+    if(!make_device_tile_matrix(memory.tilemap, buffer, width_tile, height_tile))
     {
         return false;
     } 
