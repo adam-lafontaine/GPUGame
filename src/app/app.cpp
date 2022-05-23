@@ -120,7 +120,7 @@ static bool init_device_memory(AppState& state)
 
     assert(buffer.size == buffer.capacity);
 
-    if(!cuda_memcpy_to_device(&device, device_dst, struct_size))
+    if(!cuda::memcpy_to_device(&device, device_dst, struct_size))
     {
         return false;
     }
@@ -153,7 +153,7 @@ static bool init_unified_memory(AppState& state)
 
     auto device_dst = device::push_bytes(buffer, struct_size);
 
-    if(!cuda_memcpy_to_device(&unified, device_dst, struct_size))
+    if(!cuda::memcpy_to_device(&unified, device_dst, struct_size))
     {
         return false;
     }

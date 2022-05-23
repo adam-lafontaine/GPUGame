@@ -41,7 +41,7 @@ bool copy_to_device(image_t const& src, DeviceTile const& dst)
 
     auto bytes = src.width * src.height * sizeof(pixel_t);
 
-    auto result = cuda_memcpy_to_device(src.data, dst.bitmap_data, bytes);
+    auto result = cuda::memcpy_to_device(src.data, dst.bitmap_data, bytes);
 
     if(!result)
     {
@@ -51,5 +51,5 @@ bool copy_to_device(image_t const& src, DeviceTile const& dst)
     auto avg = get_avg_color(src);
     bytes = sizeof(pixel_t);
 
-    return cuda_memcpy_to_device(&avg, dst.avg_color, bytes);    
+    return cuda::memcpy_to_device(&avg, dst.avg_color, bytes);    
 }

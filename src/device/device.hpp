@@ -7,17 +7,17 @@
 #include <array>
 
 
-bool cuda_memcpy_to_device(const void* host_src, void* device_dst, size_t n_bytes);
+namespace cuda
+{
+    bool memcpy_to_device(const void* host_src, void* device_dst, size_t n_bytes);
 
-bool cuda_memcpy_to_host(const void* device_src, void* host_dst, size_t n_bytes);
-
-
-bool cuda_no_errors(cstr label);
-
-bool cuda_launch_success(cstr label);
+    bool memcpy_to_host(const void* device_src, void* host_dst, size_t n_bytes);
 
 
+    bool no_errors(cstr label);
 
+    bool launch_success(cstr label);
+}
 
 
 namespace device
@@ -63,7 +63,7 @@ bool copy_to_device(std::array<T, N> const& src, DeviceArray<T>& dst)
 
     auto bytes = N * sizeof(T);
 
-    return cuda_memcpy_to_device(src.data(), dst.data, bytes);
+    return cuda::memcpy_to_device(src.data(), dst.data, bytes);
 }
 
 
@@ -123,7 +123,7 @@ inline bool copy_to_device(image_t const& src, DeviceImage const& dst)
 
     auto bytes = src.width * src.height * sizeof(pixel_t);
 
-    return cuda_memcpy_to_device(src.data, dst.data, bytes);
+    return cuda::memcpy_to_device(src.data, dst.data, bytes);
 }
 
 /*

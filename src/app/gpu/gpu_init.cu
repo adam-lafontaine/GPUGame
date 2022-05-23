@@ -238,19 +238,19 @@ namespace gpu
     {
         assert(state.device);
 
-        bool result = cuda_no_errors("init_device_memory");
+        bool result = cuda::no_errors("gpu::init_device_memory");
         assert(result);
 
         u32 n_threads = N_WORLD_TILES;
         gpu_init_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device, n_threads);
 
-        result = cuda_launch_success("gpu_init_tiles");
+        result = cuda::launch_success("gpu_init_tiles");
         assert(result);
 
         n_threads = N_ENTITIES;
         gpu_init_entities<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device, n_threads);
 
-        result = cuda_launch_success("gpu_init_entities");
+        result = cuda::launch_success("gpu_init_entities");
         assert(result);
     }
 }

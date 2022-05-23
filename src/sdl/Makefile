@@ -339,9 +339,6 @@ device_h += $(types_h)
 cuda_def_h := $(device)/cuda_def.cuh
 
 
-device_image_h := $(device_image)/device_image.hpp
-device_image_h += $(device_h)
-
 device_tile_h := $(tiles)/device_tile.hpp
 device_tile_h += $(device_h)
 
@@ -349,7 +346,6 @@ input_record_h := $(input_record)/input_record.hpp
 input_record_h += $(device_h)
 
 app_types_h := $(app)/app_types.hpp
-app_types_h += $(device_image_h)
 app_types_h += $(device_tile_h)
 app_types_h += $(input_record_h)
 
@@ -463,10 +459,10 @@ run: build
 	$(program_exe)
 	@echo "\n"
 
-clean:
+clean_all:
 	rm -rfv $(build)/*
 
-clean_app:
+clean:
 	rm -rfv $(build_app)/*
 
 setup:

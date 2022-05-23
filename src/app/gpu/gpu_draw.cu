@@ -176,19 +176,19 @@ namespace gpu
         props.screen_width_m = state.props.screen_width_m;
         props.screen_pos = state.props.screen_position;
 
-        bool result = cuda_no_errors("render");
+        bool result = cuda::no_errors("gpu::render");
         assert(result);
 
         auto n_threads = n_pixels;
         gpu_draw_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
 
-        result = cuda_launch_success("gpu_draw_tiles");
+        result = cuda::launch_success("gpu_draw_tiles");
         assert(result);
 
         n_threads = N_ENTITIES;
         gpu_draw_entities<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
 
-        result &= cuda_launch_success("gpu_draw_entities");
+        result = cuda::launch_success("gpu_draw_entities");
         assert(result);
     }
 }

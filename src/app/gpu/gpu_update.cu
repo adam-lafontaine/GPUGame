@@ -497,25 +497,25 @@ namespace gpu
 {    
     void update(AppState& state)
     {        
-        bool result = cuda_no_errors("update");
+        bool result = cuda::no_errors("gpu::update");
         assert(result);
 
         auto n_threads = N_ENTITIES;
         gpu_next_positions<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device, state.unified, state.props.frame_count, n_threads);
 
-        result = cuda_launch_success("gpu_next_positions");
+        result = cuda::launch_success("gpu_next_positions");
         assert(result);
 
         n_threads = N_COLLISIONS;
         gpu_collisions<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device, n_threads);
 
-        result = cuda_launch_success("gpu_collisions");
+        result = cuda::launch_success("gpu_collisions");
         assert(result);
 
         n_threads = N_ENTITIES;
         gpu_update_positions<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device, n_threads);
 
-        result = cuda_launch_success("gpu_update_positions");
+        result = cuda::launch_success("gpu_update_positions");
         assert(result);
     }
 }

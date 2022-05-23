@@ -32,40 +32,46 @@ static void check_error(cudaError_t err, cstr label = "")
 }
 
 
-bool cuda_memcpy_to_device(const void* host_src, void* device_dst, size_t n_bytes)
+namespace cuda
 {
-    cudaError_t err = cudaMemcpy(device_dst, host_src, n_bytes, cudaMemcpyHostToDevice);
-    check_error(err, "cuda_memcpy_to_device");
+    bool memcpy_to_device(const void* host_src, void* device_dst, size_t n_bytes)
+    {
+        cudaError_t err = cudaMemcpy(device_dst, host_src, n_bytes, cudaMemcpyHostToDevice);
+        check_error(err, "cuda_memcpy_to_device");
 
-    return err == cudaSuccess;
+        return err == cudaSuccess;
+    }
+
+
+    bool memcpy_to_host(const void* device_src, void* host_dst, size_t n_bytes)
+    {
+        cudaError_t err = cudaMemcpy(host_dst, device_src, n_bytes, cudaMemcpyDeviceToHost);
+        check_error(err, "cuda_memcpy_to_host");
+
+        return err == cudaSuccess;
+    }
+
+
+    bool no_errors(cstr label)
+    {
+        cudaError_t err = cudaGetLastError();
+        check_error(err, label);
+
+        return err == cudaSuccess;
+    }
+
+
+    bool launch_success(cstr label)
+    {
+        cudaError_t err = cudaDeviceSynchronize();
+        check_error(err, label);
+
+        return err == cudaSuccess;
+    }
 }
 
 
-bool cuda_memcpy_to_host(const void* device_src, void* host_dst, size_t n_bytes)
-{
-    cudaError_t err = cudaMemcpy(host_dst, device_src, n_bytes, cudaMemcpyDeviceToHost);
-    check_error(err, "cuda_memcpy_to_host");
 
-    return err == cudaSuccess;
-}
-
-
-bool cuda_no_errors(cstr label)
-{
-    cudaError_t err = cudaGetLastError();
-    check_error(err, label);
-
-    return err == cudaSuccess;
-}
-
-
-bool cuda_launch_success(cstr label)
-{
-    cudaError_t err = cudaDeviceSynchronize();
-    check_error(err, label);
-
-    return err == cudaSuccess;
-}
 
 
 
