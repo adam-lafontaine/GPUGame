@@ -91,22 +91,22 @@ static void move_player(Entity& entity, InputRecord const& input)
 {    
     entity.dt = { 0.0f, 0.0f };
 
-    if(input.input & INPUT_PLAYER_UP)
+    if(input.input & INPUT::PLAYER_UP)
     {
         entity.dt.y -= input.est_dt_frame;
     }
 
-    if(input.input & INPUT_PLAYER_DOWN)
+    if(input.input & INPUT::PLAYER_DOWN)
     {
         entity.dt.y += input.est_dt_frame;
     }
 
-    if(input.input & INPUT_PLAYER_LEFT)
+    if(input.input & INPUT::PLAYER_LEFT)
     {
         entity.dt.x -= input.est_dt_frame;
     }
 
-    if(input.input & INPUT_PLAYER_RIGHT)
+    if(input.input & INPUT::PLAYER_RIGHT)
     {
         entity.dt.x += input.est_dt_frame;
     }

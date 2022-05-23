@@ -269,19 +269,19 @@ static void process_player_input(Input const& input, AppState& state)
 
     if(controller.dpad_up.is_down)
     {
-        player_input |= INPUT_PLAYER_UP;
+        player_input |= INPUT::PLAYER_UP;
     }
     if(controller.dpad_down.is_down)
     {
-        player_input |= INPUT_PLAYER_DOWN;
+        player_input |= INPUT::PLAYER_DOWN;
     }
     if(controller.dpad_left.is_down)
     {
-        player_input |= INPUT_PLAYER_LEFT;
+        player_input |= INPUT::PLAYER_LEFT;
     }
     if(controller.dpad_right.is_down)
     {
-        player_input |= INPUT_PLAYER_RIGHT;
+        player_input |= INPUT::PLAYER_RIGHT;
     }
 
     auto const create_record = [&]()

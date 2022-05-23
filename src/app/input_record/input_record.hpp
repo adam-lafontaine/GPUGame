@@ -2,14 +2,21 @@
 
 #include "../../device/device.hpp"
 
-constexpr u32 MAX_INPUT_RECORDS = 5000;
 
-using uInput = u8;
 
-constexpr uInput INPUT_PLAYER_UP    = 0b00000001;
-constexpr uInput INPUT_PLAYER_DOWN  = 0b00000010;
-constexpr uInput INPUT_PLAYER_LEFT  = 0b00000100;
-constexpr uInput INPUT_PLAYER_RIGHT = 0b00001000;
+using uInput = u32;
+
+namespace INPUT
+{
+    constexpr uInput PLAYER_UP    = 0b0000'0000'0000'0000'0000'0000'0000'0001;
+    constexpr uInput PLAYER_DOWN  = 0b0000'0000'0000'0000'0000'0000'0000'0010;
+    constexpr uInput PLAYER_LEFT  = 0b0000'0000'0000'0000'0000'0000'0000'0100;
+    constexpr uInput PLAYER_RIGHT = 0b0000'0000'0000'0000'0000'0000'0000'1000;
+
+    constexpr u32 MAX_RECORDS = 5000;
+}
+
+
 
 
 class InputRecord
@@ -36,7 +43,7 @@ public:
 
 constexpr size_t device_input_list_data_size()
 {
-    return sizeof(InputRecord) * MAX_INPUT_RECORDS;
+    return sizeof(InputRecord) * INPUT::MAX_RECORDS;
 }
 
 
@@ -50,7 +57,7 @@ inline bool make_device_input_list(DeviceInputList& list, device::MemoryBuffer& 
         return false;
     }
 
-    list.capacity = MAX_INPUT_RECORDS;
+    list.capacity = INPUT::MAX_RECORDS;
     list.size = 0;
     list.read_index = 0;
     list.data = (InputRecord*)input_record_data;
