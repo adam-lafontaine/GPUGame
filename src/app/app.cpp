@@ -36,14 +36,12 @@ static void init_state_props(StateProps& props)
 }
 
 
-static bool load_tile_assets(AppState& state)
+static bool load_device_assets(DeviceAssets& device_assets)
 {    
     Image read_img{};
     Image tile_img{};
     tile_img.width = TILE_WIDTH_PX;
     tile_img.height = TILE_HEIGHT_PX;
-    
-    auto& device_assets = state.device_assets;
 
     auto const cleanup = [&]()
     {
@@ -110,6 +108,11 @@ static bool init_device_memory(AppState& state)
         return false;
     }
 
+    if(!load_device_assets(device.assets))
+    {
+        return false;
+    }
+
     auto struct_size = sizeof(DeviceMemory);
 
     auto device_dst = device::push_bytes(buffer, struct_size);
@@ -126,8 +129,6 @@ static bool init_device_memory(AppState& state)
     }
 
     state.device = (DeviceMemory*)device_dst;
-
-    state.device_assets = device.assets;
 
     return true;
 }
@@ -419,12 +420,10 @@ namespace app
             return false;
         }
 
-        if(!load_tile_assets(state))
+        if(!gpu::init_device_memory(state))
         {
             return false;
         }
-
-        gpu::init_device_memory(state);
 
         screen.memory = state.unified->screen_pixels.data;
 

@@ -178,24 +178,6 @@ void gpu_init_tiles(DeviceMemory* device_ptr, u32 n_threads)
     auto world_tile_id = (u32)t;
 
     world_tiles.data[world_tile_id] = assets.grass_tile;
-
-    /*
-
-    auto world_tile_y = world_tile_id / world_tiles.width;
-    auto world_tile_x = world_tile_id - world_tile_y * world_tiles.width;    
-
-    if( world_tile_x == 0 ||
-        world_tile_x == world_tiles.width - 1 ||
-        world_tile_y == 0 ||
-        world_tile_y == world_tiles.height - 1)
-    {
-        world_tile = tiles.black;
-    }
-    else
-    {
-        world_tile = tiles.grass;
-    }
-    */
 }
 
 
@@ -234,23 +216,37 @@ void gpu_init_entities(DeviceMemory* device_ptr, u32 n_threads)
 
 namespace gpu
 {
-    void init_device_memory(AppState const& state)
+    bool init_device_memory(AppState const& state)
     {
         assert(state.device);
 
         bool result = cuda::no_errors("gpu::init_device_memory");
         assert(result);
+        if(!result)
+        {
+            return false;
+        }
 
         u32 n_threads = N_WORLD_TILES;
         gpu_init_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device, n_threads);
 
         result = cuda::launch_success("gpu_init_tiles");
         assert(result);
+        if(!result)
+        {
+            return false;
+        }
 
         n_threads = N_ENTITIES;
         gpu_init_entities<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device, n_threads);
 
         result = cuda::launch_success("gpu_init_entities");
         assert(result);
+        if(!result)
+        {
+            return false;
+        }
+
+        return true;
     }
 }
