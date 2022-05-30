@@ -1,4 +1,24 @@
 #include "app_types.hpp"
+#include "app_include.hpp"
+
+
+static size_t device_entity_array_data_size(u32 n_elements)
+{
+    return n_elements * sizeof(Entity);
+}
+
+
+static size_t device_tile_matrix_data_size(u32 n_tiles)
+{
+    return n_tiles * sizeof(DeviceTile);
+}
+
+
+static size_t device_assets_data_size()
+{
+    return  N_TILE_BITMAPS * device_tile_data_size();
+}
+
 
 static bool make_device_assets(DeviceAssets& assets, device::MemoryBuffer& buffer)
 {
@@ -53,6 +73,26 @@ static bool make_device_tile_matrix(DeviceTileMatrix& tilemap, device::MemoryBuf
     tilemap.data = (DeviceTile*)tile_data;
 
     return true;
+}
+
+
+size_t device_memory_total_size()
+{
+    return 
+        sizeof(DeviceMemory)
+        + device_assets_data_size()
+        + device_tile_matrix_data_size(WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE)
+        + device_entity_array_data_size(N_ENTITIES);
+}
+
+
+size_t unified_memory_total_size(u32 screen_width, u32 screen_height)
+{
+    return 
+        sizeof(UnifiedMemory)
+        + device_image_data_size(screen_width, screen_height)
+        + device_input_list_data_size()
+        + device_input_list_data_size();
 }
 
 

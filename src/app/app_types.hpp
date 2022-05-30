@@ -36,20 +36,7 @@ public:
 
 using DeviceEntityArray = DeviceArray<Entity>;
 
-
-constexpr size_t device_entity_array_data_size(u32 n_elements)
-{
-    return n_elements * sizeof(Entity);
-}
-
-
 using DeviceTileMatrix = DeviceMatrix<DeviceTile>;
-
-
-constexpr size_t device_tile_matrix_data_size(u32 n_tiles)
-{
-    return n_tiles * sizeof(DeviceTile);
-}
 
 
 class DeviceAssets
@@ -62,15 +49,6 @@ public:
 };
 
 
-constexpr size_t device_assets_data_size()
-{
-    return  N_TILE_BITMAPS * device_tile_data_size();
-}
-
-
-
-
-
 
 class DeviceMemory
 {
@@ -79,21 +57,17 @@ public:
     
     DeviceTileMatrix tilemap;
 
-    DeviceEntityArray entities;    
+    // old
+    DeviceEntityArray entities;
+
+    // new
+    //Entity user_player;
+
+    //DeviceEntityArray blue_entities;
+
+    //DeviceEntityArray wall_entities;
 
 };
-
-
-constexpr size_t device_memory_total_size(u32 n_entities, u32 n_tiles)
-{
-    return 
-        sizeof(DeviceMemory)
-        + device_assets_data_size()
-        + device_tile_matrix_data_size(n_tiles)
-        + device_entity_array_data_size(n_entities);
-}
-
-
 
 
 class UnifiedMemory
@@ -107,19 +81,6 @@ public:
     DeviceInputList current_inputs;
     
 };
-
-
-constexpr size_t unified_memory_total_size(u32 screen_width, u32 screen_height)
-{
-    return 
-        sizeof(UnifiedMemory)
-        + device_image_data_size(screen_width, screen_height)
-        + device_input_list_data_size()
-        + device_input_list_data_size();
-}
-
-
-
 
 
 using HostImage = Image;
@@ -166,6 +127,9 @@ public:
 };
 
 
+size_t device_memory_total_size();
+
+size_t unified_memory_total_size(u32 screen_width, u32 screen_height);
 
 bool make_device_memory(DeviceMemory& memory, device::MemoryBuffer& buffer, u32 n_entities, u32 width_tile, u32 height_tile);
 

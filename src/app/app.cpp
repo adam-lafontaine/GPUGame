@@ -96,7 +96,7 @@ static bool init_device_memory(AppState& state)
 {
     auto& buffer = state.device_buffer;
 
-    if(!device::malloc(buffer, device_memory_total_size(N_ENTITIES, WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE)))
+    if(!device::malloc(buffer, device_memory_total_size()))
     {
         return false;
     }
