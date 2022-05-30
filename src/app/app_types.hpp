@@ -79,7 +79,7 @@ public:
     
     DeviceTileMatrix tilemap;
 
-    DeviceArray<Entity> entities;    
+    DeviceEntityArray entities;    
 
 };
 

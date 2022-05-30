@@ -42,8 +42,6 @@ static bool load_device_assets(DeviceAssets& device_assets)
     Image tile_img{};
     tile_img.width = TILE_WIDTH_PX;
     tile_img.height = TILE_HEIGHT_PX;
-    
-    //auto& device_assets = state.device_assets;
 
     auto const cleanup = [&]()
     {
@@ -422,7 +420,10 @@ namespace app
             return false;
         }
 
-        gpu::init_device_memory(state);
+        if(!gpu::init_device_memory(state))
+        {
+            return false;
+        }
 
         screen.memory = state.unified->screen_pixels.data;
 
