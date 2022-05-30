@@ -163,8 +163,6 @@ public:
 
     HostMemory host;
     StateProps props;
-
-    DeviceAssets device_assets;
 };
 
 
