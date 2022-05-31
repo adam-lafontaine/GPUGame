@@ -405,7 +405,7 @@ static void gpu_next_positions(DeviceMemory* device_ptr, UnifiedMemory* unified_
 
         return;
     }
-
+    /*
     auto& entity_old = entities.data[entity_id];
 
     if(gpuf::is_player_entity(entity_id))
@@ -413,7 +413,8 @@ static void gpu_next_positions(DeviceMemory* device_ptr, UnifiedMemory* unified_
         gpuf::apply_current_input(entity_old, player_inputs, current_frame);
     }
 
-    gpuf::entity_next_position(entity_old); 
+    gpuf::entity_next_position(entity_old);
+    */
 
     if(gpuf::is_player_entity(entity_id))
     {
@@ -450,10 +451,11 @@ static void gpu_collisions(DeviceMemory* device_ptr, u32 n_threads)
         auto player_offset = offset / N_BROWN_ENTITIES;
         auto wall_offset = offset - player_offset * N_BROWN_ENTITIES;
 
+        /*
         auto& player_old = entities.data[gpuf::get_entity_id_from_player_offset(player_offset)];
         auto& wall_old = entities.data[gpuf::get_entity_id_from_brown_offset(wall_offset)];
-
-        gpuf::stop_wall(player_old, wall_old);        
+        gpuf::stop_wall(player_old, wall_old);
+        */   
 
         gpuf::stop_wall(device.user_player, device.wall_entities.data[wall_offset]);
 
@@ -465,9 +467,11 @@ static void gpu_collisions(DeviceMemory* device_ptr, u32 n_threads)
         auto blue_offset = offset / N_BROWN_ENTITIES;
         auto wall_offset = offset - blue_offset * N_BROWN_ENTITIES;
 
+        /*
         auto& blue_old = entities.data[gpuf::get_entity_id_from_blue_offset(blue_offset)];
         auto& wall_old = entities.data[gpuf::get_entity_id_from_brown_offset(wall_offset)];
         gpuf::bounce_wall(blue_old, wall_old);
+        */
 
         auto& blue = device.blue_entities.data[blue_offset];
         auto& wall = device.wall_entities.data[wall_offset];
@@ -481,9 +485,11 @@ static void gpu_collisions(DeviceMemory* device_ptr, u32 n_threads)
         auto player_offset = offset / N_BLUE_ENTITIES;
         auto blue_offset = offset - player_offset * N_BLUE_ENTITIES;
 
+        /*
         auto& player_old = entities.data[gpuf::get_entity_id_from_player_offset(player_offset)];
         auto& blue_old = entities.data[gpuf::get_entity_id_from_blue_offset(blue_offset)];
         gpuf::player_blue(player_old, blue_old);
+        */
 
         auto& blue = device.blue_entities.data[blue_offset];
         gpuf::player_blue(device.user_player, blue);
@@ -501,9 +507,11 @@ static void gpu_collisions(DeviceMemory* device_ptr, u32 n_threads)
             return;
         }
 
+        /*
         auto& a_old = entities.data[gpuf::get_entity_id_from_blue_offset(a_offset)];
         auto& b_old = entities.data[gpuf::get_entity_id_from_blue_offset(b_offset)];
         gpuf::blue_blue(a_old, b_old);
+        */
 
         auto& a = device.blue_entities.data[a_offset];
         auto& b = device.blue_entities.data[b_offset];
@@ -529,7 +537,7 @@ static void gpu_update_positions(DeviceMemory* device_ptr, u32 n_threads)
 
     assert(n_threads == entities.n_elements);
 
-    gpuf::entity_update_position(entities.data[t]);
+    //gpuf::entity_update_position(entities.data[t]);
 
     auto entity_id = (u32)t;
 

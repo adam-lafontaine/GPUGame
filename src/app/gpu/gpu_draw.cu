@@ -163,7 +163,7 @@ static void gpu_draw_entities(DrawProps props, u32 n_threads)
 
     auto entity_id = (u32)t;
 
-    gpuf::draw_entity(entities.data[entity_id], props);
+    //gpuf::draw_entity(entities.data[entity_id], props);
 
 
     if(gpuf::is_player_entity(entity_id))
