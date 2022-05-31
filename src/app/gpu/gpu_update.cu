@@ -52,7 +52,7 @@ static bool is_blue_blue(u32 collision_offset)
     return collision_offset >= BLUE_BLUE_BEGIN && collision_offset < BLUE_BLUE_END;
 }
 
-
+/*
 GPU_FUNCTION
 static u32 get_entity_id_from_player_offset(u32 offset)
 {
@@ -72,6 +72,7 @@ static u32 get_entity_id_from_brown_offset(u32 offset)
 {
     return gpuf::BROWN_BEGIN + offset;
 }
+*/
 
 
 GPU_FUNCTION
@@ -387,9 +388,7 @@ static void gpu_next_positions(DeviceMemory* device_ptr, UnifiedMemory* unified_
     auto& device = *device_ptr;
     auto& unified = *unified_ptr;
 
-    auto& entities = device.entities;
-
-    assert(n_threads == entities.n_elements);
+    assert(n_threads == N_ENTITIES);
 
     auto entity_id = (u32)t;    
 
@@ -405,16 +404,6 @@ static void gpu_next_positions(DeviceMemory* device_ptr, UnifiedMemory* unified_
 
         return;
     }
-    /*
-    auto& entity_old = entities.data[entity_id];
-
-    if(gpuf::is_player_entity(entity_id))
-    {
-        gpuf::apply_current_input(entity_old, player_inputs, current_frame);
-    }
-
-    gpuf::entity_next_position(entity_old);
-    */
 
     if(gpuf::is_player_entity(entity_id))
     {
@@ -441,8 +430,6 @@ static void gpu_collisions(DeviceMemory* device_ptr, u32 n_threads)
 
     auto& device = *device_ptr;
 
-    auto& entities = device.entities;
-
     auto collision_offset = (u32)t;
 
     if(gpuf::is_player_wall(collision_offset))
@@ -450,12 +437,6 @@ static void gpu_collisions(DeviceMemory* device_ptr, u32 n_threads)
         auto offset = collision_offset - gpuf::PLAYER_WALL_BEGIN;
         auto player_offset = offset / N_BROWN_ENTITIES;
         auto wall_offset = offset - player_offset * N_BROWN_ENTITIES;
-
-        /*
-        auto& player_old = entities.data[gpuf::get_entity_id_from_player_offset(player_offset)];
-        auto& wall_old = entities.data[gpuf::get_entity_id_from_brown_offset(wall_offset)];
-        gpuf::stop_wall(player_old, wall_old);
-        */   
 
         gpuf::stop_wall(device.user_player, device.wall_entities.data[wall_offset]);
 
@@ -466,12 +447,6 @@ static void gpu_collisions(DeviceMemory* device_ptr, u32 n_threads)
         auto offset = collision_offset - gpuf::BLUE_WALL_BEGIN;
         auto blue_offset = offset / N_BROWN_ENTITIES;
         auto wall_offset = offset - blue_offset * N_BROWN_ENTITIES;
-
-        /*
-        auto& blue_old = entities.data[gpuf::get_entity_id_from_blue_offset(blue_offset)];
-        auto& wall_old = entities.data[gpuf::get_entity_id_from_brown_offset(wall_offset)];
-        gpuf::bounce_wall(blue_old, wall_old);
-        */
 
         auto& blue = device.blue_entities.data[blue_offset];
         auto& wall = device.wall_entities.data[wall_offset];
@@ -484,12 +459,6 @@ static void gpu_collisions(DeviceMemory* device_ptr, u32 n_threads)
         auto offset = collision_offset - gpuf::PLAYER_BLUE_BEGIN;
         auto player_offset = offset / N_BLUE_ENTITIES;
         auto blue_offset = offset - player_offset * N_BLUE_ENTITIES;
-
-        /*
-        auto& player_old = entities.data[gpuf::get_entity_id_from_player_offset(player_offset)];
-        auto& blue_old = entities.data[gpuf::get_entity_id_from_blue_offset(blue_offset)];
-        gpuf::player_blue(player_old, blue_old);
-        */
 
         auto& blue = device.blue_entities.data[blue_offset];
         gpuf::player_blue(device.user_player, blue);
@@ -506,12 +475,6 @@ static void gpu_collisions(DeviceMemory* device_ptr, u32 n_threads)
         {
             return;
         }
-
-        /*
-        auto& a_old = entities.data[gpuf::get_entity_id_from_blue_offset(a_offset)];
-        auto& b_old = entities.data[gpuf::get_entity_id_from_blue_offset(b_offset)];
-        gpuf::blue_blue(a_old, b_old);
-        */
 
         auto& a = device.blue_entities.data[a_offset];
         auto& b = device.blue_entities.data[b_offset];
@@ -533,11 +496,7 @@ static void gpu_update_positions(DeviceMemory* device_ptr, u32 n_threads)
 
     auto& device = *device_ptr;
 
-    auto& entities = device.entities;
-
-    assert(n_threads == entities.n_elements);
-
-    //gpuf::entity_update_position(entities.data[t]);
+    assert(n_threads == N_ENTITIES);
 
     auto entity_id = (u32)t;
 

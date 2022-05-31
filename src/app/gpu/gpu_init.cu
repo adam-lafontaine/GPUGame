@@ -192,9 +192,9 @@ static void gpu_init_entities(DeviceMemory* device_ptr, u32 n_threads)
 
     auto& device = *device_ptr;
 
-    auto& entities = device.entities;
+    //auto& entities = device.entities;
 
-    assert(n_threads == entities.n_elements);
+    assert(n_threads == N_ENTITIES);
 
     auto entity_id = (u32)t;    
 

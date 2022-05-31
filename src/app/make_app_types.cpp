@@ -84,23 +84,20 @@ size_t device_memory_total_size()
         + device_tile_matrix_data_size(WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE)
         + device_entity_array_data_size(N_BLUE_ENTITIES)
         + device_entity_array_data_size(N_BROWN_ENTITIES)
-        + device_entity_array_data_size(N_ENTITIES);
+        + device_entity_array_data_size(1);
 }
 
 
 bool make_device_memory(DeviceMemory& memory, device::MemoryBuffer& buffer)
 {
-    if(!make_device_assets(memory.assets, buffer))
-    {
-        return false;
-    }
 
-    if(!make_device_entity_array(memory.entities, buffer, N_ENTITIES))
+    if(!make_device_tile_matrix(memory.tilemap, buffer, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE))
     {
         return false;
     }
     
-    if(!make_device_entity_array(memory.blue_entities, buffer, N_BLUE_ENTITIES))
+    
+    if(!make_device_assets(memory.assets, buffer))
     {
         return false;
     }
@@ -110,10 +107,17 @@ bool make_device_memory(DeviceMemory& memory, device::MemoryBuffer& buffer)
         return false;
     }
 
-    if(!make_device_tile_matrix(memory.tilemap, buffer, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE))
+    if(!make_device_entity_array(memory.blue_entities, buffer, N_BLUE_ENTITIES))
     {
         return false;
     }
+    
+    // will fail to run if this not here
+    if(!make_device_entity_array(memory.memory_bug, buffer, 1))
+    {
+        return false;
+    }
+    
 
     return true;
 }

@@ -52,20 +52,21 @@ public:
 
 class DeviceMemory
 {
-public: 
+public:     
+
     DeviceAssets assets;
+
+    Entity user_player;
     
     DeviceTileMatrix tilemap;
-
-    // old
-    DeviceEntityArray entities;
-
-    // new
-    Entity user_player;
-
+    
+    
     DeviceEntityArray blue_entities;
 
-    DeviceEntityArray wall_entities;
+    DeviceEntityArray wall_entities;    
+
+    // will fail to run if this not here
+    DeviceEntityArray memory_bug;    
 
 };
 
