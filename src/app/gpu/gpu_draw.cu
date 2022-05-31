@@ -127,10 +127,10 @@ static void gpu_draw_tiles(DrawProps props, u32 n_threads)
     auto pixel_y_m = gpuf::px_to_m(pixel_y_px, props.screen_width_m, props.screen_width_px);
     auto pixel_x_m = gpuf::px_to_m(pixel_x_px, props.screen_width_m, props.screen_width_px);
 
-    auto pixel_pos = gpuf::add_delta(props.screen_pos, { pixel_x_m, pixel_y_m });
+    auto pixel_world_pos = gpuf::add_delta(props.screen_pos, { pixel_x_m, pixel_y_m });
 
-    auto tile_x = pixel_pos.tile.x;
-    auto tile_y = pixel_pos.tile.y;
+    auto tile_x = pixel_world_pos.tile.x;
+    auto tile_y = pixel_world_pos.tile.y;
 
     auto black = gpuf::to_pixel(30, 30, 30);
 
@@ -140,9 +140,9 @@ static void gpu_draw_tiles(DrawProps props, u32 n_threads)
         return;
     }
 
-    auto& tile =  tiles.data[tile_y * WORLD_WIDTH_TILE + tile_x];
+    auto& tile = tiles.data[tile_y * WORLD_WIDTH_TILE + tile_x];
 
-    screen_dst.data[pixel_id] = gpuf::get_tile_color(tile, pixel_pos.offset_m, props.screen_width_m, props.screen_width_px);
+    screen_dst.data[pixel_id] = gpuf::get_tile_color(tile, pixel_world_pos.offset_m, props.screen_width_m, props.screen_width_px);
 }
 
 

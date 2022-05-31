@@ -192,29 +192,23 @@ static void gpu_init_entities(DeviceMemory* device_ptr, u32 n_threads)
 
     auto& device = *device_ptr;
 
-    //auto& entities = device.entities;
-
     assert(n_threads == N_ENTITIES);
 
     auto entity_id = (u32)t;    
 
     if(gpuf::is_player_entity(entity_id))
-    {        
-        //gpuf::init_player(entities.data[entity_id]);
-
+    {  
         gpuf::init_player(device.user_player);
     }
     else if(gpuf::is_blue_entity(entity_id))
     {
         auto offset = gpuf::get_blue_offset(entity_id);
-        //gpuf::init_blue(entities.data[entity_id], offset);
 
         gpuf::init_blue(device.blue_entities.data[offset], offset);
     }
     else if(gpuf::is_brown_entity(entity_id))
     {   
-        auto offset = gpuf::get_brown_offset(entity_id);     
-        //gpuf::init_wall(entities.data[entity_id], offset);
+        auto offset = gpuf::get_brown_offset(entity_id);
 
         gpuf::init_wall(device.wall_entities.data[offset], offset);
     }

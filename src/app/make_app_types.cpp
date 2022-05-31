@@ -94,8 +94,7 @@ bool make_device_memory(DeviceMemory& memory, device::MemoryBuffer& buffer)
     if(!make_device_tile_matrix(memory.tilemap, buffer, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE))
     {
         return false;
-    }
-    
+    }    
     
     if(!make_device_assets(memory.assets, buffer))
     {
