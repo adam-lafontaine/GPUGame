@@ -31,7 +31,7 @@ static void init_player(Entity& player)
 
 
 GPU_FUNCTION
-static void init_entity(Entity& entity, u32 id)
+static void init_blue(Entity& entity, u32 id)
 {
     assert(id < N_BLUE_ENTITIES);
 
@@ -201,15 +201,22 @@ static void gpu_init_entities(DeviceMemory* device_ptr, u32 n_threads)
     if(gpuf::is_player_entity(entity_id))
     {        
         gpuf::init_player(entities.data[entity_id]);
+
+        gpuf::init_player(device.user_player);
     }
     else if(gpuf::is_blue_entity(entity_id))
     {
-        gpuf::init_entity(entities.data[entity_id], gpuf::get_blue_offset(entity_id));
-        entities.data[entity_id].color = gpuf::to_pixel(0, 0, 100);
+        auto offset = gpuf::get_blue_offset(entity_id);
+        gpuf::init_blue(entities.data[entity_id], offset);
+
+        gpuf::init_blue(device.blue_entities.data[offset], offset);
     }
     else if(gpuf::is_brown_entity(entity_id))
-    {        
-        gpuf::init_wall(entities.data[entity_id], gpuf::get_brown_offset(entity_id));
+    {   
+        auto offset = gpuf::get_brown_offset(entity_id);     
+        gpuf::init_wall(entities.data[entity_id], offset);
+
+        gpuf::init_wall(device.wall_entities.data[offset], offset);
     }
 }
 

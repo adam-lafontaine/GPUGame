@@ -61,11 +61,11 @@ public:
     DeviceEntityArray entities;
 
     // new
-    //Entity user_player;
+    Entity user_player;
 
-    //DeviceEntityArray blue_entities;
+    DeviceEntityArray blue_entities;
 
-    //DeviceEntityArray wall_entities;
+    DeviceEntityArray wall_entities;
 
 };
 
@@ -131,6 +131,6 @@ size_t device_memory_total_size();
 
 size_t unified_memory_total_size(u32 screen_width, u32 screen_height);
 
-bool make_device_memory(DeviceMemory& memory, device::MemoryBuffer& buffer, u32 n_entities, u32 width_tile, u32 height_tile);
+bool make_device_memory(DeviceMemory& memory, device::MemoryBuffer& buffer);
 
 bool make_unified_memory(UnifiedMemory& memory, device::MemoryBuffer& buffer, u32 screen_width, u32 screen_height);

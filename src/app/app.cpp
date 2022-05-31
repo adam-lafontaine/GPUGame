@@ -103,7 +103,7 @@ static bool init_device_memory(AppState& state)
 
     DeviceMemory device{};
 
-    if(!make_device_memory(device, buffer, N_ENTITIES, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE))
+    if(!make_device_memory(device, buffer))
     {
         return false;
     }
@@ -121,7 +121,7 @@ static bool init_device_memory(AppState& state)
         return false;
     }
 
-    assert(buffer.size == buffer.capacity);
+    //assert(buffer.size == buffer.capacity);
 
     if(!cuda::memcpy_to_device(&device, device_dst, struct_size))
     {
