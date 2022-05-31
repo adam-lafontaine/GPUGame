@@ -53,6 +53,50 @@ Pixel get_tile_color(DeviceTile const& tile, Point2Dr32 const& offset_m, r32 scr
 }
 
 
+GPU_FUNCTION
+static void draw_entity(Entity const& entity, DrawProps const& props)
+{
+    if(!entity.is_active)
+    {
+        return;
+    }
+
+    auto& screen_dst = props.unified_ptr->screen_pixels;
+
+    auto screen_width_px = screen_dst.width;
+    auto screen_height_px = screen_dst.height;
+    auto screen_width_m = props.screen_width_m;
+    auto screen_height_m = screen_height_px * props.screen_width_m / screen_width_px;
+
+    auto entity_screen_pos_m = gpuf::sub_delta_m(entity.position, props.screen_pos);
+
+    auto entity_rect_m = gpuf::get_screen_rect(entity, entity_screen_pos_m);
+
+    auto screen_rect_m = gpuf::make_rect(screen_width_m, screen_height_m);
+    
+    auto is_offscreen = !gpuf::rect_intersect(entity_rect_m, screen_rect_m);
+
+    if(is_offscreen)
+    {
+        return;
+    }
+
+    gpuf::clamp_rect(entity_rect_m, screen_rect_m);
+
+    auto entity_rect_px = gpuf::to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);
+    
+    for(u32 y = entity_rect_px.y_begin; y < entity_rect_px.y_end; ++y)
+    {
+        auto row = screen_dst.data + y * screen_width_px;
+        for(u32 x = entity_rect_px.x_begin; x < entity_rect_px.x_end; ++x)
+        {
+            row[x] = entity.color;
+        }
+    }
+}
+
+
+
 /*******************************/
 }
 
@@ -112,7 +156,6 @@ static void gpu_draw_entities(DrawProps props, u32 n_threads)
     }
 
     auto& device = *props.device_ptr;
-    auto& unified = *props.unified_ptr;
 
     auto& entities = device.entities;
 
@@ -120,46 +163,23 @@ static void gpu_draw_entities(DrawProps props, u32 n_threads)
 
     auto entity_id = (u32)t;
 
-    auto& entity = entities.data[entity_id];    
+    gpuf::draw_entity(entities.data[entity_id], props);
 
-    if(!entity.is_active)
+
+    if(gpuf::is_player_entity(entity_id))
     {
-        return;
+        gpuf::draw_entity(device.user_player, props);
     }
-
-    auto& screen_dst = unified.screen_pixels;
-
-    auto screen_width_px = screen_dst.width;
-    auto screen_height_px = screen_dst.height;
-    auto screen_width_m = props.screen_width_m;
-    auto screen_height_m = screen_height_px * props.screen_width_m / screen_width_px;
-
-    auto entity_screen_pos_m = gpuf::sub_delta_m(entity.position, props.screen_pos);
-
-    auto entity_rect_m = gpuf::get_screen_rect(entity, entity_screen_pos_m);
-
-    auto screen_rect_m = gpuf::make_rect(screen_width_m, screen_height_m);
-    
-    auto is_offscreen = !gpuf::rect_intersect(entity_rect_m, screen_rect_m);
-
-    if(is_offscreen)
+    else if(gpuf::is_blue_entity(entity_id))
     {
-        return;
+        auto offset = gpuf::get_blue_offset(entity_id);
+        gpuf::draw_entity(device.blue_entities.data[offset], props);        
     }
-
-    gpuf::clamp_rect(entity_rect_m, screen_rect_m);
-
-    auto entity_rect_px = gpuf::to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);
-    
-    for(u32 y = entity_rect_px.y_begin; y < entity_rect_px.y_end; ++y)
+    else if(gpuf::is_brown_entity(entity_id))
     {
-        auto row = screen_dst.data + y * screen_width_px;
-        for(u32 x = entity_rect_px.x_begin; x < entity_rect_px.x_end; ++x)
-        {
-            row[x] = entity.color;
-        }
+        auto offset = gpuf::get_brown_offset(entity_id);
+        gpuf::draw_entity(device.wall_entities.data[offset], props);
     }
-
 }
 
 
