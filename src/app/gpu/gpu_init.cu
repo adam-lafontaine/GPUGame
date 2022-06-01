@@ -31,7 +31,7 @@ static void init_player(Entity& player)
 
 
 GPU_FUNCTION
-static void init_entity(Entity& entity, u32 id)
+static void init_blue(Entity& entity, u32 id)
 {
     assert(id < N_BLUE_ENTITIES);
 
@@ -159,7 +159,7 @@ static void init_wall(Entity& wall, u32 wall_id)
 
 
 GPU_KERNAL
-void gpu_init_tiles(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_init_tiles(DeviceMemory* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -182,7 +182,7 @@ void gpu_init_tiles(DeviceMemory* device_ptr, u32 n_threads)
 
 
 GPU_KERNAL
-void gpu_init_entities(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_init_players(DeviceMemory* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -192,25 +192,47 @@ void gpu_init_entities(DeviceMemory* device_ptr, u32 n_threads)
 
     auto& device = *device_ptr;
 
-    auto& entities = device.entities;
+    assert(n_threads == N_PLAYER_ENTITIES);
 
-    assert(n_threads == entities.n_elements);
+    gpuf::init_player(device.user_player);
+}
 
-    auto entity_id = (u32)t;    
 
-    if(gpuf::is_player_entity(entity_id))
-    {        
-        gpuf::init_player(entities.data[entity_id]);
-    }
-    else if(gpuf::is_blue_entity(entity_id))
+GPU_KERNAL
+static void gpu_init_blue_entities(DeviceMemory* device_ptr, u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
     {
-        gpuf::init_entity(entities.data[entity_id], gpuf::get_blue_offset(entity_id));
-        entities.data[entity_id].color = gpuf::to_pixel(0, 0, 100);
+        return;
     }
-    else if(gpuf::is_brown_entity(entity_id))
-    {        
-        gpuf::init_wall(entities.data[entity_id], gpuf::get_brown_offset(entity_id));
+
+    auto& device = *device_ptr;
+
+    assert(n_threads == N_BLUE_ENTITIES);
+
+    auto offset = (u32)t;
+
+    gpuf::init_blue(device.blue_entities.data[offset], offset);
+}
+
+
+GPU_KERNAL
+static void gpu_init_wall_entities(DeviceMemory* device_ptr, u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
     }
+
+    auto& device = *device_ptr;
+
+    assert(n_threads == N_BROWN_ENTITIES);
+
+    auto offset = (u32)t;
+
+    gpuf::init_wall(device.wall_entities.data[offset], offset);
 }
 
 
@@ -227,20 +249,44 @@ namespace gpu
             return false;
         }
 
-        u32 n_threads = N_WORLD_TILES;
-        gpu_init_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device, n_threads);
+        constexpr auto player_threads = N_PLAYER_ENTITIES;
+        constexpr auto player_blocks = calc_thread_blocks(player_threads);
 
-        result = cuda::launch_success("gpu_init_tiles");
+        constexpr auto blue_threads = N_BLUE_ENTITIES;
+        constexpr auto blue_blocks = calc_thread_blocks(blue_threads);
+
+        constexpr auto wall_threads = N_BROWN_ENTITIES;
+        constexpr auto wall_blocks = calc_thread_blocks(wall_threads);
+
+        constexpr auto tile_threads = N_WORLD_TILES;
+        constexpr auto tile_blocks = calc_thread_blocks(tile_threads);
+
+        gpu_init_players<<<player_blocks, THREADS_PER_BLOCK>>>(state.device, player_threads);
+        result = cuda::launch_success("gpu_init_players");
         assert(result);
         if(!result)
         {
             return false;
         }
 
-        n_threads = N_ENTITIES;
-        gpu_init_entities<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device, n_threads);
+        gpu_init_blue_entities<<<blue_blocks, THREADS_PER_BLOCK>>>(state.device, blue_threads);
+        result = cuda::launch_success("gpu_init_blue_entities");
+        assert(result);
+        if(!result)
+        {
+            return false;
+        }
 
-        result = cuda::launch_success("gpu_init_entities");
+        gpu_init_wall_entities<<<wall_blocks, THREADS_PER_BLOCK>>>(state.device, wall_threads);
+        result = cuda::launch_success("gpu_init_wall_entities");
+        assert(result);
+        if(!result)
+        {
+            return false;
+        }
+
+        gpu_init_tiles<<<tile_blocks, THREADS_PER_BLOCK>>>(state.device, tile_threads);
+        result = cuda::launch_success("gpu_init_tiles");
         assert(result);
         if(!result)
         {

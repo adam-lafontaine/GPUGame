@@ -23,7 +23,7 @@ InputRecord& get_last_input_record(DeviceInputList const& list)
 
 static void init_state_props(StateProps& props)
 {
-    props.frame_count = 0;
+    //props.frame_count = 0;
     props.reset_frame_count = false;
 
     props.screen_width_px = app::SCREEN_BUFFER_WIDTH;
@@ -96,14 +96,14 @@ static bool init_device_memory(AppState& state)
 {
     auto& buffer = state.device_buffer;
 
-    if(!device::malloc(buffer, device_memory_total_size(N_ENTITIES, WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE)))
+    if(!device::malloc(buffer, device_memory_total_size()))
     {
         return false;
     }
 
     DeviceMemory device{};
 
-    if(!make_device_memory(device, buffer, N_ENTITIES, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE))
+    if(!make_device_memory(device, buffer))
     {
         return false;
     }
@@ -121,7 +121,7 @@ static bool init_device_memory(AppState& state)
         return false;
     }
 
-    assert(buffer.size == buffer.capacity);
+    //assert(buffer.size == buffer.capacity);
 
     if(!cuda::memcpy_to_device(&device, device_dst, struct_size))
     {
@@ -144,6 +144,8 @@ static bool init_unified_memory(AppState& state)
     }
 
     UnifiedMemory unified{};
+
+    unified.frame_count = 0;
 
     if(!make_unified_memory(unified, buffer, app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT))
     {        
@@ -265,6 +267,7 @@ static void process_player_input(Input const& input, AppState& state)
     auto& input_records = state.unified->current_inputs;
     //auto& keyboard = input.keyboard;
     auto& props = state.props;
+    auto current_frame = state.unified->frame_count;
 
     uInput player_input = 0;
 
@@ -288,8 +291,8 @@ static void process_player_input(Input const& input, AppState& state)
     auto const create_record = [&]()
     {
         InputRecord r{};
-        r.frame_begin = props.frame_count;
-        r.frame_end = props.frame_count + 1;
+        r.frame_begin = current_frame;
+        r.frame_end = current_frame + 1;
         r.input = player_input;
 
         r.est_dt_frame = input.dt_frame; // avg?
@@ -308,7 +311,6 @@ static void process_player_input(Input const& input, AppState& state)
     }
 
     auto& last = get_last_input_record(input_records);
-    auto current_frame = props.frame_count;
 
     // repeat input
     if(player_input && last.frame_end == current_frame && player_input == last.input)
@@ -333,7 +335,34 @@ static void process_player_input(Input const& input, AppState& state)
     else if(player_input)
     {
         create_record();
-    }    
+    }
+}
+
+
+static void copy_inputs(AppState& state)
+{
+    auto& src = state.unified->current_inputs;
+    auto& dst = state.unified->previous_inputs;
+
+    assert(src.data);
+    assert(dst.data);
+
+    if(src.size == 0 && dst.size == 0)
+    {
+        return;
+    }
+    if(src.size == dst.size + 1)
+    {
+        dst.data[dst.size++] = src.data[src.size - 1];
+    }
+    else if(src.size == dst.size)
+    {
+        dst.data[dst.size - 1] = src.data[src.size - 1];
+    }
+    else
+    {
+        assert(false);
+    }
 }
 
 
@@ -341,6 +370,8 @@ static void process_input(Input const& input, AppState& state)
 {
     process_camera_input(input, state);
     process_player_input(input, state);
+
+    copy_inputs(state);
 
     auto& controller = input.controllers[0];
     auto& keyboard = input.keyboard;
@@ -365,14 +396,15 @@ static void process_input(Input const& input, AppState& state)
 static void next_frame(AppState& state)
 {
     auto& props = state.props;
+    auto& unified = *state.unified;
 
     if(props.reset_frame_count)
     {
-        props.frame_count = 0;
+        unified.frame_count = 0;
         props.reset_frame_count = false;
     }
 
-    ++props.frame_count;
+    ++unified.frame_count;
 }
 
 

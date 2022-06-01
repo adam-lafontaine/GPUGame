@@ -1,3 +1,5 @@
+#pragma once
+
 #include "app.hpp"
 #include "gpu/gpu_app.hpp"
 #include "../libimage/libimage.hpp"

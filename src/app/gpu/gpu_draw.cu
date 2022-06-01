@@ -53,81 +53,15 @@ Pixel get_tile_color(DeviceTile const& tile, Point2Dr32 const& offset_m, r32 scr
 }
 
 
-/*******************************/
-}
-
-
-
-GPU_KERNAL
-static void gpu_draw_tiles(DrawProps props, u32 n_threads)
+GPU_FUNCTION
+static void draw_entity(Entity const& entity, DrawProps const& props)
 {
-    int t = blockDim.x * blockIdx.x + threadIdx.x;
-    if (t >= n_threads)
-    {
-        return;
-    }
-
-    auto& device = *props.device_ptr;
-    auto& unified = *props.unified_ptr;
-
-    auto& screen_dst = unified.screen_pixels;
-    auto& tiles = device.tilemap;
-
-    assert(n_threads == screen_dst.width * screen_dst.height);
-
-    auto pixel_id = (u32)t;
-
-    auto pixel_y_px = pixel_id / props.screen_width_px;
-    auto pixel_x_px = pixel_id - pixel_y_px * props.screen_width_px;    
-
-    auto pixel_y_m = gpuf::px_to_m(pixel_y_px, props.screen_width_m, props.screen_width_px);
-    auto pixel_x_m = gpuf::px_to_m(pixel_x_px, props.screen_width_m, props.screen_width_px);
-
-    auto pixel_pos = gpuf::add_delta(props.screen_pos, { pixel_x_m, pixel_y_m });
-
-    auto tile_x = pixel_pos.tile.x;
-    auto tile_y = pixel_pos.tile.y;
-
-    auto black = gpuf::to_pixel(30, 30, 30);
-
-    if(tile_x < 0 || tile_y < 0 || tile_x >= WORLD_WIDTH_TILE || tile_y >= WORLD_HEIGHT_TILE)
-    {
-        screen_dst.data[pixel_id] = black;
-        return;
-    }
-
-    auto& tile =  tiles.data[tile_y * WORLD_WIDTH_TILE + tile_x];
-
-    screen_dst.data[pixel_id] = gpuf::get_tile_color(tile, pixel_pos.offset_m, props.screen_width_m, props.screen_width_px);
-}
-
-
-GPU_KERNAL
-static void gpu_draw_entities(DrawProps props, u32 n_threads)
-{
-    int t = blockDim.x * blockIdx.x + threadIdx.x;
-    if (t >= n_threads)
-    {
-        return;
-    }
-
-    auto& device = *props.device_ptr;
-    auto& unified = *props.unified_ptr;
-
-    auto& entities = device.entities;
-
-    assert(n_threads == entities.n_elements);
-
-    auto entity_id = (u32)t;
-
-    auto& entity = entities.data[entity_id];    
-
     if(!entity.is_active)
     {
         return;
     }
 
-    auto& screen_dst = unified.screen_pixels;
+    auto& screen_dst = props.unified_ptr->screen_pixels;
 
     auto screen_width_px = screen_dst.width;
     auto screen_height_px = screen_dst.height;
@@ -159,7 +93,109 @@ static void gpu_draw_entities(DrawProps props, u32 n_threads)
             row[x] = entity.color;
         }
     }
+}
 
+
+
+/*******************************/
+}
+
+
+
+GPU_KERNAL
+static void gpu_draw_tiles(DrawProps props, u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
+    }
+
+    auto& device = *props.device_ptr;
+    auto& unified = *props.unified_ptr;
+
+    auto& screen_dst = unified.screen_pixels;
+    auto& tiles = device.tilemap;
+
+    assert(n_threads == screen_dst.width * screen_dst.height);
+
+    auto pixel_id = (u32)t;
+
+    auto pixel_y_px = pixel_id / props.screen_width_px;
+    auto pixel_x_px = pixel_id - pixel_y_px * props.screen_width_px;    
+
+    auto pixel_y_m = gpuf::px_to_m(pixel_y_px, props.screen_width_m, props.screen_width_px);
+    auto pixel_x_m = gpuf::px_to_m(pixel_x_px, props.screen_width_m, props.screen_width_px);
+
+    auto pixel_world_pos = gpuf::add_delta(props.screen_pos, { pixel_x_m, pixel_y_m });
+
+    auto tile_x = pixel_world_pos.tile.x;
+    auto tile_y = pixel_world_pos.tile.y;
+
+    auto black = gpuf::to_pixel(30, 30, 30);
+
+    if(tile_x < 0 || tile_y < 0 || tile_x >= WORLD_WIDTH_TILE || tile_y >= WORLD_HEIGHT_TILE)
+    {
+        screen_dst.data[pixel_id] = black;
+        return;
+    }
+
+    auto& tile = tiles.data[tile_y * WORLD_WIDTH_TILE + tile_x];
+
+    screen_dst.data[pixel_id] = gpuf::get_tile_color(tile, pixel_world_pos.offset_m, props.screen_width_m, props.screen_width_px);
+}
+
+
+GPU_KERNAL
+static void gpu_draw_players(DrawProps props, u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
+    }
+
+    auto& device = *props.device_ptr;
+
+    assert(n_threads == N_PLAYER_ENTITIES);
+
+    gpuf::draw_entity(device.user_player, props);
+}
+
+
+GPU_KERNAL
+static void gpu_draw_blue_entities(DrawProps props, u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
+    }
+
+    auto& device = *props.device_ptr;
+
+    assert(n_threads == N_BLUE_ENTITIES);
+
+    auto offset = (u32)t;
+    gpuf::draw_entity(device.blue_entities.data[offset], props);
+}
+
+
+GPU_KERNAL
+static void gpu_draw_wall_entities(DrawProps props, u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
+    }
+
+    auto& device = *props.device_ptr;
+
+    assert(n_threads == N_BROWN_ENTITIES);
+
+    auto offset = (u32)t;
+    gpuf::draw_entity(device.wall_entities.data[offset], props);
 }
 
 
@@ -179,16 +215,32 @@ namespace gpu
         bool result = cuda::no_errors("gpu::render");
         assert(result);
 
-        auto n_threads = n_pixels;
-        gpu_draw_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
+        constexpr auto player_threads = N_PLAYER_ENTITIES;
+        constexpr auto player_blocks = calc_thread_blocks(player_threads);
 
+        constexpr auto blue_threads = N_BLUE_ENTITIES;
+        constexpr auto blue_blocks = calc_thread_blocks(blue_threads);
+
+        constexpr auto wall_threads = N_BROWN_ENTITIES;
+        constexpr auto wall_blocks = calc_thread_blocks(wall_threads);
+
+        auto tile_threads = n_pixels;
+        auto tile_blocks = calc_thread_blocks(tile_threads);
+
+        gpu_draw_tiles<<<tile_blocks, THREADS_PER_BLOCK>>>(props, tile_threads);
         result = cuda::launch_success("gpu_draw_tiles");
         assert(result);
 
-        n_threads = N_ENTITIES;
-        gpu_draw_entities<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(props, n_threads);
+        gpu_draw_players<<<player_blocks, THREADS_PER_BLOCK>>>(props, player_threads);
+        result = cuda::launch_success("gpu_draw_players");
+        assert(result);
 
-        result = cuda::launch_success("gpu_draw_entities");
+        gpu_draw_blue_entities<<<blue_blocks, THREADS_PER_BLOCK>>>(props, blue_threads);
+        result = cuda::launch_success("gpu_draw_blue_entities");
+        assert(result);
+
+        gpu_draw_wall_entities<<<wall_blocks, THREADS_PER_BLOCK>>>(props, wall_threads);
+        result = cuda::launch_success("gpu_draw_wall_entities");
         assert(result);
     }
 }
