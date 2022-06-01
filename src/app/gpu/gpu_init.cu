@@ -258,6 +258,8 @@ namespace gpu
         constexpr auto wall_threads = N_BROWN_ENTITIES;
         constexpr auto wall_blocks = calc_thread_blocks(wall_threads);
 
+        constexpr auto tile_threads = N_WORLD_TILES;
+        constexpr auto tile_blocks = calc_thread_blocks(tile_threads);
 
         gpu_init_players<<<player_blocks, THREADS_PER_BLOCK>>>(state.device, player_threads);
         result = cuda::launch_success("gpu_init_players");
@@ -283,9 +285,7 @@ namespace gpu
             return false;
         }
 
-        u32 n_threads = N_WORLD_TILES;
-        gpu_init_tiles<<<calc_thread_blocks(n_threads), THREADS_PER_BLOCK>>>(state.device, n_threads);
-
+        gpu_init_tiles<<<tile_blocks, THREADS_PER_BLOCK>>>(state.device, tile_threads);
         result = cuda::launch_success("gpu_init_tiles");
         assert(result);
         if(!result)
