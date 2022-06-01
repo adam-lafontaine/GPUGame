@@ -102,7 +102,6 @@ class StateProps
 {
 public:
 
-    //u64 frame_count;
     bool reset_frame_count;
 
     u32 screen_width_px;
