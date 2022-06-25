@@ -16,8 +16,13 @@ static size_t device_tile_matrix_data_size(u32 n_tiles)
 
 static size_t device_assets_data_size()
 {
-    return  N_TILE_BITMAPS * device_tile_data_size();
+    constexpr auto n_tile_bitmaps = sizeof(DeviceAssets) / sizeof(DeviceTile);
+
+    return  n_tile_bitmaps * device_tile_data_size();
 }
+
+
+
 
 
 static bool make_device_assets(DeviceAssets& assets, device::MemoryBuffer& buffer)
@@ -84,7 +89,7 @@ size_t device_memory_total_size()
         + device_tile_matrix_data_size(WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE)
         + device_entity_array_data_size(N_BLUE_ENTITIES)
         + device_entity_array_data_size(N_BROWN_ENTITIES)
-        + device_entity_array_data_size(1);
+        + device_entity_array_data_size(5);
 }
 
 

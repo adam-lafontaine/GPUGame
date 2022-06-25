@@ -5,7 +5,6 @@
 
 constexpr u32 TILE_WIDTH_PX = 64;
 constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;
-constexpr u32 N_TILE_BITMAPS = 3;
 
 
 class DeviceTile
@@ -50,6 +49,7 @@ inline bool make_device_tile(DeviceTile& tile, device::MemoryBuffer& buffer)
     if(!avg_color_data)
     {
         assert("make_device_tile: avg_color" && false);
+        return false;
     }
 
     tile.bitmap_data = (Pixel*)bitmap_data;

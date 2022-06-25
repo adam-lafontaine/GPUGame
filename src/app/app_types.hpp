@@ -12,6 +12,8 @@ public:
 };
 
 
+
+
 class Entity
 {
 public:
@@ -27,11 +29,46 @@ public:
 
     WorldPosition next_position;
 
-    bool is_active = false;
+    b32 is_active = false;
 
-    bool inv_x = false;
-    bool inv_y = false;
+    b32 inv_x = false;
+    b32 inv_y = false;
 };
+
+constexpr auto EntitySize = sizeof(Entity);
+
+
+constexpr auto WorldPositionSize = sizeof(WorldPosition);
+constexpr auto Vec2Dr32Size = sizeof(Vec2Dr32);
+
+
+
+class EntitySOA
+{
+public:
+    u32 n_elements;
+
+    r32* width;
+    r32* height;
+    Pixel* color;
+
+    WorldPosition* position;
+    Vec2Dr32* dt;
+    r32* speed;
+
+    Vec2Dr32* delta_pos_m;
+
+    WorldPosition* next_position;
+
+    b32* is_active;
+
+    b32* inv_x;
+    b32* inv_y;
+};
+
+constexpr auto EntitySOASize = sizeof(EntitySOA);
+
+
 
 
 using DeviceEntityArray = DeviceArray<Entity>;
@@ -49,10 +86,9 @@ public:
 };
 
 
-
 class DeviceMemory
 {
-public:     
+public:
 
     DeviceAssets assets;
 
@@ -66,8 +102,7 @@ public:
     DeviceEntityArray wall_entities;    
 
     // will fail to run if this not here
-    DeviceEntityArray memory_bug;    
-
+    DeviceEntityArray memory_bug;
 };
 
 

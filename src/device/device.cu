@@ -71,12 +71,6 @@ namespace cuda
 }
 
 
-
-
-
-
-
-
 namespace device
 {
     bool malloc(MemoryBuffer& buffer, size_t n_bytes)

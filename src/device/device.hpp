@@ -49,8 +49,9 @@ template <typename T>
 class DeviceArray
 {
 public:
-    T* data = nullptr;
+    
     u32 n_elements = 0;
+    T* data = nullptr;
 };
 
 
