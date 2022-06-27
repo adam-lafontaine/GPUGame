@@ -227,19 +227,23 @@ namespace gpu
         auto tile_threads = n_pixels;
         auto tile_blocks = calc_thread_blocks(tile_threads);
 
-        gpu_draw_tiles<<<tile_blocks, THREADS_PER_BLOCK>>>(props, tile_threads);
+        //gpu_draw_tiles<<<tile_blocks, THREADS_PER_BLOCK>>>(props, tile_threads);
+        cuda_launch_kernel(gpu_draw_tiles, tile_blocks, THREADS_PER_BLOCK, props, tile_threads);
         result = cuda::launch_success("gpu_draw_tiles");
         assert(result);
 
-        gpu_draw_players<<<player_blocks, THREADS_PER_BLOCK>>>(props, player_threads);
+        //gpu_draw_players<<<player_blocks, THREADS_PER_BLOCK>>>(props, player_threads);
+        cuda_launch_kernel(gpu_draw_players, player_blocks, THREADS_PER_BLOCK, props, player_threads);
         result = cuda::launch_success("gpu_draw_players");
         assert(result);
 
-        gpu_draw_blue_entities<<<blue_blocks, THREADS_PER_BLOCK>>>(props, blue_threads);
+        //gpu_draw_blue_entities<<<blue_blocks, THREADS_PER_BLOCK>>>(props, blue_threads);
+        cuda_launch_kernel(gpu_draw_blue_entities, blue_blocks, THREADS_PER_BLOCK, props, blue_threads);
         result = cuda::launch_success("gpu_draw_blue_entities");
         assert(result);
 
-        gpu_draw_wall_entities<<<wall_blocks, THREADS_PER_BLOCK>>>(props, wall_threads);
+        //gpu_draw_wall_entities<<<wall_blocks, THREADS_PER_BLOCK>>>(props, wall_threads);
+        cuda_launch_kernel(gpu_draw_wall_entities, wall_blocks, THREADS_PER_BLOCK, props, wall_threads);
         result = cuda::launch_success("gpu_draw_wall_entities");
         assert(result);
     }

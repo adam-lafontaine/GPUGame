@@ -19,6 +19,9 @@
 
 #define cuda_barrier __syncthreads
 
+#define cuda_launch_kernel(kernel_name, n_blocks, blocksize, ...) \
+    kernel_name <<< (n_blocks), (blocksize) >>> (__VA_ARGS__);
+
 #else
 
 #define GPU_KERNAL /*__global__*/
@@ -46,6 +49,20 @@ inline cudaError_t cudaMalloc(void**, size_t){ return cudaSuccess; }
 inline cudaError_t cudaMallocManaged(void**, size_t){ return cudaSuccess; }
 inline cudaError_t cudaFree(void *){ return cudaSuccess; }
 
+class FakeCudaPt
+{
+public:
+    int x = 0;
+    int y = 0;
+    int z = 0;
+};
+
+constexpr FakeCudaPt blockDim = { 0, 0, 0 };
+constexpr FakeCudaPt blockIdx = { 0, 0, 0 };
+constexpr FakeCudaPt threadIdx = { 0, 0, 0 };
+
+#define cuda_launch_kernel(kernel_name, n_blocks, blocksize, ...) \
+    kernel_name (__VA_ARGS__);
 
 #endif
 
