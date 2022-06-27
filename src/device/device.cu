@@ -17,6 +17,7 @@ static void check_error(cudaError_t err, cstr label = "")
     }
 
     #ifdef CUDA_PRINT_ERROR
+    #ifndef	NDEBUG
 
     printf("\n*** CUDA ERROR ***\n\n");
     printf("%s", cudaGetErrorString(err));
@@ -29,15 +30,72 @@ static void check_error(cudaError_t err, cstr label = "")
     printf("\n\n******************\n\n");
 
     #endif
+    #endif
 }
 
 
 namespace cuda
 {
+    bool device_malloc(DevicePointer& buffer, size_t n_bytes)
+    {
+        assert(n_bytes);
+        assert(!buffer.data);
+
+        if(!n_bytes || buffer.data)
+        {
+            return false;
+        }
+
+        cudaError_t err = cudaMalloc((void**)&(buffer.data), n_bytes);
+        check_error(err, "device_malloc");
+
+        bool result = err == cudaSuccess;
+
+        assert(result);
+
+        return result;
+    }
+
+
+    bool unified_malloc(DevicePointer& buffer, size_t n_bytes)
+    {
+        assert(n_bytes);
+        assert(!buffer.data);
+
+        if(!n_bytes || buffer.data)
+        {
+            return false;
+        }
+
+        cudaError_t err = cudaMallocManaged((void**)&(buffer.data), n_bytes);
+        check_error(err, "unified_malloc");
+
+        bool result = err == cudaSuccess;
+
+        return result;
+    }
+
+
+    bool free(DevicePointer& buffer)
+    {
+        if(buffer.data)
+        {
+            return true;
+        }
+
+        cudaError_t err = cudaFree(buffer.data);
+        check_error(err, "free");
+
+        buffer.data = nullptr;
+
+        return err == cudaSuccess;
+    }
+
+
     bool memcpy_to_device(const void* host_src, void* device_dst, size_t n_bytes)
     {
         cudaError_t err = cudaMemcpy(device_dst, host_src, n_bytes, cudaMemcpyHostToDevice);
-        check_error(err, "cuda_memcpy_to_device");
+        check_error(err, "memcpy_to_device");
 
         return err == cudaSuccess;
     }
@@ -46,7 +104,7 @@ namespace cuda
     bool memcpy_to_host(const void* device_src, void* host_dst, size_t n_bytes)
     {
         cudaError_t err = cudaMemcpy(host_dst, device_src, n_bytes, cudaMemcpyDeviceToHost);
-        check_error(err, "cuda_memcpy_to_host");
+        check_error(err, "memcpy_to_host");
 
         return err == cudaSuccess;
     }

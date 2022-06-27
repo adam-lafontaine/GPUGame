@@ -11,6 +11,8 @@
 #define GPU_UNIFIED __device__ __managed__
 #define GPU_CONSTEXPR_FUNCTION __device__ constexpr
 
-#define CUDA_PRINT_ERROR
+#define cuda_barrier_block __syncthreads
 
-#define cuda_barrier __syncthreads
+
+
+#define CUDA_PRINT_ERROR

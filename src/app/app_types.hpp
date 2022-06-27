@@ -12,8 +12,6 @@ public:
 };
 
 
-
-
 class Entity
 {
 public:
@@ -35,15 +33,14 @@ public:
     b32 inv_y = false;
 };
 
+
 constexpr auto EntitySize = sizeof(Entity);
-
-
 constexpr auto WorldPositionSize = sizeof(WorldPosition);
 constexpr auto Vec2Dr32Size = sizeof(Vec2Dr32);
 
 
 
-class EntitySOA
+class DeviceEntitySOA
 {
 public:
     u32 n_elements;
@@ -65,8 +62,6 @@ public:
     b32* inv_x;
     b32* inv_y;
 };
-
-constexpr auto EntitySOASize = sizeof(EntitySOA);
 
 
 
