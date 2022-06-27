@@ -1,6 +1,6 @@
 #pragma once
 
-#define CUDA_NOT_INSTALLED
+//#define CUDA_NOT_INSTALLED
 
 #define CUDA_PRINT_ERROR
 
@@ -18,6 +18,8 @@
 #define GPU_CONSTEXPR_FUNCTION __device__ constexpr
 
 #define cuda_barrier __syncthreads
+
+// TODO: streams
 
 #define cuda_launch_kernel(kernel_name, n_blocks, blocksize, ...) \
     kernel_name <<< (n_blocks), (blocksize) >>> (__VA_ARGS__);
@@ -60,6 +62,8 @@ public:
 constexpr FakeCudaPt blockDim = { 0, 0, 0 };
 constexpr FakeCudaPt blockIdx = { 0, 0, 0 };
 constexpr FakeCudaPt threadIdx = { 0, 0, 0 };
+
+// TODO: streams
 
 #define cuda_launch_kernel(kernel_name, n_blocks, blocksize, ...) \
     kernel_name (__VA_ARGS__);

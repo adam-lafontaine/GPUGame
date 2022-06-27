@@ -486,43 +486,35 @@ namespace gpu
 
         constexpr auto blue_blue_threads = N_BLUE_BLUE_COLLISIONS;
         constexpr auto blue_blue_blocks = calc_thread_blocks(blue_blue_threads);
-
-        //gpu_next_player_positions<<<player_blocks, THREADS_PER_BLOCK>>>(state.device, state.unified, player_threads);
+        
         cuda_launch_kernel(gpu_next_player_positions, player_blocks, THREADS_PER_BLOCK, state.device, state.unified, player_threads);
         result = cuda::launch_success("gpu_next_player_positions");
         assert(result);
-
-        //gpu_next_blue_positions<<<blue_blocks, THREADS_PER_BLOCK>>>(state.device, blue_threads);
+        
         cuda_launch_kernel(gpu_next_blue_positions, blue_blocks, THREADS_PER_BLOCK, state.device, blue_threads);
         result = cuda::launch_success("gpu_next_blue_positions");
         assert(result);
-
-        //gpu_player_wall<<<player_wall_blocks, THREADS_PER_BLOCK>>>(state.device, player_wall_threads);
+        
         cuda_launch_kernel(gpu_player_wall, player_wall_blocks, THREADS_PER_BLOCK, state.device, player_wall_threads);
         result = cuda::launch_success("gpu_player_wall");
         assert(result);
-
-        //gpu_blue_wall<<<blue_wall_blocks, THREADS_PER_BLOCK>>>(state.device, blue_wall_threads);
+        
         cuda_launch_kernel(gpu_blue_wall, blue_wall_blocks, THREADS_PER_BLOCK, state.device, blue_wall_threads);
         result = cuda::launch_success("gpu_blue_wall");
         assert(result);
-
-        //gpu_player_blue<<<player_blue_blocks, THREADS_PER_BLOCK>>>(state.device, player_blue_threads);
+        
         cuda_launch_kernel(gpu_player_blue, player_blue_blocks, THREADS_PER_BLOCK, state.device, player_blue_threads);
         result = cuda::launch_success("gpu_player_blue");
         assert(result);
-
-        //gpu_blue_blue<<<blue_blue_blocks, THREADS_PER_BLOCK>>>(state.device, blue_blue_threads);
+        
         cuda_launch_kernel(gpu_blue_blue, blue_blue_blocks, THREADS_PER_BLOCK, state.device, blue_blue_threads);
         result = cuda::launch_success("gpu_blue_blue");
         assert(result);
-
-        //gpu_update_player_positions<<<player_blocks, THREADS_PER_BLOCK>>>(state.device, player_threads);
+        
         cuda_launch_kernel(gpu_update_player_positions, player_blocks, THREADS_PER_BLOCK, state.device, player_threads);
         result = cuda::launch_success("gpu_update_player_positions");
         assert(result);
-
-        //gpu_update_blue_positions<<<blue_blocks, THREADS_PER_BLOCK>>>(state.device, blue_threads);
+        
         cuda_launch_kernel(gpu_update_blue_positions, blue_blocks, THREADS_PER_BLOCK, state.device, blue_threads);
         result = cuda::launch_success("gpu_update_blue_positions");
         assert(result);
