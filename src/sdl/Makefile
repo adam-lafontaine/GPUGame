@@ -449,7 +449,7 @@ $(app_o): $(app_c) $(app_include_h)
 	$(GPP) -o $@ -c $<
 
 $(make_app_types_o): $(make_app_types_c) $(app_types_h) 
-	@echo "\n app"
+	@echo "\n make_app_types"
 	$(GPP) -o $@ -c $<
 
 $(main_o): $(main_c) $(app_h) $(sdl_input_h) $(stopwatch_h)

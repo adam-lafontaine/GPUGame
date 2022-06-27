@@ -260,32 +260,33 @@ namespace gpu
 
         constexpr auto tile_threads = N_WORLD_TILES;
         constexpr auto tile_blocks = calc_thread_blocks(tile_threads);
-
-        gpu_init_players<<<player_blocks, THREADS_PER_BLOCK>>>(state.device, player_threads);
+        
+        
+        cuda_launch_kernel(gpu_init_players, player_blocks, THREADS_PER_BLOCK, state.device, player_threads);
         result = cuda::launch_success("gpu_init_players");
         assert(result);
         if(!result)
         {
             return false;
         }
-
-        gpu_init_blue_entities<<<blue_blocks, THREADS_PER_BLOCK>>>(state.device, blue_threads);
+        
+        cuda_launch_kernel(gpu_init_blue_entities, blue_blocks, THREADS_PER_BLOCK, state.device, blue_threads);
         result = cuda::launch_success("gpu_init_blue_entities");
         assert(result);
         if(!result)
         {
             return false;
         }
-
-        gpu_init_wall_entities<<<wall_blocks, THREADS_PER_BLOCK>>>(state.device, wall_threads);
+        
+        cuda_launch_kernel(gpu_init_wall_entities, wall_blocks, THREADS_PER_BLOCK, state.device, wall_threads);
         result = cuda::launch_success("gpu_init_wall_entities");
         assert(result);
         if(!result)
         {
             return false;
         }
-
-        gpu_init_tiles<<<tile_blocks, THREADS_PER_BLOCK>>>(state.device, tile_threads);
+        
+        cuda_launch_kernel(gpu_init_tiles, tile_blocks, THREADS_PER_BLOCK, state.device, tile_threads);
         result = cuda::launch_success("gpu_init_tiles");
         assert(result);
         if(!result)
