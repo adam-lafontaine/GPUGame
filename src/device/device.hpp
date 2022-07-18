@@ -7,20 +7,27 @@
 #include <array>
 
 
-class DevicePointer
+class ByteBuffer
 {
 public:
-    void* data = nullptr;
+    u8* data = nullptr;
+    size_t capacity = 0;
+    size_t size = 0;
 };
 
 
 namespace cuda
 {
-    bool device_malloc(DevicePointer& buffer, size_t n_bytes);
+    bool device_malloc(ByteBuffer& buffer, size_t n_bytes);
 
-    bool unified_malloc(DevicePointer& buffer, size_t n_bytes);
+    bool unified_malloc(ByteBuffer& buffer, size_t n_bytes);
 
-    bool free(DevicePointer& data);
+    bool free(ByteBuffer& buffer);
+
+
+    u8* push_bytes(ByteBuffer& buffer, size_t n_bytes);
+
+    bool pop_bytes(ByteBuffer& buffer, size_t n_bytes);
 
 
     bool memcpy_to_device(const void* host_src, void* device_dst, size_t n_bytes);
@@ -38,7 +45,7 @@ namespace device
 {
     using u8 = uint8_t;
 
-    class MemoryBuffer
+    class DeviceBuffer
     {
     public:
         u8* data = nullptr;
@@ -47,15 +54,15 @@ namespace device
     };
 
 
-    bool malloc(MemoryBuffer& buffer, size_t n_bytes);
+    bool malloc(DeviceBuffer& buffer, size_t n_bytes);
 
-    bool unified_malloc(MemoryBuffer& buffer, size_t n_bytes);
+    bool unified_malloc(DeviceBuffer& buffer, size_t n_bytes);
 
-    bool free(MemoryBuffer& buffer);
+    bool free(DeviceBuffer& buffer);
 
-    u8* push_bytes(MemoryBuffer& buffer, size_t n_bytes);
+    u8* push_bytes(DeviceBuffer& buffer, size_t n_bytes);
 
-    bool pop_bytes(MemoryBuffer& buffer, size_t n_bytes);
+    bool pop_bytes(DeviceBuffer& buffer, size_t n_bytes);
 }
 
 
@@ -82,34 +89,12 @@ bool copy_to_device(std::array<T, N> const& src, DeviceArray<T>& dst)
 }
 
 
-template <typename T>
-class DeviceMatrix
-{
-public:
-	u32 width;
-	u32 height;
-
-	T* data = nullptr;
-};
-
-
-class DeviceImage
-{
-public:
-
-    u32 width;
-    u32 height;
-
-    Pixel* data;
-};
-
-
 constexpr size_t device_image_data_size(u32 width, u32 height)
 {
     return width * height * sizeof(Pixel);
 }
 
-inline bool make_device_image(Image& image, device::MemoryBuffer& buffer, u32 width, u32 height)
+inline bool make_device_image(Image& image, device::DeviceBuffer& buffer, u32 width, u32 height)
 {
     auto data_size = device_image_data_size(width, height);
 
@@ -125,34 +110,3 @@ inline bool make_device_image(Image& image, device::MemoryBuffer& buffer, u32 wi
 
     return true;
 }
-
-/*
-inline bool copy_to_device(HostImage const& src, DeviceImage const& dst)
-{
-    assert(src.data);
-    assert(src.width);
-    assert(src.height);
-    assert(dst.data);
-    assert(dst.width == src.width);
-    assert(dst.height == src.height);
-
-    auto bytes = src.width * src.height * sizeof(pixel_t);
-
-    return cuda::memcpy_to_device(src.data, dst.data, bytes);
-}
-
-
-inline bool copy_to_host(DeviceImage const& src, image_t const& dst)
-{
-    assert(src.data);
-    assert(src.width);
-    assert(src.height);
-    assert(dst.data);
-    assert(dst.width == src.width);
-    assert(dst.height == src.height);
-
-    auto bytes = src.width * src.height * sizeof(pixel_t);
-
-    return cuda_memcpy_to_host(src.data, dst.data, bytes);
-}
-*/

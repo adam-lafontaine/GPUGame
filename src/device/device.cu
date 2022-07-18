@@ -36,7 +36,7 @@ static void check_error(cudaError_t err, cstr label = "")
 
 namespace cuda
 {
-    bool device_malloc(DevicePointer& buffer, size_t n_bytes)
+    bool device_malloc(ByteBuffer& buffer, size_t n_bytes)
     {
         assert(n_bytes);
         assert(!buffer.data);
@@ -47,17 +47,21 @@ namespace cuda
         }
 
         cudaError_t err = cudaMalloc((void**)&(buffer.data), n_bytes);
-        check_error(err, "device_malloc");
+        check_error(err, "malloc");
 
         bool result = err == cudaSuccess;
 
-        assert(result);
-
+        if(result)
+        {
+            buffer.capacity = n_bytes;
+            buffer.size = 0;
+        }
+        
         return result;
     }
 
 
-    bool unified_malloc(DevicePointer& buffer, size_t n_bytes)
+    bool unified_malloc(ByteBuffer& buffer, size_t n_bytes)
     {
         assert(n_bytes);
         assert(!buffer.data);
@@ -72,25 +76,86 @@ namespace cuda
 
         bool result = err == cudaSuccess;
 
+        if(result)
+        {
+            buffer.capacity = n_bytes;
+            buffer.size = 0;
+        }
+        
         return result;
     }
 
 
-    bool free(DevicePointer& buffer)
+    bool free(ByteBuffer& buffer)
     {
+        buffer.capacity = 0;
+        buffer.size = 0;
+
         if(buffer.data)
         {
+            cudaError_t err = cudaFree(buffer.data);
+            check_error(err, "free");
+
+            buffer.data = nullptr;
+
+            return err == cudaSuccess;
+        }
+
+        return true;
+    }
+
+
+    u8* push_bytes(ByteBuffer& buffer, size_t n_bytes)
+    {
+        assert(buffer.data);
+        assert(buffer.capacity);
+        assert(buffer.size < buffer.capacity);
+
+        auto is_valid = 
+            buffer.data &&
+            buffer.capacity &&
+            buffer.size < buffer.capacity;
+
+        auto bytes_available = (buffer.capacity - buffer.size) >= n_bytes;
+        assert(bytes_available);
+
+        if(!is_valid || !bytes_available)
+        {
+            return nullptr;
+        }
+
+        auto data = buffer.data + buffer.size;
+
+        buffer.size += n_bytes;
+
+        return data;
+    }
+
+
+    bool pop_bytes(ByteBuffer& buffer, size_t n_bytes)
+    {
+        assert(buffer.data);
+        assert(buffer.capacity);
+        assert(buffer.size <= buffer.capacity);
+        assert(n_bytes <= buffer.capacity);
+        assert(n_bytes <= buffer.size);
+
+        auto is_valid = 
+            buffer.data &&
+            buffer.capacity &&
+            buffer.size <= buffer.capacity &&
+            n_bytes <= buffer.capacity &&
+            n_bytes <= buffer.size;
+
+        if(is_valid)
+        {
+            buffer.size -= n_bytes;
             return true;
         }
 
-        cudaError_t err = cudaFree(buffer.data);
-        check_error(err, "free");
-
-        buffer.data = nullptr;
-
-        return err == cudaSuccess;
+        return false;
     }
-
+    
 
     bool memcpy_to_device(const void* host_src, void* device_dst, size_t n_bytes)
     {
@@ -131,7 +196,7 @@ namespace cuda
 
 namespace device
 {
-    bool malloc(MemoryBuffer& buffer, size_t n_bytes)
+    bool malloc(DeviceBuffer& buffer, size_t n_bytes)
     {
         assert(n_bytes);
         assert(!buffer.data);
@@ -155,7 +220,7 @@ namespace device
     }
 
 
-    bool unified_malloc(MemoryBuffer& buffer, size_t n_bytes)
+    bool unified_malloc(DeviceBuffer& buffer, size_t n_bytes)
     {
         assert(n_bytes);
         assert(!buffer.data);
@@ -179,7 +244,7 @@ namespace device
     }
 
 
-    bool free(MemoryBuffer& buffer)
+    bool free(DeviceBuffer& buffer)
     {
         buffer.capacity = 0;
         buffer.size = 0;
@@ -198,7 +263,7 @@ namespace device
     }
 
 
-    u8* push_bytes(MemoryBuffer& buffer, size_t n_bytes)
+    u8* push_bytes(DeviceBuffer& buffer, size_t n_bytes)
     {
         assert(buffer.data);
         assert(buffer.capacity);
@@ -225,7 +290,7 @@ namespace device
     }
 
 
-    bool pop_bytes(MemoryBuffer& buffer, size_t n_bytes)
+    bool pop_bytes(DeviceBuffer& buffer, size_t n_bytes)
     {
         assert(buffer.data);
         assert(buffer.capacity);

@@ -36,7 +36,7 @@ constexpr size_t device_tile_data_size()
 }
 
 
-inline bool make_device_tile(DeviceTile& tile, device::MemoryBuffer& buffer)
+inline bool make_device_tile(DeviceTile& tile, device::DeviceBuffer& buffer)
 {    
     auto bitmap_data = device::push_bytes(buffer, device_tile_bitmap_data_size());
     if(!bitmap_data)

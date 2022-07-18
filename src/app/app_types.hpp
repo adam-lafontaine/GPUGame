@@ -66,7 +66,7 @@ public:
 
 using DeviceEntityArray = DeviceArray<Entity>;
 
-using DeviceTileMatrix = DeviceMatrix<DeviceTile>;
+using DeviceTileMatrix = Matrix<DeviceTile>;
 
 
 class DeviceAssets
@@ -113,19 +113,6 @@ public:
 };
 
 
-using HostImage = Image;
-
-
-class HostMemory
-{
-public:
-
-    //HostImage screen_pixels;
-
-    
-};
-
-
 class AppInput
 {
 public:
@@ -145,14 +132,16 @@ class AppState
 {
 public:
 
-    device::MemoryBuffer device_buffer;
-    device::MemoryBuffer unified_buffer;
+    device::DeviceBuffer device_buffer;
+    device::DeviceBuffer unified_buffer;
 
     DeviceMemory* device;
     UnifiedMemory* unified;
+    
 
-    HostMemory host;
     AppInput app_input;
+
+
 };
 
 
@@ -160,6 +149,6 @@ size_t device_memory_total_size();
 
 size_t unified_memory_total_size(u32 screen_width, u32 screen_height);
 
-bool make_device_memory(DeviceMemory& memory, device::MemoryBuffer& buffer);
+bool make_device_memory(DeviceMemory& memory, device::DeviceBuffer& buffer);
 
-bool make_unified_memory(UnifiedMemory& memory, device::MemoryBuffer& buffer, u32 screen_width, u32 screen_height);
+bool make_unified_memory(UnifiedMemory& memory, device::DeviceBuffer& buffer, u32 screen_width, u32 screen_height);

@@ -47,7 +47,7 @@ constexpr size_t device_input_list_data_size()
 }
 
 
-inline bool make_device_input_list(DeviceInputList& list, device::MemoryBuffer& buffer)
+inline bool make_device_input_list(DeviceInputList& list, device::DeviceBuffer& buffer)
 {
     auto data_size = device_input_list_data_size();
 

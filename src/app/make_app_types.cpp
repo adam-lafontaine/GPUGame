@@ -25,7 +25,7 @@ static size_t device_assets_data_size()
 
 
 
-static bool make_device_assets(DeviceAssets& assets, device::MemoryBuffer& buffer)
+static bool make_device_assets(DeviceAssets& assets, device::DeviceBuffer& buffer)
 {
     if(!make_device_tile(assets.grass_tile, buffer))
     {
@@ -46,7 +46,7 @@ static bool make_device_assets(DeviceAssets& assets, device::MemoryBuffer& buffe
 }
 
 
-static bool make_device_entity_array(DeviceEntityArray& array, device::MemoryBuffer& buffer, u32 n_elements)
+static bool make_device_entity_array(DeviceEntityArray& array, device::DeviceBuffer& buffer, u32 n_elements)
 {
     auto data_size = device_entity_array_data_size(n_elements);
 
@@ -63,7 +63,7 @@ static bool make_device_entity_array(DeviceEntityArray& array, device::MemoryBuf
 }
 
 
-static bool make_device_tile_matrix(DeviceTileMatrix& tilemap, device::MemoryBuffer& buffer, u32 width_tile, u32 height_tile)
+static bool make_device_tile_matrix(DeviceTileMatrix& tilemap, device::DeviceBuffer& buffer, u32 width_tile, u32 height_tile)
 {
     auto data_size = device_tile_matrix_data_size(width_tile * height_tile);
 
@@ -93,7 +93,7 @@ size_t device_memory_total_size()
 }
 
 
-bool make_device_memory(DeviceMemory& memory, device::MemoryBuffer& buffer)
+bool make_device_memory(DeviceMemory& memory, device::DeviceBuffer& buffer)
 {
 
     if(!make_device_tile_matrix(memory.tilemap, buffer, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE))
@@ -137,7 +137,7 @@ size_t unified_memory_total_size(u32 screen_width, u32 screen_height)
 }
 
 
-bool make_unified_memory(UnifiedMemory& memory, device::MemoryBuffer& buffer, u32 screen_width, u32 screen_height)
+bool make_unified_memory(UnifiedMemory& memory, device::DeviceBuffer& buffer, u32 screen_width, u32 screen_height)
 {
     if(!make_device_image(memory.screen_pixels, buffer, screen_width, screen_height))
     {
