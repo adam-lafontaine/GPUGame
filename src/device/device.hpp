@@ -109,7 +109,7 @@ constexpr size_t device_image_data_size(u32 width, u32 height)
     return width * height * sizeof(Pixel);
 }
 
-inline bool make_device_image(DeviceImage& image, device::MemoryBuffer& buffer, u32 width, u32 height)
+inline bool make_device_image(Image& image, device::MemoryBuffer& buffer, u32 width, u32 height)
 {
     auto data_size = device_image_data_size(width, height);
 
@@ -126,8 +126,8 @@ inline bool make_device_image(DeviceImage& image, device::MemoryBuffer& buffer, 
     return true;
 }
 
-
-inline bool copy_to_device(image_t const& src, DeviceImage const& dst)
+/*
+inline bool copy_to_device(HostImage const& src, DeviceImage const& dst)
 {
     assert(src.data);
     assert(src.width);
@@ -141,7 +141,7 @@ inline bool copy_to_device(image_t const& src, DeviceImage const& dst)
     return cuda::memcpy_to_device(src.data, dst.data, bytes);
 }
 
-/*
+
 inline bool copy_to_host(DeviceImage const& src, image_t const& dst)
 {
     assert(src.data);

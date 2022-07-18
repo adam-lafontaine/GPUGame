@@ -59,4 +59,4 @@ inline bool make_device_tile(DeviceTile& tile, device::MemoryBuffer& buffer)
 }
 
 
-bool copy_to_device(image_t const& src, DeviceTile const& dst);
+bool copy_to_device(Image const& src, DeviceTile const& dst);

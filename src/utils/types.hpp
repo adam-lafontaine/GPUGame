@@ -116,16 +116,18 @@ typedef union Pixel
 using pixel_t = Pixel;
 
 
-class Image
+template <typename T>
+class Matrix
 {
 public:
-
 	u32 width;
 	u32 height;
 
-	pixel_t* data;
+	T* data;
 };
 
+
+using Image = Matrix<Pixel>;
 using image_t = Image;
 
 

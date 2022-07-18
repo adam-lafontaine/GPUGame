@@ -4,6 +4,9 @@
 #include "input_record/input_record.hpp"
 
 
+
+
+
 class WorldPosition
 {
 public:
@@ -100,7 +103,7 @@ class UnifiedMemory
 {
 public:
 
-    DeviceImage screen_pixels;
+    Image screen_pixels;
 
     DeviceInputList previous_inputs;
     
