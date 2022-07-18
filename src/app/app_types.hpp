@@ -79,7 +79,7 @@ public:
 };
 
 
-class DeviceMemory
+class DeviceMemoryOld
 {
 public:
 
@@ -99,7 +99,7 @@ public:
 };
 
 
-class UnifiedMemory
+class UnifiedMemoryOld
 {
 public:
 
@@ -128,6 +128,40 @@ public:
 };
 
 
+class DeviceMemory
+{
+public:
+
+    //DeviceAssets assets;
+
+    //Entity user_player;
+    
+    //DeviceTileMatrix tilemap;
+    
+    
+    //DeviceEntityArray blue_entities;
+
+    //DeviceEntityArray wall_entities;    
+
+    // will fail to run if this not here
+    //DeviceEntityArray memory_bug;
+};
+
+
+class UnifiedMemory
+{
+public:
+
+    //Image screen_pixels;
+
+    //DeviceInputList previous_inputs;
+    
+    //DeviceInputList current_inputs;
+    
+    //u64 frame_count;
+};
+
+
 class AppState
 {
 public:
@@ -135,8 +169,8 @@ public:
     device::DeviceBuffer device_buffer;
     device::DeviceBuffer unified_buffer;
 
-    DeviceMemory* device_p;
-    UnifiedMemory* unified_p;
+    DeviceMemoryOld* device_p;
+    UnifiedMemoryOld* unified_p;
     
 
     AppInput app_input;
@@ -144,6 +178,7 @@ public:
     //MemoryBuffer<DeviceMemory> device;
 
     //MemoryBuffer<UnifiedMemory> unified;
+    //MemoryBuffer<Pixel> unified_pixel;
 
 
 };
@@ -153,6 +188,6 @@ size_t device_memory_total_size();
 
 size_t unified_memory_total_size(u32 screen_width, u32 screen_height);
 
-bool make_device_memory(DeviceMemory& memory, device::DeviceBuffer& buffer);
+bool make_device_memory(DeviceMemoryOld& memory, device::DeviceBuffer& buffer);
 
-bool make_unified_memory(UnifiedMemory& memory, device::DeviceBuffer& buffer, u32 screen_width, u32 screen_height);
+bool make_unified_memory(UnifiedMemoryOld& memory, device::DeviceBuffer& buffer, u32 screen_width, u32 screen_height);

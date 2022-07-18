@@ -7,8 +7,8 @@ class DrawProps
 {
 public:
 
-    DeviceMemory* device_ptr;
-    UnifiedMemory* unified_ptr;
+    DeviceMemoryOld* device_ptr;
+    UnifiedMemoryOld* unified_ptr;
 
     WorldPosition screen_pos;
     u32 screen_width_px;

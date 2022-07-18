@@ -159,7 +159,7 @@ static void init_wall(Entity& wall, u32 wall_id)
 
 
 GPU_KERNAL
-static void gpu_init_tiles(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_init_tiles(DeviceMemoryOld* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -182,7 +182,7 @@ static void gpu_init_tiles(DeviceMemory* device_ptr, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_init_players(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_init_players(DeviceMemoryOld* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -199,7 +199,7 @@ static void gpu_init_players(DeviceMemory* device_ptr, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_init_blue_entities(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_init_blue_entities(DeviceMemoryOld* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -218,7 +218,7 @@ static void gpu_init_blue_entities(DeviceMemory* device_ptr, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_init_wall_entities(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_init_wall_entities(DeviceMemoryOld* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)

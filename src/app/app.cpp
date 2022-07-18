@@ -1,5 +1,22 @@
 #include "app_include.hpp"
 
+#ifndef NDEBUG
+#define PRINT_APP_ERROR
+#endif
+
+#ifdef PRINT_APP_ERROR
+#include <cstdio>
+#endif
+
+static void print_error(cstr msg)
+{
+#ifdef PRINT_APP_ERROR
+	printf("\n*** APP ERROR ***\n\n");
+	printf("%s", msg);
+	printf("\n\n******************\n\n");
+#endif
+}
+
 
 void add_input_record(DeviceInputList& list, InputRecord& item)
 {
@@ -101,7 +118,7 @@ static bool init_device_memory(AppState& state)
         return false;
     }
 
-    DeviceMemory device{};
+    DeviceMemoryOld device{};
 
     if(!make_device_memory(device, buffer))
     {
@@ -113,7 +130,7 @@ static bool init_device_memory(AppState& state)
         return false;
     }
 
-    auto struct_size = sizeof(DeviceMemory);
+    auto struct_size = sizeof(DeviceMemoryOld);
 
     auto device_dst = device::push_bytes(buffer, struct_size);
     if(!device_dst)
@@ -128,13 +145,13 @@ static bool init_device_memory(AppState& state)
         return false;
     }
 
-    state.device_p = (DeviceMemory*)device_dst;
+    state.device_p = (DeviceMemoryOld*)device_dst;
 
     return true;
 }
 
 
-static bool init_unified_memory(AppState& state)
+static bool init_unified_memory_old(AppState& state)
 {
     auto& buffer = state.unified_buffer;
 
@@ -143,35 +160,79 @@ static bool init_unified_memory(AppState& state)
         return false;
     }
 
-    UnifiedMemory unified{};
+    UnifiedMemoryOld unified_p{};
 
-    unified.frame_count = 0;
+    unified_p.frame_count = 0;
 
-    if(!make_unified_memory(unified, buffer, app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT))
+    if(!make_unified_memory(unified_p, buffer, app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT))
     {        
         return false;
     }
 
-    auto struct_size = sizeof(UnifiedMemory);
+    auto struct_size = sizeof(UnifiedMemoryOld);
 
     auto device_dst = device::push_bytes(buffer, struct_size);
 
-    if(!cuda::memcpy_to_device(&unified, device_dst, struct_size))
+    if(!cuda::memcpy_to_device(&unified_p, device_dst, struct_size))
     {
         return false;
     }
 
     assert(buffer.size == buffer.capacity);
 
-    state.unified_p = (UnifiedMemory*)device_dst;
+    state.unified_p = (UnifiedMemoryOld*)device_dst;
 
 
-
+    UnifiedMemoryOld unified{};
 
 
     return true;
 }
 
+/*
+static bool init_unified_memory(AppState& state, app::ScreenBuffer& buffer)
+{
+    assert(sizeof(Pixel) == buffer.bytes_per_pixel);
+
+    UnifiedMemory unified{};
+    auto& screen = unified.screen_pixels;
+
+    auto const width = buffer.width;
+    auto const height = buffer.height;
+
+    auto const n_pixels = width * height;
+
+    if(!cuda::unified_malloc(state.unified_pixel, n_pixels))
+    {
+        print_error("unified_pixel");
+        return false;
+    }
+
+    assert(state.unified_pixel.data);
+
+    screen.data = cuda::push_elements(state.unified_pixel, n_pixels);
+    if(!screen.data)
+    {
+        print_error("screen data");
+        return false;
+    }
+
+    screen.width = width;
+    screen.height = height;
+
+    buffer.memory = screen.data;
+
+    if(!cuda::unified_malloc(state.unified, 1))
+    {
+        print_error("state.unified");
+        return false;
+    }
+
+    state.unified.data[0] = unified;
+
+    return true;
+}
+*/
 
 static void apply_delta(WorldPosition& pos, Vec2Dr32 const& delta)
 {
@@ -446,7 +507,7 @@ namespace app
 
         auto& state = get_initial_state(memory);
 
-        if(!init_unified_memory(state))
+        if(!init_unified_memory_old(state))
 		{
 			return false;
 		}

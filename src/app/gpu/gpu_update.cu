@@ -292,7 +292,7 @@ static void entity_update_position(Entity& entity)
 
 
 GPU_KERNAL
-static void gpu_next_player_positions(DeviceMemory* device_ptr, UnifiedMemory* unified_ptr, u32 n_threads)
+static void gpu_next_player_positions(DeviceMemoryOld* device_ptr, UnifiedMemoryOld* unified_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -312,7 +312,7 @@ static void gpu_next_player_positions(DeviceMemory* device_ptr, UnifiedMemory* u
 
 
 GPU_KERNAL
-static void gpu_next_blue_positions(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_next_blue_positions(DeviceMemoryOld* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -330,7 +330,7 @@ static void gpu_next_blue_positions(DeviceMemory* device_ptr, u32 n_threads)
 
 
 GPU_KERNAL 
-static void gpu_player_wall(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_player_wall(DeviceMemoryOld* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -352,7 +352,7 @@ static void gpu_player_wall(DeviceMemory* device_ptr, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_blue_wall(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_blue_wall(DeviceMemoryOld* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -376,7 +376,7 @@ static void gpu_blue_wall(DeviceMemory* device_ptr, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_player_blue(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_player_blue(DeviceMemoryOld* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -399,7 +399,7 @@ static void gpu_player_blue(DeviceMemory* device_ptr, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_blue_blue(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_blue_blue(DeviceMemoryOld* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -428,7 +428,7 @@ static void gpu_blue_blue(DeviceMemory* device_ptr, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_update_player_positions(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_update_player_positions(DeviceMemoryOld* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -445,7 +445,7 @@ static void gpu_update_player_positions(DeviceMemory* device_ptr, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_update_blue_positions(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_update_blue_positions(DeviceMemoryOld* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
