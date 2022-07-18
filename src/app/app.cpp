@@ -21,18 +21,18 @@ InputRecord& get_last_input_record(DeviceInputList const& list)
 }
 
 
-static void init_state_props(StateProps& props)
+static void init_app_input(AppInput& app_input)
 {
-    //props.frame_count = 0;
-    props.reset_frame_count = false;
+    //app_input.frame_count = 0;
+    app_input.reset_frame_count = false;
 
-    props.screen_width_px = app::SCREEN_BUFFER_WIDTH;
-    props.screen_height_px = app::SCREEN_BUFFER_HEIGHT;
+    app_input.screen_width_px = app::SCREEN_BUFFER_WIDTH;
+    app_input.screen_height_px = app::SCREEN_BUFFER_HEIGHT;
 
-    props.screen_width_m = MIN_SCREEN_WIDTH_M;    
+    app_input.screen_width_m = MIN_SCREEN_WIDTH_M;    
 
-    props.screen_position.tile = { 0, 0 };
-    props.screen_position.offset_m = { 0.0f, 0.0f };
+    app_input.screen_position.tile = { 0, 0 };
+    app_input.screen_position.offset_m = { 0.0f, 0.0f };
 }
 
 
@@ -195,7 +195,7 @@ static void process_camera_input(Input const& input, AppState& state)
 {
     auto& controller = input.controllers[0];
     auto& keyboard = input.keyboard;
-    auto& props = state.props;
+    auto& app_input = state.app_input;
 
     auto dt = input.dt_frame;
 
@@ -203,10 +203,10 @@ static void process_camera_input(Input const& input, AppState& state)
     r32 min_camera_speed_px = 200.0f;
 
     auto camera_speed_px = max_camera_speed_px - 
-        (props.screen_width_m - MIN_SCREEN_WIDTH_M) / (MAX_SCREEN_WIDTH_M - MIN_SCREEN_WIDTH_M) * (max_camera_speed_px - min_camera_speed_px);
+        (app_input.screen_width_m - MIN_SCREEN_WIDTH_M) / (MAX_SCREEN_WIDTH_M - MIN_SCREEN_WIDTH_M) * (max_camera_speed_px - min_camera_speed_px);
   
     auto camera_movement_px = camera_speed_px * dt;
-    auto camera_movement_m = px_to_m(camera_movement_px, props.screen_width_m, props.screen_width_px);    
+    auto camera_movement_m = px_to_m(camera_movement_px, app_input.screen_width_m, app_input.screen_width_px);    
 
     Vec2Dr32 camera_d_m = { 0.0f, 0.0f };
 
@@ -230,34 +230,34 @@ static void process_camera_input(Input const& input, AppState& state)
     r32 zoom_speed = 50.0f;
     auto zoom_m = zoom_speed * dt;
 
-    if(props.screen_width_m > MIN_SCREEN_WIDTH_M && controller.stick_right_y.end > 0.5f)
+    if(app_input.screen_width_m > MIN_SCREEN_WIDTH_M && controller.stick_right_y.end > 0.5f)
     {
-        auto old_w = props.screen_width_m;
+        auto old_w = app_input.screen_width_m;
         auto old_h = screen_height_m(old_w);
 
-        props.screen_width_m = std::max(props.screen_width_m - zoom_m, MIN_SCREEN_WIDTH_M);
+        app_input.screen_width_m = std::max(app_input.screen_width_m - zoom_m, MIN_SCREEN_WIDTH_M);
 
-        auto new_w = props.screen_width_m;
+        auto new_w = app_input.screen_width_m;
         auto new_h = screen_height_m(new_w);
 
         camera_d_m.x += 0.5f * (old_w - new_w);
         camera_d_m.y += 0.5f * (old_h - new_h);
     }
-    else if(props.screen_width_m < MAX_SCREEN_WIDTH_M && controller.stick_right_y.end < -0.5f)
+    else if(app_input.screen_width_m < MAX_SCREEN_WIDTH_M && controller.stick_right_y.end < -0.5f)
     {
-        auto old_w = props.screen_width_m;
+        auto old_w = app_input.screen_width_m;
         auto old_h = screen_height_m(old_w);
 
-        props.screen_width_m = std::min(props.screen_width_m + zoom_m, MAX_SCREEN_WIDTH_M);
+        app_input.screen_width_m = std::min(app_input.screen_width_m + zoom_m, MAX_SCREEN_WIDTH_M);
 
-        auto new_w = props.screen_width_m;
+        auto new_w = app_input.screen_width_m;
         auto new_h = screen_height_m(new_w);
 
         camera_d_m.x += 0.5f * (old_w - new_w);
         camera_d_m.y += 0.5f * (old_h - new_h);
     } 
 
-    apply_delta(props.screen_position, camera_d_m);
+    apply_delta(app_input.screen_position, camera_d_m);
 }
 
 
@@ -266,7 +266,7 @@ static void process_player_input(Input const& input, AppState& state)
     auto& controller = input.controllers[0];
     auto& input_records = state.unified->current_inputs;
     //auto& keyboard = input.keyboard;
-    auto& props = state.props;
+    auto& app_input = state.app_input;
     auto current_frame = state.unified->frame_count;
 
     uInput player_input = 0;
@@ -375,7 +375,7 @@ static void process_input(Input const& input, AppState& state)
 
     auto& controller = input.controllers[0];
     auto& keyboard = input.keyboard;
-    auto& props = state.props;
+    auto& app_input = state.app_input;
 
     if(controller.button_b.pressed)
     {
@@ -395,13 +395,13 @@ static void process_input(Input const& input, AppState& state)
 
 static void next_frame(AppState& state)
 {
-    auto& props = state.props;
+    auto& app_input = state.app_input;
     auto& unified = *state.unified;
 
-    if(props.reset_frame_count)
+    if(app_input.reset_frame_count)
     {
         unified.frame_count = 0;
-        props.reset_frame_count = false;
+        app_input.reset_frame_count = false;
     }
 
     ++unified.frame_count;
@@ -428,7 +428,7 @@ namespace app
         assert(required_sz <= memory.permanent_storage_size);
 
         auto& state = get_state(memory);
-        init_state_props(state.props);
+        init_app_input(state.app_input);
 
         return state;
     }

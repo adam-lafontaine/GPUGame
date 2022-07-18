@@ -414,6 +414,7 @@ object_files     += $(make_app_types_o)
 program_exe := $(build)/$(exe_name)
 
 GPP += -O3
+#GPP += -DNDEBUG
 
 
 $(img_o): $(img_c) $(libimage_h) $(stb_include_h)

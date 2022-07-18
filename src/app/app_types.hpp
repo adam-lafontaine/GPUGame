@@ -34,11 +34,6 @@ public:
 };
 
 
-constexpr auto EntitySize = sizeof(Entity);
-constexpr auto WorldPositionSize = sizeof(WorldPosition);
-constexpr auto Vec2Dr32Size = sizeof(Vec2Dr32);
-
-
 
 class DeviceEntitySOA
 {
@@ -128,7 +123,7 @@ public:
 };
 
 
-class StateProps
+class AppInput
 {
 public:
 
@@ -154,7 +149,7 @@ public:
     UnifiedMemory* unified;
 
     HostMemory host;
-    StateProps props;
+    AppInput app_input;
 };
 
 
