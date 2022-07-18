@@ -128,7 +128,7 @@ static bool init_device_memory(AppState& state)
         return false;
     }
 
-    state.device = (DeviceMemory*)device_dst;
+    state.device_p = (DeviceMemory*)device_dst;
 
     return true;
 }
@@ -163,7 +163,11 @@ static bool init_unified_memory(AppState& state)
 
     assert(buffer.size == buffer.capacity);
 
-    state.unified = (UnifiedMemory*)device_dst;
+    state.unified_p = (UnifiedMemory*)device_dst;
+
+
+
+
 
     return true;
 }
@@ -264,10 +268,10 @@ static void process_camera_input(Input const& input, AppState& state)
 static void process_player_input(Input const& input, AppState& state)
 {
     auto& controller = input.controllers[0];
-    auto& input_records = state.unified->current_inputs;
+    auto& input_records = state.unified_p->current_inputs;
     //auto& keyboard = input.keyboard;
     auto& app_input = state.app_input;
-    auto current_frame = state.unified->frame_count;
+    auto current_frame = state.unified_p->frame_count;
 
     uInput player_input = 0;
 
@@ -341,8 +345,8 @@ static void process_player_input(Input const& input, AppState& state)
 
 static void copy_inputs(AppState& state)
 {
-    auto& src = state.unified->current_inputs;
-    auto& dst = state.unified->previous_inputs;
+    auto& src = state.unified_p->current_inputs;
+    auto& dst = state.unified_p->previous_inputs;
 
     assert(src.data);
     assert(dst.data);
@@ -396,7 +400,7 @@ static void process_input(Input const& input, AppState& state)
 static void next_frame(AppState& state)
 {
     auto& app_input = state.app_input;
-    auto& unified = *state.unified;
+    auto& unified = *state.unified_p;
 
     if(app_input.reset_frame_count)
     {
@@ -457,7 +461,7 @@ namespace app
             return false;
         }
 
-        screen.memory = state.unified->screen_pixels.data;
+        screen.memory = state.unified_p->screen_pixels.data;
 
         memory.is_app_initialized = true;
         return true;

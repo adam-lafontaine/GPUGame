@@ -206,8 +206,8 @@ namespace gpu
         u32 n_pixels = state.app_input.screen_width_px * state.app_input.screen_height_px;
 
         DrawProps props{};
-        props.device_ptr = state.device;
-        props.unified_ptr = state.unified;
+        props.device_ptr = state.device_p;
+        props.unified_ptr = state.unified_p;
         props.screen_width_px = state.app_input.screen_width_px;
         props.screen_width_m = state.app_input.screen_width_m;
         props.screen_pos = state.app_input.screen_position;

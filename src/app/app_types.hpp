@@ -135,11 +135,15 @@ public:
     device::DeviceBuffer device_buffer;
     device::DeviceBuffer unified_buffer;
 
-    DeviceMemory* device;
-    UnifiedMemory* unified;
+    DeviceMemory* device_p;
+    UnifiedMemory* unified_p;
     
 
     AppInput app_input;
+
+    //MemoryBuffer<DeviceMemory> device;
+
+    //MemoryBuffer<UnifiedMemory> unified;
 
 
 };
