@@ -292,7 +292,7 @@ static void entity_update_position(Entity& entity)
 
 
 GPU_KERNAL
-static void gpu_next_player_positions(DeviceMemoryOld* device_ptr, UnifiedMemoryOld* unified_ptr, UnifiedMemory* unified, u32 n_threads)
+static void gpu_next_player_positions(DeviceMemoryOld* device_ptr, UnifiedMemory* unified, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -301,7 +301,6 @@ static void gpu_next_player_positions(DeviceMemoryOld* device_ptr, UnifiedMemory
     }
 
     auto& device = *device_ptr;
-    //auto& unified_p = *unified_ptr;
 
     assert(n_threads == N_PLAYER_ENTITIES);
 
@@ -487,7 +486,7 @@ namespace gpu
         constexpr auto blue_blue_threads = N_BLUE_BLUE_COLLISIONS;
         constexpr auto blue_blue_blocks = calc_thread_blocks(blue_blue_threads);
         
-        cuda_launch_kernel(gpu_next_player_positions, player_blocks, THREADS_PER_BLOCK, state.device_p, state.unified_p, state.unified.data, player_threads);
+        cuda_launch_kernel(gpu_next_player_positions, player_blocks, THREADS_PER_BLOCK, state.device_p, state.unified.data, player_threads);
         result = cuda::launch_success("gpu_next_player_positions");
         assert(result);
         

@@ -99,16 +99,6 @@ public:
 };
 
 
-class UnifiedMemoryOld
-{
-public:
-
-    //DeviceInputList previous_inputs;
-    
-    //DeviceInputList current_inputs;
-};
-
-
 class AppInput
 {
 public:
@@ -162,10 +152,8 @@ class AppState
 public:
 
     device::DeviceBuffer device_buffer;
-    device::DeviceBuffer unified_buffer;
 
     DeviceMemoryOld* device_p;
-    UnifiedMemoryOld* unified_p;
     
 
     AppInput app_input;
@@ -185,5 +173,3 @@ size_t device_memory_total_size();
 size_t unified_memory_total_size(u32 screen_width, u32 screen_height);
 
 bool make_device_memory(DeviceMemoryOld& memory, device::DeviceBuffer& buffer);
-
-bool make_unified_memory(UnifiedMemoryOld& memory, device::DeviceBuffer& buffer, u32 screen_width, u32 screen_height);

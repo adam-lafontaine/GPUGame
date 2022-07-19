@@ -8,7 +8,6 @@ class DrawProps
 public:
 
     DeviceMemoryOld* device_ptr;
-    UnifiedMemoryOld* unified_ptr;
 
     UnifiedMemory* unified;
 
@@ -209,7 +208,6 @@ namespace gpu
 
         DrawProps props{};
         props.device_ptr = state.device_p;
-        props.unified_ptr = state.unified_p;
         props.unified = state.unified.data;
         props.screen_width_px = state.app_input.screen_width_px;
         props.screen_width_m = state.app_input.screen_width_m;

@@ -125,36 +125,3 @@ bool make_device_memory(DeviceMemoryOld& memory, device::DeviceBuffer& buffer)
 
     return true;
 }
-
-
-size_t unified_memory_total_size(u32 screen_width, u32 screen_height)
-{
-    return 
-        sizeof(UnifiedMemoryOld);
-        //+ device_image_data_size(screen_width, screen_height)
-        //+ device_input_list_data_size()
-        //+ device_input_list_data_size();
-}
-
-
-bool make_unified_memory(UnifiedMemoryOld& memory, device::DeviceBuffer& buffer, u32 screen_width, u32 screen_height)
-{
-    /*
-    if(!make_device_image(memory.screen_pixels, buffer, screen_width, screen_height))
-    {
-        return false;
-    }
-
-    if(!make_device_input_list(memory.previous_inputs, buffer))
-    {
-        return false;
-    }
-
-    if(!make_device_input_list(memory.current_inputs, buffer))
-    {
-        return false;
-    }
-    */
-
-    return true;
-}

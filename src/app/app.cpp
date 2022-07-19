@@ -151,45 +151,6 @@ static bool init_device_memory(AppState& state)
 }
 
 
-static bool init_unified_memory_old(AppState& state)
-{
-    auto& buffer = state.unified_buffer;
-
-    if(!device::unified_malloc(buffer, unified_memory_total_size(app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT)))
-    {
-        return false;
-    }
-
-    UnifiedMemoryOld unified_p{};
-
-    //unified_p.frame_count = 0;
-
-    if(!make_unified_memory(unified_p, buffer, app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT))
-    {        
-        return false;
-    }
-
-    auto struct_size = sizeof(UnifiedMemoryOld);
-
-    auto device_dst = device::push_bytes(buffer, struct_size);
-
-    if(!cuda::memcpy_to_device(&unified_p, device_dst, struct_size))
-    {
-        return false;
-    }
-
-    assert(buffer.size == buffer.capacity);
-
-    state.unified_p = (UnifiedMemoryOld*)device_dst;
-
-
-    UnifiedMemoryOld unified{};
-
-
-    return true;
-}
-
-
 static bool init_image(Image& image, MemoryBuffer<Pixel>& buffer, u32 width, u32 height)
 {
     auto const n_pixels = width * height;
@@ -559,11 +520,6 @@ namespace app
             return false;
         }
 
-        if(!init_unified_memory_old(state))
-		{
-			return false;
-		}
-
         if(!init_device_memory(state))
         {
             return false;
@@ -601,7 +557,6 @@ namespace app
         auto& state = get_state(memory);        
 
         device::free(state.device_buffer);
-		device::free(state.unified_buffer);
 
         cuda::free(state.unified_pixel_buffer);
         cuda::free(state.unified_input_record_buffer);
