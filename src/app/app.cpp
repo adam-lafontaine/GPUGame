@@ -109,9 +109,9 @@ static bool load_device_assets(DeviceAssets& device_assets)
 }
 
 
-static bool init_device_memory(AppState& state)
+static bool init_device_memory_old(AppState& state)
 {
-    auto& buffer = state.device_buffer;
+    auto& buffer = state.device_buffer_old;
 
     if(!device::malloc(buffer, device_memory_total_size()))
     {
@@ -145,7 +145,19 @@ static bool init_device_memory(AppState& state)
         return false;
     }
 
-    state.device_p = (DeviceMemoryOld*)device_dst;
+    state.device_old_p = (DeviceMemoryOld*)device_dst;
+
+    return true;
+}
+
+
+static bool init_device_memory(AppState& state)
+{
+    DeviceMemory device{};
+
+
+
+    *state.device_buffer.data = device;
 
     return true;
 }
@@ -230,13 +242,13 @@ static bool init_unified_memory(AppState& state, app::ScreenBuffer& buffer)
         return false;
     }
 
-    if(!cuda::unified_malloc(state.unified, 1))
+    if(!cuda::unified_malloc(state.unified_buffer, 1))
     {
         print_error("state.unified");
         return false;
     }    
 
-    *state.unified.data = unified;
+    *state.unified_buffer.data = unified;
 
     return true;
 }
@@ -337,10 +349,10 @@ static void process_camera_input(Input const& input, AppState& state)
 static void process_player_input(Input const& input, AppState& state)
 {
     auto& controller = input.controllers[0];
-    auto& input_records = state.unified.data->current_inputs;
+    auto& input_records = state.unified_buffer.data->current_inputs;
     //auto& keyboard = input.keyboard;
     auto& app_input = state.app_input;
-    auto current_frame = (*state.unified.data).frame_count;
+    auto current_frame = (*state.unified_buffer.data).frame_count;
 
     uInput player_input = 0;
 
@@ -414,8 +426,8 @@ static void process_player_input(Input const& input, AppState& state)
 
 static void copy_inputs(AppState& state)
 {
-    auto& src = state.unified.data->current_inputs;
-    auto& dst = state.unified.data->previous_inputs;
+    auto& src = state.unified_buffer.data->current_inputs;
+    auto& dst = state.unified_buffer.data->previous_inputs;
 
     assert(src.data);
     assert(dst.data);
@@ -469,7 +481,7 @@ static void process_input(Input const& input, AppState& state)
 static void next_frame(AppState& state)
 {
     auto& app_input = state.app_input;
-    auto& unified = *state.unified.data;
+    auto& unified = *state.unified_buffer.data;
 
     if(app_input.reset_frame_count)
     {
@@ -520,6 +532,11 @@ namespace app
             return false;
         }
 
+        if(!init_device_memory_old(state))
+        {
+            return false;
+        }
+
         if(!init_device_memory(state))
         {
             return false;
@@ -556,11 +573,14 @@ namespace app
     {
         auto& state = get_state(memory);        
 
-        device::free(state.device_buffer);
+        device::free(state.device_buffer_old);
+
+        
+        cuda::free(state.device_buffer);
 
         cuda::free(state.unified_pixel_buffer);
         cuda::free(state.unified_input_record_buffer);
-        cuda::free(state.unified);
+        cuda::free(state.unified_buffer);
 
     }
 }

@@ -151,16 +151,16 @@ class AppState
 {
 public:
 
-    device::DeviceBuffer device_buffer;
+    device::DeviceBuffer device_buffer_old;
 
-    DeviceMemoryOld* device_p;
+    DeviceMemoryOld* device_old_p;
     
 
     AppInput app_input;
 
-    //MemoryBuffer<DeviceMemory> device;
+    MemoryBuffer<DeviceMemory> device_buffer;
 
-    MemoryBuffer<UnifiedMemory> unified;
+    MemoryBuffer<UnifiedMemory> unified_buffer;
     MemoryBuffer<Pixel> unified_pixel_buffer;
     MemoryBuffer<InputRecord> unified_input_record_buffer;
 
