@@ -162,7 +162,7 @@ static bool init_unified_memory_old(AppState& state)
 
     UnifiedMemoryOld unified_p{};
 
-    unified_p.frame_count = 0;
+    //unified_p.frame_count = 0;
 
     if(!make_unified_memory(unified_p, buffer, app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT))
     {        
@@ -189,12 +189,16 @@ static bool init_unified_memory_old(AppState& state)
     return true;
 }
 
-/*
+
 static bool init_unified_memory(AppState& state, app::ScreenBuffer& buffer)
 {
     assert(sizeof(Pixel) == buffer.bytes_per_pixel);
 
     UnifiedMemory unified{};
+
+    unified.frame_count = 0;
+
+    /*
     auto& screen = unified.screen_pixels;
 
     auto const width = buffer.width;
@@ -221,18 +225,19 @@ static bool init_unified_memory(AppState& state, app::ScreenBuffer& buffer)
     screen.height = height;
 
     buffer.memory = screen.data;
+    */
 
     if(!cuda::unified_malloc(state.unified, 1))
     {
         print_error("state.unified");
         return false;
-    }
+    }    
 
-    state.unified.data[0] = unified;
+    *state.unified.data = unified;    
 
     return true;
 }
-*/
+
 
 static void apply_delta(WorldPosition& pos, Vec2Dr32 const& delta)
 {
@@ -332,7 +337,7 @@ static void process_player_input(Input const& input, AppState& state)
     auto& input_records = state.unified_p->current_inputs;
     //auto& keyboard = input.keyboard;
     auto& app_input = state.app_input;
-    auto current_frame = state.unified_p->frame_count;
+    auto current_frame = (*state.unified.data).frame_count;
 
     uInput player_input = 0;
 
@@ -461,7 +466,7 @@ static void process_input(Input const& input, AppState& state)
 static void next_frame(AppState& state)
 {
     auto& app_input = state.app_input;
-    auto& unified = *state.unified_p;
+    auto& unified = *state.unified.data;
 
     if(app_input.reset_frame_count)
     {
@@ -506,6 +511,11 @@ namespace app
         memory.is_app_initialized = false;
 
         auto& state = get_initial_state(memory);
+
+        if(!init_unified_memory(state, screen))
+        {
+            return false;
+        }
 
         if(!init_unified_memory_old(state))
 		{

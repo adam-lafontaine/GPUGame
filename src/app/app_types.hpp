@@ -109,7 +109,7 @@ public:
     
     DeviceInputList current_inputs;
     
-    u64 frame_count;
+    //u64 frame_count;
 };
 
 
@@ -158,7 +158,7 @@ public:
     
     //DeviceInputList current_inputs;
     
-    //u64 frame_count;
+    u64 frame_count;
 };
 
 
@@ -177,7 +177,7 @@ public:
 
     //MemoryBuffer<DeviceMemory> device;
 
-    //MemoryBuffer<UnifiedMemory> unified;
+    MemoryBuffer<UnifiedMemory> unified;
     //MemoryBuffer<Pixel> unified_pixel;
 
 
