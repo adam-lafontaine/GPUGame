@@ -53,7 +53,7 @@ static void init_app_input(AppInput& app_input)
 }
 
 
-static bool load_device_assets(DeviceAssets& device_assets)
+static bool load_device_assets_old(DeviceAssets& device_assets)
 {    
     Image read_img{};
     Image tile_img{};
@@ -124,11 +124,11 @@ static bool init_device_memory_old(AppState& state)
     {
         return false;
     }
-
-    if(!load_device_assets(device.assets))
+/*
+    if(!load_device_assets_old(device.assets))
     {
         return false;
-    }
+    }*/
 
     auto struct_size = sizeof(DeviceMemoryOld);
 
@@ -149,9 +149,118 @@ static bool init_device_memory_old(AppState& state)
 }
 
 
+static bool init_tile(MemoryBuffer<Pixel>& buffer, Image const& host_image, DeviceTile& tile)
+{
+    auto const n_pixels = host_image.width * host_image.height;
+
+    tile.bitmap_data = cuda::push_elements(buffer, n_pixels);
+    if(!tile.bitmap_data)
+    {
+        print_error("tile.bitmap_data");
+        return false;
+    }
+
+    tile.avg_color = cuda::push_elements(buffer, 1);
+    if(!tile.avg_color)
+    {
+        print_error("tile.avg_color");
+        return false;
+    }
+
+    // TODO: set avg_color
+
+    if(!cuda::memcpy_to_device(host_image.data, tile.bitmap_data, n_pixels * sizeof(Pixel)))
+    {
+        print_error("tile memcpy");
+        return false;
+    }
+
+    return true;
+}
+
+
+static bool load_device_assets(MemoryBuffer<Pixel>& buffer, DeviceAssets& assets)
+{
+    Image read_img{};
+    Image tile_img{};
+    tile_img.width = TILE_WIDTH_PX;
+    tile_img.height = TILE_HEIGHT_PX;
+
+    auto const cleanup = [&]()
+    {
+        img::destroy_image(read_img);
+        img::destroy_image(tile_img);
+    };
+
+    img::read_image_from_file(GRASS_TILE_PATH, read_img);
+    img::resize_image(read_img, tile_img);
+
+    if(!init_tile(buffer, tile_img, assets.grass_tile))
+    {
+        cleanup();
+        print_error("init grass");
+        return false;
+    }
+
+    // temp make brown
+    auto brown = to_pixel(150, 75, 0);
+    for(u32 i = 0; i < tile_img.width * tile_img.height; ++i)
+    {
+        tile_img.data[i] = brown;
+    }
+
+    if(!init_tile(buffer, tile_img, assets.brown_tile))
+    {
+        cleanup();
+        print_error("init brown");
+        return false;
+    }
+
+
+    // temp make black
+    auto black = to_pixel(0, 0, 0);
+    for(u32 i = 0; i < tile_img.width * tile_img.height; ++i)
+    {
+        tile_img.data[i] = black;
+    }
+
+    if(!init_tile(buffer, tile_img, assets.black_tile))
+    {
+        cleanup();
+        print_error("init black");
+        return false;
+    }
+
+    return true;
+}
+
+
 static bool init_device_memory(AppState& state)
 {
     DeviceMemory device{};
+
+    auto const n_pixels_per_tile = N_TILE_PIXELS;     
+    auto const n_asset_tiles = N_TILE_BITMAPS;
+    auto const n_tilemap_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;   
+
+    auto const  n_pixels = n_pixels_per_tile * n_asset_tiles;
+    if(!cuda::device_malloc(state.device_pixel_buffer, n_pixels * sizeof(Pixel)))
+    {
+        print_error("device pixel_buffer");
+        return false;
+    }
+
+    if(!load_device_assets(state.device_pixel_buffer, device.assets))
+    {
+        print_error("device assets");
+        return false;
+    }
+
+    if(!cuda::device_malloc(state.device_tile_buffer, n_tilemap_tiles * sizeof(DeviceTile)))
+    {
+        print_error("device tiles");
+        return false;
+    }
 
     if(!cuda::device_malloc(state.device_buffer, 1))
     {
@@ -581,8 +690,9 @@ namespace app
 
         device::free(state.device_buffer_old);
 
-
         cuda::free(state.device_buffer);
+        cuda::free(state.device_pixel_buffer);
+        cuda::free(state.device_tile_buffer);
 
         cuda::free(state.unified_pixel_buffer);
         cuda::free(state.unified_input_record_buffer);

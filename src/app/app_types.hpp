@@ -79,6 +79,9 @@ public:
 };
 
 
+constexpr auto N_TILE_BITMAPS = sizeof(DeviceAssets) / sizeof(DeviceTile);
+
+
 class DeviceMemoryOld
 {
 public:
@@ -118,21 +121,17 @@ class DeviceMemory
 {
 public:
 
-    //DeviceAssets assets;
+    DeviceAssets assets;
 
-    //Entity user_player;
+    DeviceTileMatrix tilemap;
+
+    //Entity user_player;  
     
-    //DeviceTileMatrix tilemap;
     
     
     //DeviceEntityArray blue_entities;
 
-    //DeviceEntityArray wall_entities;    
-
-    // will fail to run if this not here
-    //DeviceEntityArray memory_bug;
-
-    int x;
+    //DeviceEntityArray wall_entities;  
 };
 
 
@@ -154,13 +153,15 @@ class AppState
 public:
 
     device::DeviceBuffer device_buffer_old;
-
     DeviceMemoryOld* device_old_p;
     
 
     AppInput app_input;
 
     MemoryBuffer<DeviceMemory> device_buffer;
+    MemoryBuffer<Pixel> device_pixel_buffer;
+    MemoryBuffer<DeviceTile> device_tile_buffer;
+
 
     MemoryBuffer<UnifiedMemory> unified_buffer;
     MemoryBuffer<Pixel> unified_pixel_buffer;

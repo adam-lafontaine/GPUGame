@@ -15,6 +15,9 @@ public:
     Pixel* avg_color;
 };
 
+// bitmap + avg_color
+constexpr auto N_TILE_PIXELS = TILE_WIDTH_PX * TILE_HEIGHT_PX + 1;
+
 
 constexpr size_t device_tile_bitmap_data_size()
 {
