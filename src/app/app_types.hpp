@@ -148,13 +148,12 @@ class UnifiedMemory
 {
 public:
 
+    u64 frame_count;
+
     Image screen_pixels;
 
-    //DeviceInputList previous_inputs;
-    
-    //DeviceInputList current_inputs;
-    
-    u64 frame_count;
+    DeviceInputList previous_inputs;
+    DeviceInputList current_inputs;    
 };
 
 
@@ -175,6 +174,7 @@ public:
 
     MemoryBuffer<UnifiedMemory> unified;
     MemoryBuffer<Pixel> unified_pixel;
+    MemoryBuffer<InputRecord> unified_input_records;
 
 
 };

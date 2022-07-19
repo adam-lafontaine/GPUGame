@@ -190,22 +190,46 @@ static bool init_unified_memory_old(AppState& state)
 }
 
 
+static bool init_image(Image& image, MemoryBuffer<Pixel>& buffer, u32 width, u32 height)
+{
+    auto const n_pixels = width * height;
+    image.data = cuda::push_elements(buffer, n_pixels);
+    if(!image.data)
+    {
+        return false;
+    }
+
+    image.width = width;
+    image.height = height;
+
+    return true;
+}
+
+
+static void init_input_list(DeviceInputList& list)
+{
+
+
+    list.capacity = INPUT::MAX_RECORDS;
+    list.size = 0;
+    list.read_index = 0;
+
+
+}
+
+
 static bool init_unified_memory(AppState& state, app::ScreenBuffer& buffer)
 {
     assert(sizeof(Pixel) == buffer.bytes_per_pixel);
 
     UnifiedMemory unified{};
 
-    unified.frame_count = 0;
-
+    unified.frame_count = 0;    
     
-    auto& screen = unified.screen_pixels;
-
     auto const width = buffer.width;
     auto const height = buffer.height;
 
     auto const n_pixels = width * height;
-
     if(!cuda::unified_malloc(state.unified_pixel, n_pixels))
     {
         print_error("unified_pixel");
@@ -214,17 +238,22 @@ static bool init_unified_memory(AppState& state, app::ScreenBuffer& buffer)
 
     assert(state.unified_pixel.data);
 
-    screen.data = cuda::push_elements(state.unified_pixel, n_pixels);
-    if(!screen.data)
+    auto& screen = unified.screen_pixels;
+    if(!init_image(screen, state.unified_pixel, width, height))
     {
-        print_error("screen data");
+        print_error("screen_pixels");
+        return false;
+    }    
+
+    buffer.memory = screen.data;
+
+    auto const n_input_records = 2 * INPUT::MAX_RECORDS;
+    if(!cuda::unified_malloc(state.unified_input_records, n_input_records))
+    {
+        print_error("state.unified_input_records");
         return false;
     }
 
-    screen.width = width;
-    screen.height = height;
-
-    buffer.memory = screen.data;
     
 
     if(!cuda::unified_malloc(state.unified, 1))
@@ -233,7 +262,7 @@ static bool init_unified_memory(AppState& state, app::ScreenBuffer& buffer)
         return false;
     }    
 
-    *state.unified.data = unified;    
+    *state.unified.data = unified;
 
     return true;
 }
@@ -532,8 +561,6 @@ namespace app
             return false;
         }
 
-        //screen.memory = state.unified_p->screen_pixels.data;
-
         memory.is_app_initialized = true;
         return true;
     }
@@ -558,9 +585,14 @@ namespace app
 	
 	void end_program(AppMemory& memory)
     {
-        auto& state = get_state(memory);
+        auto& state = get_state(memory);        
 
         device::free(state.device_buffer);
 		device::free(state.unified_buffer);
+
+        cuda::free(state.unified_pixel);
+        cuda::free(state.unified_input_records);
+        cuda::free(state.unified);
+
     }
 }
