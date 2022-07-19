@@ -206,15 +206,20 @@ static bool init_image(Image& image, MemoryBuffer<Pixel>& buffer, u32 width, u32
 }
 
 
-static void init_input_list(DeviceInputList& list)
+static bool init_input_list(DeviceInputList& list, MemoryBuffer<InputRecord>& buffer)
 {
+    auto const n_records = INPUT::MAX_RECORDS;
+    list.data = cuda::push_elements(buffer, n_records);
+    if(!list.data)
+    {
+        return false;
+    }
 
-
-    list.capacity = INPUT::MAX_RECORDS;
+    list.capacity = n_records;
     list.size = 0;
     list.read_index = 0;
 
-
+    return true;
 }
 
 
@@ -230,16 +235,14 @@ static bool init_unified_memory(AppState& state, app::ScreenBuffer& buffer)
     auto const height = buffer.height;
 
     auto const n_pixels = width * height;
-    if(!cuda::unified_malloc(state.unified_pixel, n_pixels))
+    if(!cuda::unified_malloc(state.unified_pixel_buffer, n_pixels))
     {
         print_error("unified_pixel");
         return false;
     }
 
-    assert(state.unified_pixel.data);
-
     auto& screen = unified.screen_pixels;
-    if(!init_image(screen, state.unified_pixel, width, height))
+    if(!init_image(screen, state.unified_pixel_buffer, width, height))
     {
         print_error("screen_pixels");
         return false;
@@ -248,13 +251,23 @@ static bool init_unified_memory(AppState& state, app::ScreenBuffer& buffer)
     buffer.memory = screen.data;
 
     auto const n_input_records = 2 * INPUT::MAX_RECORDS;
-    if(!cuda::unified_malloc(state.unified_input_records, n_input_records))
+    if(!cuda::unified_malloc(state.unified_input_record_buffer, n_input_records))
     {
-        print_error("state.unified_input_records");
+        print_error("unified_input_records");
         return false;
     }
 
-    
+    if(!init_input_list(unified.current_inputs, state.unified_input_record_buffer))
+    {
+        print_error("current_inputs");
+        return false;
+    }
+
+    if(!init_input_list(unified.previous_inputs, state.unified_input_record_buffer))
+    {
+        print_error("previous_inputs");
+        return false;
+    }
 
     if(!cuda::unified_malloc(state.unified, 1))
     {
@@ -363,7 +376,7 @@ static void process_camera_input(Input const& input, AppState& state)
 static void process_player_input(Input const& input, AppState& state)
 {
     auto& controller = input.controllers[0];
-    auto& input_records = state.unified_p->current_inputs;
+    auto& input_records = state.unified.data->current_inputs;
     //auto& keyboard = input.keyboard;
     auto& app_input = state.app_input;
     auto current_frame = (*state.unified.data).frame_count;
@@ -440,8 +453,8 @@ static void process_player_input(Input const& input, AppState& state)
 
 static void copy_inputs(AppState& state)
 {
-    auto& src = state.unified_p->current_inputs;
-    auto& dst = state.unified_p->previous_inputs;
+    auto& src = state.unified.data->current_inputs;
+    auto& dst = state.unified.data->previous_inputs;
 
     assert(src.data);
     assert(dst.data);
@@ -590,8 +603,8 @@ namespace app
         device::free(state.device_buffer);
 		device::free(state.unified_buffer);
 
-        cuda::free(state.unified_pixel);
-        cuda::free(state.unified_input_records);
+        cuda::free(state.unified_pixel_buffer);
+        cuda::free(state.unified_input_record_buffer);
         cuda::free(state.unified);
 
     }

@@ -103,9 +103,9 @@ class UnifiedMemoryOld
 {
 public:
 
-    DeviceInputList previous_inputs;
+    //DeviceInputList previous_inputs;
     
-    DeviceInputList current_inputs;
+    //DeviceInputList current_inputs;
 };
 
 
@@ -173,8 +173,8 @@ public:
     //MemoryBuffer<DeviceMemory> device;
 
     MemoryBuffer<UnifiedMemory> unified;
-    MemoryBuffer<Pixel> unified_pixel;
-    MemoryBuffer<InputRecord> unified_input_records;
+    MemoryBuffer<Pixel> unified_pixel_buffer;
+    MemoryBuffer<InputRecord> unified_input_record_buffer;
 
 
 };

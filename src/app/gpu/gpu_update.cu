@@ -301,11 +301,11 @@ static void gpu_next_player_positions(DeviceMemoryOld* device_ptr, UnifiedMemory
     }
 
     auto& device = *device_ptr;
-    auto& unified_p = *unified_ptr;
+    //auto& unified_p = *unified_ptr;
 
     assert(n_threads == N_PLAYER_ENTITIES);
 
-    gpuf::apply_current_input(device.user_player, unified_p.current_inputs, unified->frame_count);
+    gpuf::apply_current_input(device.user_player, unified->current_inputs, unified->frame_count);
 
     gpuf::entity_next_position(device.user_player);
 }
