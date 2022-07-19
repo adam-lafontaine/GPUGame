@@ -198,7 +198,7 @@ static bool init_unified_memory(AppState& state, app::ScreenBuffer& buffer)
 
     unified.frame_count = 0;
 
-    /*
+    
     auto& screen = unified.screen_pixels;
 
     auto const width = buffer.width;
@@ -225,7 +225,7 @@ static bool init_unified_memory(AppState& state, app::ScreenBuffer& buffer)
     screen.height = height;
 
     buffer.memory = screen.data;
-    */
+    
 
     if(!cuda::unified_malloc(state.unified, 1))
     {
@@ -532,7 +532,7 @@ namespace app
             return false;
         }
 
-        screen.memory = state.unified_p->screen_pixels.data;
+        //screen.memory = state.unified_p->screen_pixels.data;
 
         memory.is_app_initialized = true;
         return true;

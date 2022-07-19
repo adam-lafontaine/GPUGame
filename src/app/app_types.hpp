@@ -152,7 +152,7 @@ class UnifiedMemory
 {
 public:
 
-    //Image screen_pixels;
+    Image screen_pixels;
 
     //DeviceInputList previous_inputs;
     
@@ -178,7 +178,7 @@ public:
     //MemoryBuffer<DeviceMemory> device;
 
     MemoryBuffer<UnifiedMemory> unified;
-    //MemoryBuffer<Pixel> unified_pixel;
+    MemoryBuffer<Pixel> unified_pixel;
 
 
 };

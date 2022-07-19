@@ -10,6 +10,8 @@ public:
     DeviceMemoryOld* device_ptr;
     UnifiedMemoryOld* unified_ptr;
 
+    UnifiedMemory* unified;
+
     WorldPosition screen_pos;
     u32 screen_width_px;
     r32 screen_width_m;
@@ -61,7 +63,7 @@ static void draw_entity(Entity const& entity, DrawProps const& props)
         return;
     }
 
-    auto& screen_dst = props.unified_ptr->screen_pixels;
+    auto& screen_dst = props.unified->screen_pixels;
 
     auto screen_width_px = screen_dst.width;
     auto screen_height_px = screen_dst.height;
@@ -112,7 +114,7 @@ static void gpu_draw_tiles(DrawProps props, u32 n_threads)
     }
 
     auto& device = *props.device_ptr;
-    auto& unified = *props.unified_ptr;
+    auto& unified = *props.unified;
 
     auto& screen_dst = unified.screen_pixels;
     auto& tiles = device.tilemap;
@@ -208,6 +210,7 @@ namespace gpu
         DrawProps props{};
         props.device_ptr = state.device_p;
         props.unified_ptr = state.unified_p;
+        props.unified = state.unified.data;
         props.screen_width_px = state.app_input.screen_width_px;
         props.screen_width_m = state.app_input.screen_width_m;
         props.screen_pos = state.app_input.screen_position;
