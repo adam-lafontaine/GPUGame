@@ -131,6 +131,8 @@ public:
 
     // will fail to run if this not here
     //DeviceEntityArray memory_bug;
+
+    int x;
 };
 
 
