@@ -96,22 +96,22 @@ size_t device_memory_total_size()
 bool make_device_memory(DeviceMemoryOld& memory, device::DeviceBuffer& buffer)
 {
 
-    if(!make_device_tile_matrix(memory.tilemap, buffer, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE))
+    if(!make_device_tile_matrix(memory.tilemap_old, buffer, WORLD_WIDTH_TILE, WORLD_HEIGHT_TILE))
     {
         return false;
     }    
     
-    if(!make_device_assets(memory.assets, buffer))
+    if(!make_device_assets(memory.assets_old, buffer))
     {
         return false;
     }
 
-    if(!make_device_entity_array(memory.wall_entities, buffer, N_BROWN_ENTITIES))
+    if(!make_device_entity_array(memory.wall_entities_old, buffer, N_BROWN_ENTITIES))
     {
         return false;
     }
 
-    if(!make_device_entity_array(memory.blue_entities, buffer, N_BLUE_ENTITIES))
+    if(!make_device_entity_array(memory.blue_entities_old, buffer, N_BLUE_ENTITIES))
     {
         return false;
     }

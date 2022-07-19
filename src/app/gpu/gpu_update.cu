@@ -304,9 +304,9 @@ static void gpu_next_player_positions(DeviceMemoryOld* device_ptr, UnifiedMemory
 
     assert(n_threads == N_PLAYER_ENTITIES);
 
-    gpuf::apply_current_input(device.user_player, unified->current_inputs, unified->frame_count);
+    gpuf::apply_current_input(device.user_player_old, unified->current_inputs, unified->frame_count);
 
-    gpuf::entity_next_position(device.user_player);
+    gpuf::entity_next_position(device.user_player_old);
 }
 
 
@@ -324,7 +324,7 @@ static void gpu_next_blue_positions(DeviceMemoryOld* device_ptr, u32 n_threads)
     assert(n_threads == N_BLUE_ENTITIES);
 
     auto offset = (u32)t;
-    gpuf::entity_next_position(device.blue_entities.data[offset]);
+    gpuf::entity_next_position(device.blue_entities_old.data[offset]);
 }
 
 
@@ -346,7 +346,7 @@ static void gpu_player_wall(DeviceMemoryOld* device_ptr, u32 n_threads)
     auto player_offset = offset / N_BROWN_ENTITIES;
     auto wall_offset = offset - player_offset * N_BROWN_ENTITIES;
 
-    gpuf::stop_wall(device.user_player, device.wall_entities.data[wall_offset]);
+    gpuf::stop_wall(device.user_player_old, device.wall_entities_old.data[wall_offset]);
 }
 
 
@@ -368,8 +368,8 @@ static void gpu_blue_wall(DeviceMemoryOld* device_ptr, u32 n_threads)
     auto blue_offset = offset / N_BROWN_ENTITIES;
     auto wall_offset = offset - blue_offset * N_BROWN_ENTITIES;
 
-    auto& blue = device.blue_entities.data[blue_offset];
-    auto& wall = device.wall_entities.data[wall_offset];
+    auto& blue = device.blue_entities_old.data[blue_offset];
+    auto& wall = device.wall_entities_old.data[wall_offset];
     gpuf::bounce_wall(blue, wall);
 }
 
@@ -392,8 +392,8 @@ static void gpu_player_blue(DeviceMemoryOld* device_ptr, u32 n_threads)
     auto player_offset = offset / N_BLUE_ENTITIES;
     auto blue_offset = offset - player_offset * N_BLUE_ENTITIES;
 
-    auto& blue = device.blue_entities.data[blue_offset];
-    gpuf::player_blue(device.user_player, blue);
+    auto& blue = device.blue_entities_old.data[blue_offset];
+    gpuf::player_blue(device.user_player_old, blue);
 }
 
 
@@ -420,8 +420,8 @@ static void gpu_blue_blue(DeviceMemoryOld* device_ptr, u32 n_threads)
         return;
     }
 
-    auto& a = device.blue_entities.data[a_offset];
-    auto& b = device.blue_entities.data[b_offset];
+    auto& a = device.blue_entities_old.data[a_offset];
+    auto& b = device.blue_entities_old.data[b_offset];
     gpuf::blue_blue(a, b);
 }
 
@@ -439,7 +439,7 @@ static void gpu_update_player_positions(DeviceMemoryOld* device_ptr, u32 n_threa
 
     assert(n_threads == N_PLAYER_ENTITIES);
 
-    gpuf::entity_update_position(device.user_player);    
+    gpuf::entity_update_position(device.user_player_old);    
 }
 
 
@@ -457,7 +457,7 @@ static void gpu_update_blue_positions(DeviceMemoryOld* device_ptr, u32 n_threads
     assert(n_threads == N_BLUE_ENTITIES);
 
     auto offset = (u32)t;
-    gpuf::entity_update_position(device.blue_entities.data[offset]);
+    gpuf::entity_update_position(device.blue_entities_old.data[offset]);
 }
 
 

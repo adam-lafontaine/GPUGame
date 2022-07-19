@@ -86,16 +86,16 @@ class DeviceMemoryOld
 {
 public:
 
-    DeviceAssets assets;
+    DeviceAssets assets_old;
 
-    Entity user_player;
+    Entity user_player_old;
     
-    DeviceTileMatrix tilemap;
+    DeviceTileMatrix tilemap_old;
     
     
-    DeviceEntityArray blue_entities;
+    DeviceEntityArray blue_entities_old;
 
-    DeviceEntityArray wall_entities;    
+    DeviceEntityArray wall_entities_old;    
 
     // will fail to run if this not here
     DeviceEntityArray memory_bug;

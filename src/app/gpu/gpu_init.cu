@@ -169,7 +169,7 @@ static void gpu_init_tiles(DeviceMemoryOld* device_ptr, DeviceMemory* device_p, 
 
     auto& device = *device_ptr;
 
-    auto& world_tiles = device.tilemap;
+    auto& world_tiles = device.tilemap_old;
     auto& assets = device_p->assets;
 
     assert(n_threads == world_tiles.width * world_tiles.height);
@@ -194,7 +194,7 @@ static void gpu_init_players(DeviceMemoryOld* device_ptr, u32 n_threads)
 
     assert(n_threads == N_PLAYER_ENTITIES);
 
-    gpuf::init_player(device.user_player);
+    gpuf::init_player(device.user_player_old);
 }
 
 
@@ -213,7 +213,7 @@ static void gpu_init_blue_entities(DeviceMemoryOld* device_ptr, u32 n_threads)
 
     auto offset = (u32)t;
 
-    gpuf::init_blue(device.blue_entities.data[offset], offset);
+    gpuf::init_blue(device.blue_entities_old.data[offset], offset);
 }
 
 
@@ -232,7 +232,7 @@ static void gpu_init_wall_entities(DeviceMemoryOld* device_ptr, u32 n_threads)
 
     auto offset = (u32)t;
 
-    gpuf::init_wall(device.wall_entities.data[offset], offset);
+    gpuf::init_wall(device.wall_entities_old.data[offset], offset);
 }
 
 

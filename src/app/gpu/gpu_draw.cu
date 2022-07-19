@@ -116,7 +116,7 @@ static void gpu_draw_tiles(DrawProps props, u32 n_threads)
     auto& unified = *props.unified;
 
     auto& screen_dst = unified.screen_pixels;
-    auto& tiles = device.tilemap;
+    auto& tiles = device.tilemap_old;
 
     assert(n_threads == screen_dst.width * screen_dst.height);
 
@@ -160,7 +160,7 @@ static void gpu_draw_players(DrawProps props, u32 n_threads)
 
     assert(n_threads == N_PLAYER_ENTITIES);
 
-    gpuf::draw_entity(device.user_player, props);
+    gpuf::draw_entity(device.user_player_old, props);
 }
 
 
@@ -178,7 +178,7 @@ static void gpu_draw_blue_entities(DrawProps props, u32 n_threads)
     assert(n_threads == N_BLUE_ENTITIES);
 
     auto offset = (u32)t;
-    gpuf::draw_entity(device.blue_entities.data[offset], props);
+    gpuf::draw_entity(device.blue_entities_old.data[offset], props);
 }
 
 
@@ -196,7 +196,7 @@ static void gpu_draw_wall_entities(DrawProps props, u32 n_threads)
     assert(n_threads == N_BROWN_ENTITIES);
 
     auto offset = (u32)t;
-    gpuf::draw_entity(device.wall_entities.data[offset], props);
+    gpuf::draw_entity(device.wall_entities_old.data[offset], props);
 }
 
 
