@@ -103,13 +103,9 @@ class UnifiedMemoryOld
 {
 public:
 
-    Image screen_pixels;
-
     DeviceInputList previous_inputs;
     
     DeviceInputList current_inputs;
-    
-    //u64 frame_count;
 };
 
 

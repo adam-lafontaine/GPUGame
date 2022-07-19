@@ -193,26 +193,3 @@ bool copy_to_device(std::array<T, N> const& src, DeviceArray<T>& dst)
 
     return cuda::memcpy_to_device(src.data(), dst.data, bytes);
 }
-
-
-constexpr size_t device_image_data_size(u32 width, u32 height)
-{
-    return width * height * sizeof(Pixel);
-}
-
-inline bool make_device_image(Image& image, device::DeviceBuffer& buffer, u32 width, u32 height)
-{
-    auto data_size = device_image_data_size(width, height);
-
-    auto pixel_data = device::push_bytes(buffer, data_size);
-    if(!pixel_data)
-    {
-        return false;
-    }
-
-    image.width = width;
-    image.height = height;
-    image.data = (Pixel*)pixel_data;
-
-    return true;
-}
