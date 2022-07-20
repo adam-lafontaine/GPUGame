@@ -262,6 +262,16 @@ static bool init_device_memory(AppState& state)
         return false;
     }
 
+    auto tilemap_data = cuda::push_elements(state.device_tile_buffer, n_tilemap_tiles);
+    if(!tilemap_data)
+    {
+        print_error("tilemap data");
+        return false;
+    }
+    device.tilemap.data = tilemap_data;
+    device.tilemap.width = WORLD_WIDTH_TILE;
+    device.tilemap.height = WORLD_HEIGHT_TILE;
+
     if(!cuda::device_malloc(state.device_buffer, 1))
     {
         print_error("state.device_buffer");

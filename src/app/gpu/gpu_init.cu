@@ -159,7 +159,7 @@ static void init_wall(Entity& wall, u32 wall_id)
 
 
 GPU_KERNAL
-static void gpu_init_tiles(DeviceMemoryOld* device_ptr, DeviceMemory* device_p, u32 n_threads)
+static void gpu_init_tiles(DeviceMemory* device_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -167,9 +167,7 @@ static void gpu_init_tiles(DeviceMemoryOld* device_ptr, DeviceMemory* device_p, 
         return;
     }
 
-    auto& device = *device_ptr;
-
-    auto& world_tiles = device.tilemap_old;
+    auto& world_tiles = device_p->tilemap;   //.tilemap_old;
     auto& assets = device_p->assets;
 
     assert(n_threads == world_tiles.width * world_tiles.height);
@@ -286,7 +284,7 @@ namespace gpu
             return false;
         }
         
-        cuda_launch_kernel(gpu_init_tiles, tile_blocks, THREADS_PER_BLOCK, state.device_old_p, state.device_buffer.data, tile_threads);
+        cuda_launch_kernel(gpu_init_tiles, tile_blocks, THREADS_PER_BLOCK, state.device_buffer.data, tile_threads);
         result = cuda::launch_success("gpu_init_tiles");
         assert(result);
         if(!result)
