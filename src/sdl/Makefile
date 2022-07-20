@@ -338,17 +338,7 @@ device_h += $(types_h)
 
 cuda_def_h := $(device)/cuda_def.cuh
 
-
-device_tile_h := $(tiles)/device_tile.hpp
-device_tile_h += $(device_h)
-
-input_record_h := $(input_record)/input_record.hpp
-input_record_h += $(device_h)
-
 app_types_h := $(app)/app_types.hpp
-app_types_h += $(device_tile_h)
-app_types_h += $(input_record_h)
-
 
 gpu_constants_h := $(gpu)/gpu_constants.hpp
 
@@ -386,10 +376,6 @@ device_c     := $(device)/device.cu
 device_o     := $(build_app)/device.o
 object_files += $(device_o)
 
-tiles_c      := $(tiles)/device_tile.cpp
-tiles_o      := $(build_app)/tiles.o
-object_files += $(tiles_o)
-
 gpu_init_c   := $(gpu)/gpu_init.cu
 gpu_init_o   := $(build_app)/gpu_init.o
 object_files += $(gpu_init_o)
@@ -424,10 +410,6 @@ $(device_o): $(device_c) $(device_h) $(cuda_def_h)
 $(input_o): $(input_c) $(sdl_input_h) $(input_state_h)
 	@echo "\n input"
 	$(GPP) -o $@ -c $< $(SDL2)
-
-$(tiles_o): $(tiles_c) $(device_tile_h) $(gpu_app_h)
-	@echo "\n tiles"
-	$(GPP) -o $@ -c $<
 
 $(gpu_update_o): $(gpu_update_c) $(gpu_include_h)
 	@echo "\n gpu_update"

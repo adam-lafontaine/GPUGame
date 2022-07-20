@@ -1,10 +1,59 @@
 #pragma once
 
-#include "tiles/device_tile.hpp"
-#include "input_record/input_record.hpp"
+
+#include "../device/device.hpp"
+
+using uInput = u32;
+
+namespace INPUT
+{
+    constexpr uInput PLAYER_UP    = 0b0000'0000'0000'0000'0000'0000'0000'0001;
+    constexpr uInput PLAYER_DOWN  = 0b0000'0000'0000'0000'0000'0000'0000'0010;
+    constexpr uInput PLAYER_LEFT  = 0b0000'0000'0000'0000'0000'0000'0000'0100;
+    constexpr uInput PLAYER_RIGHT = 0b0000'0000'0000'0000'0000'0000'0000'1000;
+
+    constexpr u32 MAX_RECORDS = 5000;
+}
 
 
 
+
+class InputRecord
+{
+public:
+    u64 frame_begin;
+    u64 frame_end;
+    uInput input;
+
+    r32 est_dt_frame;
+};
+
+
+class DeviceInputList
+{
+public:
+    u32 capacity;
+    u32 size;
+    u32 read_index;
+
+    InputRecord* data;
+};
+
+
+constexpr u32 TILE_WIDTH_PX = 64;
+constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;
+
+
+class DeviceTile
+{
+public:
+
+    Pixel* bitmap_data;
+    Pixel* avg_color;
+};
+
+// bitmap + avg_color
+constexpr auto N_TILE_PIXELS = TILE_WIDTH_PX * TILE_HEIGHT_PX + 1;
 
 
 class WorldPosition

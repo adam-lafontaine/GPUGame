@@ -53,62 +53,6 @@ static void init_app_input(AppInput& app_input)
 }
 
 
-static bool load_device_assets_old(DeviceAssets& device_assets)
-{    
-    Image read_img{};
-    Image tile_img{};
-    tile_img.width = TILE_WIDTH_PX;
-    tile_img.height = TILE_HEIGHT_PX;
-
-    auto const cleanup = [&]()
-    {
-        img::destroy_image(read_img);
-        img::destroy_image(tile_img);
-    };
-
-    img::read_image_from_file(GRASS_TILE_PATH, read_img);
-    img::resize_image(read_img, tile_img);
-
-    if(!copy_to_device(tile_img, device_assets.grass_tile))
-    {
-        print("copy grass tile failed");
-        cleanup();
-        return false;
-    }
-
-    // temp make brown
-    auto brown = to_pixel(150, 75, 0);
-    for(u32 i = 0; i < tile_img.width * tile_img.height; ++i)
-    {
-        tile_img.data[i] = brown;
-    }
-
-    if(!copy_to_device(tile_img, device_assets.brown_tile))
-    {
-        print("copy brown tile failed");
-        cleanup();
-        return false;
-    }
-
-    // temp make black
-    auto black = to_pixel(0, 0, 0);
-    for(u32 i = 0; i < tile_img.width * tile_img.height; ++i)
-    {
-        tile_img.data[i] = black;
-    }
-
-    if(!copy_to_device(tile_img, device_assets.black_tile))
-    {
-        print("copy black tile failed");
-        cleanup();
-        return false;
-    }
-
-    cleanup();
-    return true;
-}
-
-
 static Pixel get_avg_color(image_t const& image)
 {
     auto sub_h = image.height / 10;
