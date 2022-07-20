@@ -16,8 +16,6 @@ namespace INPUT
 }
 
 
-
-
 class InputRecord
 {
 public:
@@ -29,7 +27,7 @@ public:
 };
 
 
-class DeviceInputList
+class InputList
 {
 public:
     u32 capacity;
@@ -44,7 +42,7 @@ constexpr u32 TILE_WIDTH_PX = 64;
 constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;
 
 
-class DeviceTile
+class Tile
 {
 public:
 
@@ -87,7 +85,7 @@ public:
 
 
 
-class DeviceEntitySOA
+class EntitySOA
 {
 public:
     u32 n_elements;
@@ -113,22 +111,22 @@ public:
 
 
 
-using DeviceEntityArray = DeviceArray<Entity>;
+using EntityArray = DeviceArray<Entity>;
 
-using DeviceTileMatrix = Matrix<DeviceTile>;
+using TileMatrix = Matrix<Tile>;
 
 
 class DeviceAssets
 {
 public:
-    DeviceTile grass_tile;
+    Tile grass_tile;
     
-    DeviceTile brown_tile;
-    DeviceTile black_tile;
+    Tile brown_tile;
+    Tile black_tile;
 };
 
 
-constexpr auto N_TILE_BITMAPS = sizeof(DeviceAssets) / sizeof(DeviceTile);
+constexpr auto N_TILE_BITMAPS = sizeof(DeviceAssets) / sizeof(Tile);
 
 
 class AppInput
@@ -152,13 +150,13 @@ public:
 
     DeviceAssets assets;
 
-    DeviceTileMatrix tilemap;
+    TileMatrix tilemap;
 
     Entity user_player;   
     
-    DeviceEntityArray blue_entities;
+    EntityArray blue_entities;
 
-    DeviceEntityArray wall_entities;  
+    EntityArray wall_entities;  
 };
 
 
@@ -170,8 +168,8 @@ public:
 
     Image screen_pixels;
 
-    DeviceInputList previous_inputs;
-    DeviceInputList current_inputs;    
+    InputList previous_inputs;
+    InputList current_inputs;    
 };
 
 
@@ -182,7 +180,7 @@ public:
 
     MemoryBuffer<DeviceMemory> device_buffer;
     MemoryBuffer<Pixel> device_pixel_buffer;
-    MemoryBuffer<DeviceTile> device_tile_buffer;
+    MemoryBuffer<Tile> device_tile_buffer;
     MemoryBuffer<Entity> device_entity_buffer;
 
     MemoryBuffer<UnifiedMemory> unified_buffer;

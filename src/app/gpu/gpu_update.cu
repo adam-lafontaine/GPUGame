@@ -61,7 +61,7 @@ static void move_player(Entity& entity, InputRecord const& input)
 
 
 GPU_FUNCTION 
-void apply_current_input(Entity& entity, DeviceInputList const& inputs, u64 frame)
+void apply_current_input(Entity& entity, InputList const& inputs, u64 frame)
 {
     entity.dt = { 0.0f, 0.0f };
 

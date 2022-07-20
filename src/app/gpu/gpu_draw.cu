@@ -22,7 +22,7 @@ namespace gpuf
 
 
 GPU_FUNCTION
-Pixel get_tile_color(DeviceTile const& tile, Point2Dr32 const& offset_m, r32 screen_width_m, u32 screen_width_px)
+Pixel get_tile_color(Tile const& tile, Point2Dr32 const& offset_m, r32 screen_width_m, u32 screen_width_px)
 {
     Pixel color{};
 

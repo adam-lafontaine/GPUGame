@@ -18,7 +18,7 @@ static void print_error(cstr msg)
 }
 
 
-void add_input_record(DeviceInputList& list, InputRecord& item)
+void add_input_record(InputList& list, InputRecord& item)
 {
     assert(list.data);
     assert(list.size < list.capacity);
@@ -29,7 +29,7 @@ void add_input_record(DeviceInputList& list, InputRecord& item)
 }
 
 
-InputRecord& get_last_input_record(DeviceInputList const& list)
+InputRecord& get_last_input_record(InputList const& list)
 {
     assert(list.data);
     assert(list.size);
@@ -81,7 +81,7 @@ static Pixel get_avg_color(image_t const& image)
 }
 
 
-static bool init_tile(MemoryBuffer<Pixel>& buffer, Image const& host_image, DeviceTile& tile)
+static bool init_tile(MemoryBuffer<Pixel>& buffer, Image const& host_image, Tile& tile)
 {
     auto const n_pixels = host_image.width * host_image.height;
 
@@ -199,7 +199,7 @@ static bool init_device_memory(AppState& state)
     // tilemap
     auto const n_tilemap_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;
 
-    if(!cuda::device_malloc(state.device_tile_buffer, n_tilemap_tiles * sizeof(DeviceTile)))
+    if(!cuda::device_malloc(state.device_tile_buffer, n_tilemap_tiles * sizeof(Tile)))
     {
         print_error("device tiles");
         return false;
@@ -276,7 +276,7 @@ static bool init_image(Image& image, MemoryBuffer<Pixel>& buffer, u32 width, u32
 }
 
 
-static bool init_input_list(DeviceInputList& list, MemoryBuffer<InputRecord>& buffer)
+static bool init_input_list(InputList& list, MemoryBuffer<InputRecord>& buffer)
 {
     auto const n_records = INPUT::MAX_RECORDS;
     list.data = cuda::push_elements(buffer, n_records);
