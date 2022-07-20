@@ -28,6 +28,10 @@ using cstr = const char*;
 
 #define GlobalVariable static
 
+//#define NO_CPP_17
+//#define NDEBUG
+
+
 class Vec2Di32
 {
 public:
@@ -89,10 +93,6 @@ using Point2Dr32 = Vec2Dr32;
 using Point2Dr64 = Vec2Dr64;
 using Point2Du32 = Vec2Du32;
 
-
-
-
-
 constexpr auto RGB_CHANNELS = 3u;
 constexpr auto RGBA_CHANNELS = 4u;
 
@@ -116,17 +116,28 @@ typedef union Pixel
 using pixel_t = Pixel;
 
 
-class Image
+template <typename T>
+class Matrix
 {
 public:
-
 	u32 width;
 	u32 height;
 
-	pixel_t* data;
+	T* data;
 };
 
+
+using Image = Matrix<Pixel>;
 using image_t = Image;
+
+
+template <typename T>
+class Array
+{
+public:
+	u32 n_elements;
+	T* data;
+};
 
 
 
@@ -141,10 +152,6 @@ inline pixel_t to_pixel(u8 red, u8 green, u8 blue)
 
 	return p;
 }
-
-
-//#define NO_CPP_17
-//#define NDEBUG
 
 
 inline i32 round_r32_to_i32(r32 value)

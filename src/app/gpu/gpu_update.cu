@@ -61,7 +61,7 @@ static void move_player(Entity& entity, InputRecord const& input)
 
 
 GPU_FUNCTION 
-void apply_current_input(Entity& entity, DeviceInputList const& inputs, u64 frame)
+void apply_current_input(Entity& entity, InputList const& inputs, u64 frame)
 {
     entity.dt = { 0.0f, 0.0f };
 
@@ -292,7 +292,7 @@ static void entity_update_position(Entity& entity)
 
 
 GPU_KERNAL
-static void gpu_next_player_positions(DeviceMemory* device_ptr, UnifiedMemory* unified_ptr, u32 n_threads)
+static void gpu_next_player_positions(DeviceMemory* device_ptr, UnifiedMemory* unified, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -301,18 +301,17 @@ static void gpu_next_player_positions(DeviceMemory* device_ptr, UnifiedMemory* u
     }
 
     auto& device = *device_ptr;
-    auto& unified = *unified_ptr;
 
     assert(n_threads == N_PLAYER_ENTITIES);
 
-    gpuf::apply_current_input(device.user_player, unified.current_inputs, unified.frame_count);
+    gpuf::apply_current_input(device.user_player, unified->current_inputs, unified->frame_count);
 
     gpuf::entity_next_position(device.user_player);
 }
 
 
 GPU_KERNAL
-static void gpu_next_blue_positions(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_next_blue_positions(DeviceMemory* device_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -320,7 +319,7 @@ static void gpu_next_blue_positions(DeviceMemory* device_ptr, u32 n_threads)
         return;
     }
 
-    auto& device = *device_ptr;
+    auto& device = *device_p;
 
     assert(n_threads == N_BLUE_ENTITIES);
 
@@ -330,7 +329,7 @@ static void gpu_next_blue_positions(DeviceMemory* device_ptr, u32 n_threads)
 
 
 GPU_KERNAL 
-static void gpu_player_wall(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_player_wall(DeviceMemory* device_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -340,19 +339,22 @@ static void gpu_player_wall(DeviceMemory* device_ptr, u32 n_threads)
 
     assert(n_threads == N_PLAYER_WALL_COLLISIONS);
 
-    auto& device = *device_ptr;
+    auto& device = *device_p;
 
     auto offset = (u32)t;
 
     auto player_offset = offset / N_BROWN_ENTITIES;
     auto wall_offset = offset - player_offset * N_BROWN_ENTITIES;
 
-    gpuf::stop_wall(device.user_player, device.wall_entities.data[wall_offset]);
+    auto& player = device.user_player;
+    auto& wall = device.wall_entities.data[wall_offset];
+
+    gpuf::stop_wall(player, wall);
 }
 
 
 GPU_KERNAL
-static void gpu_blue_wall(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_blue_wall(DeviceMemory* device_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -362,7 +364,7 @@ static void gpu_blue_wall(DeviceMemory* device_ptr, u32 n_threads)
 
     assert(n_threads == N_BLUE_WALL_COLLISIONS);
 
-    auto& device = *device_ptr;
+    auto& device = *device_p;
 
     auto offset = (u32)t;
 
@@ -371,12 +373,13 @@ static void gpu_blue_wall(DeviceMemory* device_ptr, u32 n_threads)
 
     auto& blue = device.blue_entities.data[blue_offset];
     auto& wall = device.wall_entities.data[wall_offset];
+
     gpuf::bounce_wall(blue, wall);
 }
 
 
 GPU_KERNAL
-static void gpu_player_blue(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_player_blue(DeviceMemory* device_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -386,7 +389,7 @@ static void gpu_player_blue(DeviceMemory* device_ptr, u32 n_threads)
 
     assert(n_threads == N_PLAYER_BLUE_COLLISIONS);
 
-    auto& device = *device_ptr;
+    auto& device = *device_p;
 
     auto offset = (u32)t;
 
@@ -394,12 +397,14 @@ static void gpu_player_blue(DeviceMemory* device_ptr, u32 n_threads)
     auto blue_offset = offset - player_offset * N_BLUE_ENTITIES;
 
     auto& blue = device.blue_entities.data[blue_offset];
-    gpuf::player_blue(device.user_player, blue);
+    auto& player = device.user_player;
+
+    gpuf::player_blue(player, blue);
 }
 
 
 GPU_KERNAL
-static void gpu_blue_blue(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_blue_blue(DeviceMemory* device_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -409,7 +414,7 @@ static void gpu_blue_blue(DeviceMemory* device_ptr, u32 n_threads)
 
     assert(n_threads == N_BLUE_BLUE_COLLISIONS);
 
-    auto& device = *device_ptr;
+    auto& device = *device_p;
 
     auto offset = (u32)t;
 
@@ -423,6 +428,7 @@ static void gpu_blue_blue(DeviceMemory* device_ptr, u32 n_threads)
 
     auto& a = device.blue_entities.data[a_offset];
     auto& b = device.blue_entities.data[b_offset];
+
     gpuf::blue_blue(a, b);
 }
 
@@ -445,7 +451,7 @@ static void gpu_update_player_positions(DeviceMemory* device_ptr, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_update_blue_positions(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_update_blue_positions(DeviceMemory* device_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -453,7 +459,7 @@ static void gpu_update_blue_positions(DeviceMemory* device_ptr, u32 n_threads)
         return;
     }
 
-    auto& device = *device_ptr;
+    auto& device = *device_p;
 
     assert(n_threads == N_BLUE_ENTITIES);
 
@@ -486,36 +492,39 @@ namespace gpu
 
         constexpr auto blue_blue_threads = N_BLUE_BLUE_COLLISIONS;
         constexpr auto blue_blue_blocks = calc_thread_blocks(blue_blue_threads);
+
+        auto device_p = state.device_buffer.data;
+        auto unified_p = state.unified_buffer.data;
         
-        cuda_launch_kernel(gpu_next_player_positions, player_blocks, THREADS_PER_BLOCK, state.device, state.unified, player_threads);
+        cuda_launch_kernel(gpu_next_player_positions, player_blocks, THREADS_PER_BLOCK, device_p, unified_p, player_threads);
         result = cuda::launch_success("gpu_next_player_positions");
         assert(result);
         
-        cuda_launch_kernel(gpu_next_blue_positions, blue_blocks, THREADS_PER_BLOCK, state.device, blue_threads);
+        cuda_launch_kernel(gpu_next_blue_positions, blue_blocks, THREADS_PER_BLOCK, device_p, blue_threads);
         result = cuda::launch_success("gpu_next_blue_positions");
         assert(result);
         
-        cuda_launch_kernel(gpu_player_wall, player_wall_blocks, THREADS_PER_BLOCK, state.device, player_wall_threads);
+        cuda_launch_kernel(gpu_player_wall, player_wall_blocks, THREADS_PER_BLOCK, device_p, player_wall_threads);
         result = cuda::launch_success("gpu_player_wall");
         assert(result);
         
-        cuda_launch_kernel(gpu_blue_wall, blue_wall_blocks, THREADS_PER_BLOCK, state.device, blue_wall_threads);
+        cuda_launch_kernel(gpu_blue_wall, blue_wall_blocks, THREADS_PER_BLOCK, device_p, blue_wall_threads);
         result = cuda::launch_success("gpu_blue_wall");
         assert(result);
         
-        cuda_launch_kernel(gpu_player_blue, player_blue_blocks, THREADS_PER_BLOCK, state.device, player_blue_threads);
+        cuda_launch_kernel(gpu_player_blue, player_blue_blocks, THREADS_PER_BLOCK, device_p, player_blue_threads);
         result = cuda::launch_success("gpu_player_blue");
         assert(result);
         
-        cuda_launch_kernel(gpu_blue_blue, blue_blue_blocks, THREADS_PER_BLOCK, state.device, blue_blue_threads);
+        cuda_launch_kernel(gpu_blue_blue, blue_blue_blocks, THREADS_PER_BLOCK, device_p, blue_blue_threads);
         result = cuda::launch_success("gpu_blue_blue");
         assert(result);
         
-        cuda_launch_kernel(gpu_update_player_positions, player_blocks, THREADS_PER_BLOCK, state.device, player_threads);
+        cuda_launch_kernel(gpu_update_player_positions, player_blocks, THREADS_PER_BLOCK, device_p, player_threads);
         result = cuda::launch_success("gpu_update_player_positions");
         assert(result);
         
-        cuda_launch_kernel(gpu_update_blue_positions, blue_blocks, THREADS_PER_BLOCK, state.device, blue_threads);
+        cuda_launch_kernel(gpu_update_blue_positions, blue_blocks, THREADS_PER_BLOCK, device_p, blue_threads);
         result = cuda::launch_success("gpu_update_blue_positions");
         assert(result);
     }

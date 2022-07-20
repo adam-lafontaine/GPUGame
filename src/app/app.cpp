@@ -1,7 +1,9 @@
 #include "app_include.hpp"
 
 
-void add_input_record(DeviceInputList& list, InputRecord& item)
+
+
+static void add_input_record(InputList& list, InputRecord& item)
 {
     assert(list.data);
     assert(list.size < list.capacity);
@@ -12,160 +14,12 @@ void add_input_record(DeviceInputList& list, InputRecord& item)
 }
 
 
-InputRecord& get_last_input_record(DeviceInputList const& list)
+static InputRecord& get_last_input_record(InputList const& list)
 {
     assert(list.data);
     assert(list.size);
 
     return list.data[list.size - 1];
-}
-
-
-static void init_state_props(StateProps& props)
-{
-    //props.frame_count = 0;
-    props.reset_frame_count = false;
-
-    props.screen_width_px = app::SCREEN_BUFFER_WIDTH;
-    props.screen_height_px = app::SCREEN_BUFFER_HEIGHT;
-
-    props.screen_width_m = MIN_SCREEN_WIDTH_M;    
-
-    props.screen_position.tile = { 0, 0 };
-    props.screen_position.offset_m = { 0.0f, 0.0f };
-}
-
-
-static bool load_device_assets(DeviceAssets& device_assets)
-{    
-    Image read_img{};
-    Image tile_img{};
-    tile_img.width = TILE_WIDTH_PX;
-    tile_img.height = TILE_HEIGHT_PX;
-
-    auto const cleanup = [&]()
-    {
-        img::destroy_image(read_img);
-        img::destroy_image(tile_img);
-    };
-
-    img::read_image_from_file(GRASS_TILE_PATH, read_img);
-    img::resize_image(read_img, tile_img);
-
-    if(!copy_to_device(tile_img, device_assets.grass_tile))
-    {
-        print("copy grass tile failed");
-        cleanup();
-        return false;
-    }
-
-    // temp make brown
-    auto brown = to_pixel(150, 75, 0);
-    for(u32 i = 0; i < tile_img.width * tile_img.height; ++i)
-    {
-        tile_img.data[i] = brown;
-    }
-
-    if(!copy_to_device(tile_img, device_assets.brown_tile))
-    {
-        print("copy brown tile failed");
-        cleanup();
-        return false;
-    }
-
-    // temp make black
-    auto black = to_pixel(0, 0, 0);
-    for(u32 i = 0; i < tile_img.width * tile_img.height; ++i)
-    {
-        tile_img.data[i] = black;
-    }
-
-    if(!copy_to_device(tile_img, device_assets.black_tile))
-    {
-        print("copy black tile failed");
-        cleanup();
-        return false;
-    }
-
-    cleanup();
-    return true;
-}
-
-
-static bool init_device_memory(AppState& state)
-{
-    auto& buffer = state.device_buffer;
-
-    if(!device::malloc(buffer, device_memory_total_size()))
-    {
-        return false;
-    }
-
-    DeviceMemory device{};
-
-    if(!make_device_memory(device, buffer))
-    {
-        return false;
-    }
-
-    if(!load_device_assets(device.assets))
-    {
-        return false;
-    }
-
-    auto struct_size = sizeof(DeviceMemory);
-
-    auto device_dst = device::push_bytes(buffer, struct_size);
-    if(!device_dst)
-    {
-        return false;
-    }
-
-    //assert(buffer.size == buffer.capacity);
-
-    if(!cuda::memcpy_to_device(&device, device_dst, struct_size))
-    {
-        return false;
-    }
-
-    state.device = (DeviceMemory*)device_dst;
-
-    return true;
-}
-
-
-static bool init_unified_memory(AppState& state)
-{
-    auto& buffer = state.unified_buffer;
-
-    if(!device::unified_malloc(buffer, unified_memory_total_size(app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT)))
-    {
-        return false;
-    }
-
-    UnifiedMemory unified{};
-
-    unified.frame_count = 0;
-
-    if(!make_unified_memory(unified, buffer, app::SCREEN_BUFFER_WIDTH, app::SCREEN_BUFFER_HEIGHT))
-    {        
-        return false;
-    }
-
-    auto struct_size = sizeof(UnifiedMemory);
-
-    auto device_dst = device::push_bytes(buffer, struct_size);
-
-    if(!cuda::memcpy_to_device(&unified, device_dst, struct_size))
-    {
-        return false;
-    }
-
-    assert(buffer.size == buffer.capacity);
-
-    state.unified = (UnifiedMemory*)device_dst;
-
-    return true;
 }
 
 
@@ -195,7 +49,7 @@ static void process_camera_input(Input const& input, AppState& state)
 {
     auto& controller = input.controllers[0];
     auto& keyboard = input.keyboard;
-    auto& props = state.props;
+    auto& app_input = state.app_input;
 
     auto dt = input.dt_frame;
 
@@ -203,10 +57,10 @@ static void process_camera_input(Input const& input, AppState& state)
     r32 min_camera_speed_px = 200.0f;
 
     auto camera_speed_px = max_camera_speed_px - 
-        (props.screen_width_m - MIN_SCREEN_WIDTH_M) / (MAX_SCREEN_WIDTH_M - MIN_SCREEN_WIDTH_M) * (max_camera_speed_px - min_camera_speed_px);
+        (app_input.screen_width_m - MIN_SCREEN_WIDTH_M) / (MAX_SCREEN_WIDTH_M - MIN_SCREEN_WIDTH_M) * (max_camera_speed_px - min_camera_speed_px);
   
     auto camera_movement_px = camera_speed_px * dt;
-    auto camera_movement_m = px_to_m(camera_movement_px, props.screen_width_m, props.screen_width_px);    
+    auto camera_movement_m = px_to_m(camera_movement_px, app_input.screen_width_m, app_input.screen_width_px);    
 
     Vec2Dr32 camera_d_m = { 0.0f, 0.0f };
 
@@ -230,44 +84,44 @@ static void process_camera_input(Input const& input, AppState& state)
     r32 zoom_speed = 50.0f;
     auto zoom_m = zoom_speed * dt;
 
-    if(props.screen_width_m > MIN_SCREEN_WIDTH_M && controller.stick_right_y.end > 0.5f)
+    if(app_input.screen_width_m > MIN_SCREEN_WIDTH_M && controller.stick_right_y.end > 0.5f)
     {
-        auto old_w = props.screen_width_m;
+        auto old_w = app_input.screen_width_m;
         auto old_h = screen_height_m(old_w);
 
-        props.screen_width_m = std::max(props.screen_width_m - zoom_m, MIN_SCREEN_WIDTH_M);
+        app_input.screen_width_m = std::max(app_input.screen_width_m - zoom_m, MIN_SCREEN_WIDTH_M);
 
-        auto new_w = props.screen_width_m;
+        auto new_w = app_input.screen_width_m;
         auto new_h = screen_height_m(new_w);
 
         camera_d_m.x += 0.5f * (old_w - new_w);
         camera_d_m.y += 0.5f * (old_h - new_h);
     }
-    else if(props.screen_width_m < MAX_SCREEN_WIDTH_M && controller.stick_right_y.end < -0.5f)
+    else if(app_input.screen_width_m < MAX_SCREEN_WIDTH_M && controller.stick_right_y.end < -0.5f)
     {
-        auto old_w = props.screen_width_m;
+        auto old_w = app_input.screen_width_m;
         auto old_h = screen_height_m(old_w);
 
-        props.screen_width_m = std::min(props.screen_width_m + zoom_m, MAX_SCREEN_WIDTH_M);
+        app_input.screen_width_m = std::min(app_input.screen_width_m + zoom_m, MAX_SCREEN_WIDTH_M);
 
-        auto new_w = props.screen_width_m;
+        auto new_w = app_input.screen_width_m;
         auto new_h = screen_height_m(new_w);
 
         camera_d_m.x += 0.5f * (old_w - new_w);
         camera_d_m.y += 0.5f * (old_h - new_h);
     } 
 
-    apply_delta(props.screen_position, camera_d_m);
+    apply_delta(app_input.screen_position, camera_d_m);
 }
 
 
 static void process_player_input(Input const& input, AppState& state)
 {
     auto& controller = input.controllers[0];
-    auto& input_records = state.unified->current_inputs;
+    auto& input_records = state.unified_buffer.data->current_inputs;
     //auto& keyboard = input.keyboard;
-    auto& props = state.props;
-    auto current_frame = state.unified->frame_count;
+    auto& app_input = state.app_input;
+    auto current_frame = (*state.unified_buffer.data).frame_count;
 
     uInput player_input = 0;
 
@@ -341,8 +195,8 @@ static void process_player_input(Input const& input, AppState& state)
 
 static void copy_inputs(AppState& state)
 {
-    auto& src = state.unified->current_inputs;
-    auto& dst = state.unified->previous_inputs;
+    auto& src = state.unified_buffer.data->current_inputs;
+    auto& dst = state.unified_buffer.data->previous_inputs;
 
     assert(src.data);
     assert(dst.data);
@@ -375,7 +229,7 @@ static void process_input(Input const& input, AppState& state)
 
     auto& controller = input.controllers[0];
     auto& keyboard = input.keyboard;
-    auto& props = state.props;
+    auto& app_input = state.app_input;
 
     if(controller.button_b.pressed)
     {
@@ -395,13 +249,13 @@ static void process_input(Input const& input, AppState& state)
 
 static void next_frame(AppState& state)
 {
-    auto& props = state.props;
-    auto& unified = *state.unified;
+    auto& app_input = state.app_input;
+    auto& unified = *state.unified_buffer.data;
 
-    if(props.reset_frame_count)
+    if(app_input.reset_frame_count)
     {
         unified.frame_count = 0;
-        props.reset_frame_count = false;
+        app_input.reset_frame_count = false;
     }
 
     ++unified.frame_count;
@@ -428,7 +282,7 @@ namespace app
         assert(required_sz <= memory.permanent_storage_size);
 
         auto& state = get_state(memory);
-        init_state_props(state.props);
+        init_app_input(state.app_input);
 
         return state;
     }
@@ -442,10 +296,10 @@ namespace app
 
         auto& state = get_initial_state(memory);
 
-        if(!init_unified_memory(state))
-		{
-			return false;
-		}
+        if(!init_unified_memory(state, screen))
+        {
+            return false;
+        }
 
         if(!init_device_memory(state))
         {
@@ -456,8 +310,6 @@ namespace app
         {
             return false;
         }
-
-        screen.memory = state.unified->screen_pixels.data;
 
         memory.is_app_initialized = true;
         return true;
@@ -483,9 +335,16 @@ namespace app
 	
 	void end_program(AppMemory& memory)
     {
-        auto& state = get_state(memory);
+        auto& state = get_state(memory);  
 
-        device::free(state.device_buffer);
-		device::free(state.unified_buffer);
+        cuda::free(state.device_buffer);
+        cuda::free(state.device_pixel_buffer);
+        cuda::free(state.device_tile_buffer);
+        cuda::free(state.device_entity_buffer);
+
+        cuda::free(state.unified_pixel_buffer);
+        cuda::free(state.unified_input_record_buffer);
+        cuda::free(state.unified_buffer);
+
     }
 }

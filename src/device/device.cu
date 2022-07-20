@@ -1,6 +1,8 @@
 #include "device.hpp"
 #include "cuda_def.cuh"
 
+#include <cassert>
+
 #ifdef CUDA_PRINT_ERROR
 
 #include <cstdio>
@@ -17,6 +19,7 @@ static void check_error(cudaError_t err, cstr label = "")
     }
 
     #ifdef CUDA_PRINT_ERROR
+    #ifndef	NDEBUG
 
     printf("\n*** CUDA ERROR ***\n\n");
     printf("%s", cudaGetErrorString(err));
@@ -29,51 +32,13 @@ static void check_error(cudaError_t err, cstr label = "")
     printf("\n\n******************\n\n");
 
     #endif
+    #endif
 }
 
 
 namespace cuda
 {
-    bool memcpy_to_device(const void* host_src, void* device_dst, size_t n_bytes)
-    {
-        cudaError_t err = cudaMemcpy(device_dst, host_src, n_bytes, cudaMemcpyHostToDevice);
-        check_error(err, "cuda_memcpy_to_device");
-
-        return err == cudaSuccess;
-    }
-
-
-    bool memcpy_to_host(const void* device_src, void* host_dst, size_t n_bytes)
-    {
-        cudaError_t err = cudaMemcpy(host_dst, device_src, n_bytes, cudaMemcpyDeviceToHost);
-        check_error(err, "cuda_memcpy_to_host");
-
-        return err == cudaSuccess;
-    }
-
-
-    bool no_errors(cstr label)
-    {
-        cudaError_t err = cudaGetLastError();
-        check_error(err, label);
-
-        return err == cudaSuccess;
-    }
-
-
-    bool launch_success(cstr label)
-    {
-        cudaError_t err = cudaDeviceSynchronize();
-        check_error(err, label);
-
-        return err == cudaSuccess;
-    }
-}
-
-
-namespace device
-{
-    bool malloc(MemoryBuffer& buffer, size_t n_bytes)
+    bool device_malloc(ByteBuffer& buffer, size_t n_bytes)
     {
         assert(n_bytes);
         assert(!buffer.data);
@@ -91,13 +56,14 @@ namespace device
         if(result)
         {
             buffer.capacity = n_bytes;
+            buffer.size = 0;
         }
         
         return result;
     }
 
 
-    bool unified_malloc(MemoryBuffer& buffer, size_t n_bytes)
+    bool unified_malloc(ByteBuffer& buffer, size_t n_bytes)
     {
         assert(n_bytes);
         assert(!buffer.data);
@@ -115,13 +81,14 @@ namespace device
         if(result)
         {
             buffer.capacity = n_bytes;
+            buffer.size = 0;
         }
         
         return result;
     }
 
 
-    bool free(MemoryBuffer& buffer)
+    bool free(ByteBuffer& buffer)
     {
         buffer.capacity = 0;
         buffer.size = 0;
@@ -140,7 +107,7 @@ namespace device
     }
 
 
-    u8* push_bytes(MemoryBuffer& buffer, size_t n_bytes)
+    u8* push_bytes(ByteBuffer& buffer, size_t n_bytes)
     {
         assert(buffer.data);
         assert(buffer.capacity);
@@ -167,7 +134,7 @@ namespace device
     }
 
 
-    bool pop_bytes(MemoryBuffer& buffer, size_t n_bytes)
+    bool pop_bytes(ByteBuffer& buffer, size_t n_bytes)
     {
         assert(buffer.data);
         assert(buffer.capacity);
@@ -189,5 +156,41 @@ namespace device
         }
 
         return false;
+    }
+    
+
+    bool memcpy_to_device(const void* host_src, void* device_dst, size_t n_bytes)
+    {
+        cudaError_t err = cudaMemcpy(device_dst, host_src, n_bytes, cudaMemcpyHostToDevice);
+        check_error(err, "memcpy_to_device");
+
+        return err == cudaSuccess;
+    }
+
+
+    bool memcpy_to_host(const void* device_src, void* host_dst, size_t n_bytes)
+    {
+        cudaError_t err = cudaMemcpy(host_dst, device_src, n_bytes, cudaMemcpyDeviceToHost);
+        check_error(err, "memcpy_to_host");
+
+        return err == cudaSuccess;
+    }
+
+
+    bool no_errors(cstr label)
+    {
+        cudaError_t err = cudaGetLastError();
+        check_error(err, label);
+
+        return err == cudaSuccess;
+    }
+
+
+    bool launch_success(cstr label)
+    {
+        cudaError_t err = cudaDeviceSynchronize();
+        check_error(err, label);
+
+        return err == cudaSuccess;
     }
 }

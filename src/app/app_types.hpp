@@ -1,7 +1,56 @@
 #pragma once
 
-#include "tiles/device_tile.hpp"
-#include "input_record/input_record.hpp"
+#include "../device/device.hpp"
+
+
+using uInput = u32;
+
+namespace INPUT
+{
+    constexpr uInput PLAYER_UP    = 0b0000'0000'0000'0000'0000'0000'0000'0001;
+    constexpr uInput PLAYER_DOWN  = 0b0000'0000'0000'0000'0000'0000'0000'0010;
+    constexpr uInput PLAYER_LEFT  = 0b0000'0000'0000'0000'0000'0000'0000'0100;
+    constexpr uInput PLAYER_RIGHT = 0b0000'0000'0000'0000'0000'0000'0000'1000;
+
+    constexpr u32 MAX_RECORDS = 5000;
+}
+
+
+class InputRecord
+{
+public:
+    u64 frame_begin;
+    u64 frame_end;
+    uInput input;
+
+    r32 est_dt_frame;
+};
+
+
+class InputList
+{
+public:
+    u32 capacity;
+    u32 size;
+    u32 read_index;
+
+    InputRecord* data;
+};
+
+
+class Tile
+{
+public:
+
+    Pixel* bitmap_data;
+    Pixel* avg_color;
+};
+
+constexpr u32 TILE_WIDTH_PX = 64;
+constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;
+
+// bitmap + avg_color
+constexpr auto N_TILE_PIXELS = TILE_WIDTH_PX * TILE_HEIGHT_PX + 1;
 
 
 class WorldPosition
@@ -27,78 +76,55 @@ public:
 
     WorldPosition next_position;
 
-    bool is_active = false;
+    b32 is_active = false;
 
-    bool inv_x = false;
-    bool inv_y = false;
+    b32 inv_x = false;
+    b32 inv_y = false;
 };
 
 
-using DeviceEntityArray = DeviceArray<Entity>;
+class EntitySOA
+{
+public:
+    u32 n_elements;
 
-using DeviceTileMatrix = DeviceMatrix<DeviceTile>;
+    r32* width;
+    r32* height;
+    Pixel* color;
+
+    WorldPosition* position;
+    Vec2Dr32* dt;
+    r32* speed;
+
+    Vec2Dr32* delta_pos_m;
+
+    WorldPosition* next_position;
+
+    b32* is_active;
+
+    b32* inv_x;
+    b32* inv_y;
+};
 
 
 class DeviceAssets
 {
 public:
-    DeviceTile grass_tile;
+    Tile grass_tile;
     
-    DeviceTile brown_tile;
-    DeviceTile black_tile;
+    Tile brown_tile;
+    Tile black_tile;
 };
 
 
-
-class DeviceMemory
-{
-public:     
-
-    DeviceAssets assets;
-
-    Entity user_player;
-    
-    DeviceTileMatrix tilemap;
-    
-    
-    DeviceEntityArray blue_entities;
-
-    DeviceEntityArray wall_entities;    
-
-    // will fail to run if this not here
-    DeviceEntityArray memory_bug;    
-
-};
+constexpr auto N_TILE_BITMAPS = sizeof(DeviceAssets) / sizeof(Tile);
 
 
-class UnifiedMemory
-{
-public:
-
-    DeviceImage screen_pixels;
-
-    DeviceInputList previous_inputs;
-    
-    DeviceInputList current_inputs;
-    
-    u64 frame_count;
-};
+using EntityArray = Array<Entity>;
+using TileMatrix = Matrix<Tile>;
 
 
-using HostImage = Image;
-
-
-class HostMemory
-{
-public:
-
-    //HostImage screen_pixels;
-
-    
-};
-
-
-class StateProps
+class AppInput
 {
 public:
 
@@ -113,25 +139,46 @@ public:
 };
 
 
-class AppState
+class DeviceMemory
 {
 public:
 
-    device::MemoryBuffer device_buffer;
-    device::MemoryBuffer unified_buffer;
+    DeviceAssets assets;
 
-    DeviceMemory* device;
-    UnifiedMemory* unified;
+    TileMatrix tilemap;
 
-    HostMemory host;
-    StateProps props;
+    Entity user_player;   
+    
+    EntityArray blue_entities;
+
+    EntityArray wall_entities;  
 };
 
 
-size_t device_memory_total_size();
+class UnifiedMemory
+{
+public:
 
-size_t unified_memory_total_size(u32 screen_width, u32 screen_height);
+    u64 frame_count;
 
-bool make_device_memory(DeviceMemory& memory, device::MemoryBuffer& buffer);
+    Image screen_pixels;
 
-bool make_unified_memory(UnifiedMemory& memory, device::MemoryBuffer& buffer, u32 screen_width, u32 screen_height);
+    InputList previous_inputs;
+    InputList current_inputs;    
+};
+
+
+class AppState
+{
+public:
+    AppInput app_input;
+
+    MemoryBuffer<DeviceMemory> device_buffer;
+    MemoryBuffer<Pixel> device_pixel_buffer;
+    MemoryBuffer<Tile> device_tile_buffer;
+    MemoryBuffer<Entity> device_entity_buffer;
+
+    MemoryBuffer<UnifiedMemory> unified_buffer;
+    MemoryBuffer<Pixel> unified_pixel_buffer;
+    MemoryBuffer<InputRecord> unified_input_record_buffer;
+};

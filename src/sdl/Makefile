@@ -338,17 +338,7 @@ device_h += $(types_h)
 
 cuda_def_h := $(device)/cuda_def.cuh
 
-
-device_tile_h := $(tiles)/device_tile.hpp
-device_tile_h += $(device_h)
-
-input_record_h := $(input_record)/input_record.hpp
-input_record_h += $(device_h)
-
 app_types_h := $(app)/app_types.hpp
-app_types_h += $(device_tile_h)
-app_types_h += $(input_record_h)
-
 
 gpu_constants_h := $(gpu)/gpu_constants.hpp
 
@@ -366,7 +356,6 @@ app_h += $(input_h)
 app_include_h := $(app)/app_include.hpp
 app_include_h += $(app_h)
 app_include_h += $(gpu_app_h)
-app_include_h += $(libimage_h)
 
 
 # main
@@ -386,10 +375,6 @@ device_c     := $(device)/device.cu
 device_o     := $(build_app)/device.o
 object_files += $(device_o)
 
-tiles_c      := $(tiles)/device_tile.cpp
-tiles_o      := $(build_app)/tiles.o
-object_files += $(tiles_o)
-
 gpu_init_c   := $(gpu)/gpu_init.cu
 gpu_init_o   := $(build_app)/gpu_init.o
 object_files += $(gpu_init_o)
@@ -406,14 +391,15 @@ app_c        := $(app)/app.cpp
 app_o        := $(build_app)/app.o
 object_files += $(app_o)
 
-make_app_types_c := $(app)/make_app_types.cpp
-make_app_types_o := $(build_app)/make_app_types.o
-object_files     += $(make_app_types_o)
+app_init_c        := $(app)/app_init.cpp
+app_init_o        := $(build_app)/app_init.o
+object_files += $(app_init_o)
 
 
 program_exe := $(build)/$(exe_name)
 
 GPP += -O3
+#GPP += -DNDEBUG
 
 
 $(img_o): $(img_c) $(libimage_h) $(stb_include_h)
@@ -427,10 +413,6 @@ $(device_o): $(device_c) $(device_h) $(cuda_def_h)
 $(input_o): $(input_c) $(sdl_input_h) $(input_state_h)
 	@echo "\n input"
 	$(GPP) -o $@ -c $< $(SDL2)
-
-$(tiles_o): $(tiles_c) $(device_tile_h) $(gpu_app_h)
-	@echo "\n tiles"
-	$(GPP) -o $@ -c $<
 
 $(gpu_update_o): $(gpu_update_c) $(gpu_include_h)
 	@echo "\n gpu_update"
@@ -448,8 +430,8 @@ $(app_o): $(app_c) $(app_include_h)
 	@echo "\n app"
 	$(GPP) -o $@ -c $<
 
-$(make_app_types_o): $(make_app_types_c) $(app_types_h) 
-	@echo "\n make_app_types"
+$(app_init_o): $(app_init_c) $(app_include_h) $(libimage_h)
+	@echo "\n app"
 	$(GPP) -o $@ -c $<
 
 $(main_o): $(main_c) $(app_h) $(sdl_input_h) $(stopwatch_h)
@@ -467,7 +449,7 @@ run: build
 	$(program_exe)
 	@echo "\n"
 
-clean_all:
+cleanall:
 	rm -rfv $(build)/*
 
 clean:
