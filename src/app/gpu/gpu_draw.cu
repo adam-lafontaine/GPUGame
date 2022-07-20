@@ -174,12 +174,12 @@ static void gpu_draw_blue_entities(DrawProps props, u32 n_threads)
         return;
     }
 
-    auto& device = *props.device_ptr;
+    auto& device = *props.device;
 
     assert(n_threads == N_BLUE_ENTITIES);
 
     auto offset = (u32)t;
-    gpuf::draw_entity(device.blue_entities_old.data[offset], props);
+    gpuf::draw_entity(device.blue_entities.data[offset], props);
 }
 
 

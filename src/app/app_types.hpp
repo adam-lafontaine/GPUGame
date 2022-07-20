@@ -125,11 +125,9 @@ public:
 
     DeviceTileMatrix tilemap;
 
-    Entity user_player;  
+    Entity user_player;   
     
-    
-    
-    //DeviceEntityArray blue_entities;
+    DeviceEntityArray blue_entities;
 
     //DeviceEntityArray wall_entities;  
 };
@@ -153,15 +151,14 @@ class AppState
 public:
 
     device::DeviceBuffer device_buffer_old;
-    DeviceMemoryOld* device_old_p;
-    
+    DeviceMemoryOld* device_old_p;    
 
     AppInput app_input;
 
     MemoryBuffer<DeviceMemory> device_buffer;
     MemoryBuffer<Pixel> device_pixel_buffer;
     MemoryBuffer<DeviceTile> device_tile_buffer;
-
+    MemoryBuffer<Entity> device_entity_buffer;
 
     MemoryBuffer<UnifiedMemory> unified_buffer;
     MemoryBuffer<Pixel> unified_pixel_buffer;

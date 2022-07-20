@@ -241,9 +241,11 @@ static bool init_device_memory(AppState& state)
 
     auto const n_pixels_per_tile = N_TILE_PIXELS;     
     auto const n_asset_tiles = N_TILE_BITMAPS;
-    auto const n_tilemap_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;   
+    
 
+    // tiles/pixels
     auto const  n_pixels = n_pixels_per_tile * n_asset_tiles;
+
     if(!cuda::device_malloc(state.device_pixel_buffer, n_pixels * sizeof(Pixel)))
     {
         print_error("device pixel_buffer");
@@ -255,6 +257,9 @@ static bool init_device_memory(AppState& state)
         print_error("device assets");
         return false;
     }
+
+    // tilemap
+    auto const n_tilemap_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;
 
     if(!cuda::device_malloc(state.device_tile_buffer, n_tilemap_tiles * sizeof(DeviceTile)))
     {
@@ -271,6 +276,33 @@ static bool init_device_memory(AppState& state)
     device.tilemap.data = tilemap_data;
     device.tilemap.width = WORLD_WIDTH_TILE;
     device.tilemap.height = WORLD_HEIGHT_TILE;
+
+
+    // entities
+    auto const n_entities = N_BLUE_ENTITIES;
+
+    if(!cuda::device_malloc(state.device_entity_buffer, n_entities * sizeof(Entity)))
+    {
+        print_error("entities");
+        return false;
+    }
+
+    auto blue_data = cuda::push_elements(state.device_entity_buffer, N_BLUE_ENTITIES);
+    if(!blue_data)
+    {
+        print_error("blue data");
+        return false;
+    }
+    device.blue_entities.data = blue_data;
+    device.blue_entities.n_elements = N_BLUE_ENTITIES;
+
+
+
+
+
+
+
+
 
     if(!cuda::device_malloc(state.device_buffer, 1))
     {
@@ -703,6 +735,7 @@ namespace app
         cuda::free(state.device_buffer);
         cuda::free(state.device_pixel_buffer);
         cuda::free(state.device_tile_buffer);
+        cuda::free(state.device_entity_buffer);
 
         cuda::free(state.unified_pixel_buffer);
         cuda::free(state.unified_input_record_buffer);

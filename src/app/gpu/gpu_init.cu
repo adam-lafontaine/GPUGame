@@ -197,7 +197,7 @@ static void gpu_init_players(DeviceMemory* device_ptr, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_init_blue_entities(DeviceMemoryOld* device_ptr, u32 n_threads)
+static void gpu_init_blue_entities(DeviceMemory* device_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -205,13 +205,13 @@ static void gpu_init_blue_entities(DeviceMemoryOld* device_ptr, u32 n_threads)
         return;
     }
 
-    auto& device = *device_ptr;
+    auto& device = *device_p;
 
     assert(n_threads == N_BLUE_ENTITIES);
 
     auto offset = (u32)t;
 
-    gpuf::init_blue(device.blue_entities_old.data[offset], offset);
+    gpuf::init_blue(device.blue_entities.data[offset], offset);
 }
 
 
@@ -258,9 +258,11 @@ namespace gpu
 
         constexpr auto tile_threads = N_WORLD_TILES;
         constexpr auto tile_blocks = calc_thread_blocks(tile_threads);
+
+        auto device_p = state.device_buffer.data;
         
         
-        cuda_launch_kernel(gpu_init_players, player_blocks, THREADS_PER_BLOCK, state.device_buffer.data, player_threads);
+        cuda_launch_kernel(gpu_init_players, player_blocks, THREADS_PER_BLOCK, device_p, player_threads);
         result = cuda::launch_success("gpu_init_players");
         assert(result);
         if(!result)
@@ -268,7 +270,7 @@ namespace gpu
             return false;
         }
         
-        cuda_launch_kernel(gpu_init_blue_entities, blue_blocks, THREADS_PER_BLOCK, state.device_old_p, blue_threads);
+        cuda_launch_kernel(gpu_init_blue_entities, blue_blocks, THREADS_PER_BLOCK, device_p, blue_threads);
         result = cuda::launch_success("gpu_init_blue_entities");
         assert(result);
         if(!result)
@@ -284,7 +286,7 @@ namespace gpu
             return false;
         }
         
-        cuda_launch_kernel(gpu_init_tiles, tile_blocks, THREADS_PER_BLOCK, state.device_buffer.data, tile_threads);
+        cuda_launch_kernel(gpu_init_tiles, tile_blocks, THREADS_PER_BLOCK, device_p, tile_threads);
         result = cuda::launch_success("gpu_init_tiles");
         assert(result);
         if(!result)
