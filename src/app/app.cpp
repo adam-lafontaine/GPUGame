@@ -149,6 +149,34 @@ static bool init_device_memory_old(AppState& state)
 }
 
 
+static Pixel get_avg_color(image_t const& image)
+{
+    auto sub_h = image.height / 10;
+    auto sub_w = image.width / 10;
+
+    u32 r = 0;
+    u32 g = 0;
+    u32 b = 0;
+    for(u32 y = 0; y < sub_h; ++y)
+    {
+        for(u32 x = 0; x < sub_w; ++x)
+        {
+            auto p = image.data[y * image.width + x];
+            r += p.red;
+            g += p.green;
+            b += p.blue;
+        }
+    }
+
+    auto div = sub_h * sub_w;
+    r /= div;
+    g /= div;
+    b /= div;
+
+    return to_pixel((u8)r, (u8)g, (u8)b);
+}
+
+
 static bool init_tile(MemoryBuffer<Pixel>& buffer, Image const& host_image, DeviceTile& tile)
 {
     auto const n_pixels = host_image.width * host_image.height;
@@ -160,6 +188,14 @@ static bool init_tile(MemoryBuffer<Pixel>& buffer, Image const& host_image, Devi
         return false;
     }
 
+    if(!cuda::memcpy_to_device(host_image.data, tile.bitmap_data, n_pixels * sizeof(Pixel)))
+    {
+        print_error("tile memcpy");
+        return false;
+    }
+
+    auto avg_image_color = get_avg_color(host_image);    
+
     tile.avg_color = cuda::push_elements(buffer, 1);
     if(!tile.avg_color)
     {
@@ -167,11 +203,9 @@ static bool init_tile(MemoryBuffer<Pixel>& buffer, Image const& host_image, Devi
         return false;
     }
 
-    // TODO: set avg_color
-
-    if(!cuda::memcpy_to_device(host_image.data, tile.bitmap_data, n_pixels * sizeof(Pixel)))
+    if(!cuda::memcpy_to_device(&avg_image_color, tile.avg_color, sizeof(Pixel)))
     {
-        print_error("tile memcpy");
+        print_error("avg_color memcpy");
         return false;
     }
 
