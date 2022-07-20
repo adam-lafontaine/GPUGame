@@ -406,10 +406,6 @@ app_c        := $(app)/app.cpp
 app_o        := $(build_app)/app.o
 object_files += $(app_o)
 
-make_app_types_c := $(app)/make_app_types.cpp
-make_app_types_o := $(build_app)/make_app_types.o
-object_files     += $(make_app_types_o)
-
 
 program_exe := $(build)/$(exe_name)
 
@@ -447,10 +443,6 @@ $(gpu_draw_o): $(gpu_draw_c) $(gpu_include_h)
 
 $(app_o): $(app_c) $(app_include_h) 
 	@echo "\n app"
-	$(GPP) -o $@ -c $<
-
-$(make_app_types_o): $(make_app_types_c) $(app_types_h) 
-	@echo "\n make_app_types"
 	$(GPP) -o $@ -c $<
 
 $(main_o): $(main_c) $(app_h) $(sdl_input_h) $(stopwatch_h)

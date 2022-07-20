@@ -109,46 +109,6 @@ static bool load_device_assets_old(DeviceAssets& device_assets)
 }
 
 
-static bool init_device_memory_old(AppState& state)
-{
-    auto& buffer = state.device_buffer_old;
-
-    if(!device::malloc(buffer, device_memory_total_size()))
-    {
-        return false;
-    }
-
-    DeviceMemoryOld device{};
-
-    if(!make_device_memory(device, buffer))
-    {
-        return false;
-    }
-/*
-    if(!load_device_assets_old(device.assets))
-    {
-        return false;
-    }*/
-
-    auto struct_size = sizeof(DeviceMemoryOld);
-
-    auto device_dst = device::push_bytes(buffer, struct_size);
-    if(!device_dst)
-    {
-        return false;
-    }
-
-    if(!cuda::memcpy_to_device(&device, device_dst, struct_size))
-    {
-        return false;
-    }
-
-    state.device_old_p = (DeviceMemoryOld*)device_dst;
-
-    return true;
-}
-
-
 static Pixel get_avg_color(image_t const& image)
 {
     auto sub_h = image.height / 10;
@@ -725,11 +685,6 @@ namespace app
             return false;
         }
 
-        if(!init_device_memory_old(state))
-        {
-            return false;
-        }
-
         if(!init_device_memory(state))
         {
             return false;
@@ -764,9 +719,7 @@ namespace app
 	
 	void end_program(AppMemory& memory)
     {
-        auto& state = get_state(memory);        
-
-        device::free(state.device_buffer_old);
+        auto& state = get_state(memory);  
 
         cuda::free(state.device_buffer);
         cuda::free(state.device_pixel_buffer);

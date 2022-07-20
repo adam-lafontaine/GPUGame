@@ -82,26 +82,6 @@ public:
 constexpr auto N_TILE_BITMAPS = sizeof(DeviceAssets) / sizeof(DeviceTile);
 
 
-class DeviceMemoryOld
-{
-public:
-
-    DeviceAssets assets_old;
-
-    Entity user_player_old;
-    
-    DeviceTileMatrix tilemap_old;
-    
-    
-    DeviceEntityArray blue_entities_old;
-
-    DeviceEntityArray wall_entities_old;    
-
-    // will fail to run if this not here
-    DeviceEntityArray memory_bug;
-};
-
-
 class AppInput
 {
 public:
@@ -149,10 +129,6 @@ public:
 class AppState
 {
 public:
-
-    device::DeviceBuffer device_buffer_old;
-    DeviceMemoryOld* device_old_p;    
-
     AppInput app_input;
 
     MemoryBuffer<DeviceMemory> device_buffer;
@@ -164,10 +140,3 @@ public:
     MemoryBuffer<Pixel> unified_pixel_buffer;
     MemoryBuffer<InputRecord> unified_input_record_buffer;
 };
-
-
-size_t device_memory_total_size();
-
-size_t unified_memory_total_size(u32 screen_width, u32 screen_height);
-
-bool make_device_memory(DeviceMemoryOld& memory, device::DeviceBuffer& buffer);

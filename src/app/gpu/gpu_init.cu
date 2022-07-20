@@ -238,7 +238,9 @@ namespace gpu
 {
     bool init_device_memory(AppState const& state)
     {
-        assert(state.device_old_p);
+        auto device_p = state.device_buffer.data;
+
+        assert(device_p);
 
         bool result = cuda::no_errors("gpu::init_device_memory");
         assert(result);
@@ -257,9 +259,7 @@ namespace gpu
         constexpr auto wall_blocks = calc_thread_blocks(wall_threads);
 
         constexpr auto tile_threads = N_WORLD_TILES;
-        constexpr auto tile_blocks = calc_thread_blocks(tile_threads);
-
-        auto device_p = state.device_buffer.data;
+        constexpr auto tile_blocks = calc_thread_blocks(tile_threads);        
         
         
         cuda_launch_kernel(gpu_init_players, player_blocks, THREADS_PER_BLOCK, device_p, player_threads);
