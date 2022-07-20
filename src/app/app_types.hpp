@@ -1,7 +1,7 @@
 #pragma once
 
-
 #include "../device/device.hpp"
+
 
 using uInput = u32;
 
@@ -38,10 +38,6 @@ public:
 };
 
 
-constexpr u32 TILE_WIDTH_PX = 64;
-constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;
-
-
 class Tile
 {
 public:
@@ -49,6 +45,9 @@ public:
     Pixel* bitmap_data;
     Pixel* avg_color;
 };
+
+constexpr u32 TILE_WIDTH_PX = 64;
+constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;
 
 // bitmap + avg_color
 constexpr auto N_TILE_PIXELS = TILE_WIDTH_PX * TILE_HEIGHT_PX + 1;
@@ -84,7 +83,6 @@ public:
 };
 
 
-
 class EntitySOA
 {
 public:
@@ -109,13 +107,6 @@ public:
 };
 
 
-
-
-using EntityArray = DeviceArray<Entity>;
-
-using TileMatrix = Matrix<Tile>;
-
-
 class DeviceAssets
 {
 public:
@@ -127,6 +118,10 @@ public:
 
 
 constexpr auto N_TILE_BITMAPS = sizeof(DeviceAssets) / sizeof(Tile);
+
+
+using EntityArray = Array<Entity>;
+using TileMatrix = Matrix<Tile>;
 
 
 class AppInput

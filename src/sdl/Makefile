@@ -356,7 +356,6 @@ app_h += $(input_h)
 app_include_h := $(app)/app_include.hpp
 app_include_h += $(app_h)
 app_include_h += $(gpu_app_h)
-app_include_h += $(libimage_h)
 
 
 # main
@@ -391,6 +390,10 @@ object_files += $(gpu_draw_o)
 app_c        := $(app)/app.cpp
 app_o        := $(build_app)/app.o
 object_files += $(app_o)
+
+app_init_c        := $(app)/app_init.cpp
+app_init_o        := $(build_app)/app_init.o
+object_files += $(app_init_o)
 
 
 program_exe := $(build)/$(exe_name)
@@ -427,6 +430,10 @@ $(app_o): $(app_c) $(app_include_h)
 	@echo "\n app"
 	$(GPP) -o $@ -c $<
 
+$(app_init_o): $(app_init_c) $(app_include_h) $(libimage_h)
+	@echo "\n app"
+	$(GPP) -o $@ -c $<
+
 $(main_o): $(main_c) $(app_h) $(sdl_input_h) $(stopwatch_h)
 	@echo "\n main"
 	$(GPP) -o $@ -c $< $(SDL2)
@@ -442,7 +449,7 @@ run: build
 	$(program_exe)
 	@echo "\n"
 
-clean_all:
+cleanall:
 	rm -rfv $(build)/*
 
 clean:

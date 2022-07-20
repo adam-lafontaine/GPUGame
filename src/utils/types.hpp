@@ -131,6 +131,15 @@ using Image = Matrix<Pixel>;
 using image_t = Image;
 
 
+template <typename T>
+class Array
+{
+public:
+	u32 n_elements;
+	T* data;
+};
+
+
 
 inline pixel_t to_pixel(u8 red, u8 green, u8 blue)
 {

@@ -2,27 +2,24 @@
 
 #include "app.hpp"
 #include "gpu/gpu_app.hpp"
-#include "../libimage/libimage.hpp"
 
-namespace img = libimage;
+#ifndef NDEBUG
+#define PRINT_APP_ERROR
+#endif
 
-#include <cassert>
-#include <cmath>
-
-#define PRINT
-
-#ifdef PRINT
+#ifdef PRINT_APP_ERROR
 #include <cstdio>
 #endif
 
-static void print(const char* msg)
+static void print_error(cstr msg)
 {
-#ifdef PRINT
-
-    printf("* %s *\n", msg);
-
+#ifdef PRINT_APP_ERROR
+	printf("\n*** APP ERROR ***\n\n");
+	printf("%s", msg);
+	printf("\n\n******************\n\n");
 #endif
 }
+
 
 constexpr auto GRASS_TILE_PATH = "/home/adam/Repos/GPUGame/assets/tiles/basic_grass.png";
 
@@ -48,6 +45,8 @@ constexpr size_t host_memory_sz()
 }
 
 
+bool init_device_memory(AppState& state);
 
+bool init_unified_memory(AppState& state, app::ScreenBuffer& buffer);
 
-
+void init_app_input(AppInput& app_input);
