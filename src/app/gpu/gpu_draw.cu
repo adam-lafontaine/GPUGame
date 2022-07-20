@@ -6,11 +6,8 @@
 class DrawProps
 {
 public:
-
-    DeviceMemoryOld* device_ptr;
-    DeviceMemory* device;
-
-    UnifiedMemory* unified;
+    DeviceMemory* device_p;
+    UnifiedMemory* unified_p;
 
     WorldPosition screen_pos;
     u32 screen_width_px;
@@ -63,7 +60,7 @@ static void draw_entity(Entity const& entity, DrawProps const& props)
         return;
     }
 
-    auto& screen_dst = props.unified->screen_pixels;
+    auto& screen_dst = props.unified_p->screen_pixels;
 
     auto screen_width_px = screen_dst.width;
     auto screen_height_px = screen_dst.height;
@@ -113,8 +110,8 @@ static void gpu_draw_tiles(DrawProps props, u32 n_threads)
         return;
     }
 
-    auto& device = *props.device;
-    auto& unified = *props.unified;
+    auto& device = *props.device_p;
+    auto& unified = *props.unified_p;
 
     auto& screen_dst = unified.screen_pixels;
     auto& tiles = device.tilemap;
@@ -157,7 +154,7 @@ static void gpu_draw_players(DrawProps props, u32 n_threads)
         return;
     }
 
-    auto& device = *props.device;
+    auto& device = *props.device_p;
 
     assert(n_threads == N_PLAYER_ENTITIES);
 
@@ -174,7 +171,7 @@ static void gpu_draw_blue_entities(DrawProps props, u32 n_threads)
         return;
     }
 
-    auto& device = *props.device;
+    auto& device = *props.device_p;
 
     assert(n_threads == N_BLUE_ENTITIES);
 
@@ -192,12 +189,14 @@ static void gpu_draw_wall_entities(DrawProps props, u32 n_threads)
         return;
     }
 
-    auto& device = *props.device_ptr;
+    auto& device = *props.device_p;
 
     assert(n_threads == N_BROWN_ENTITIES);
 
     auto offset = (u32)t;
-    gpuf::draw_entity(device.wall_entities_old.data[offset], props);
+    auto& wall = device.wall_entities.data[offset];
+
+    gpuf::draw_entity(wall, props);
 }
 
 
@@ -208,9 +207,8 @@ namespace gpu
         u32 n_pixels = state.app_input.screen_width_px * state.app_input.screen_height_px;
 
         DrawProps props{};
-        props.device_ptr = state.device_old_p;
-        props.device = state.device_buffer.data;
-        props.unified = state.unified_buffer.data;
+        props.device_p = state.device_buffer.data;
+        props.unified_p = state.unified_buffer.data;
         props.screen_width_px = state.app_input.screen_width_px;
         props.screen_width_m = state.app_input.screen_width_m;
         props.screen_pos = state.app_input.screen_position;

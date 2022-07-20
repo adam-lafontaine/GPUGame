@@ -279,7 +279,7 @@ static bool init_device_memory(AppState& state)
 
 
     // entities
-    auto const n_entities = N_BLUE_ENTITIES;
+    auto const n_entities = N_BLUE_ENTITIES + N_BROWN_ENTITIES;
 
     if(!cuda::device_malloc(state.device_entity_buffer, n_entities * sizeof(Entity)))
     {
@@ -296,12 +296,14 @@ static bool init_device_memory(AppState& state)
     device.blue_entities.data = blue_data;
     device.blue_entities.n_elements = N_BLUE_ENTITIES;
 
-
-
-
-
-
-
+    auto wall_data = cuda::push_elements(state.device_entity_buffer, N_BROWN_ENTITIES);
+    if(!wall_data)
+    {
+        print_error("wall data");
+        return false;
+    }
+    device.wall_entities.data = wall_data;
+    device.wall_entities.n_elements = N_BROWN_ENTITIES;
 
 
     if(!cuda::device_malloc(state.device_buffer, 1))

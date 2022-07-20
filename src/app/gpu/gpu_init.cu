@@ -216,7 +216,7 @@ static void gpu_init_blue_entities(DeviceMemory* device_p, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_init_wall_entities(DeviceMemoryOld* device_ptr, u32 n_threads)
+static void gpu_init_wall_entities(DeviceMemory* device_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -224,13 +224,13 @@ static void gpu_init_wall_entities(DeviceMemoryOld* device_ptr, u32 n_threads)
         return;
     }
 
-    auto& device = *device_ptr;
+    auto& device = *device_p;
 
     assert(n_threads == N_BROWN_ENTITIES);
 
     auto offset = (u32)t;
 
-    gpuf::init_wall(device.wall_entities_old.data[offset], offset);
+    gpuf::init_wall(device.wall_entities.data[offset], offset);
 }
 
 
@@ -278,7 +278,7 @@ namespace gpu
             return false;
         }
         
-        cuda_launch_kernel(gpu_init_wall_entities, wall_blocks, THREADS_PER_BLOCK, state.device_old_p, wall_threads);
+        cuda_launch_kernel(gpu_init_wall_entities, wall_blocks, THREADS_PER_BLOCK, device_p, wall_threads);
         result = cuda::launch_success("gpu_init_wall_entities");
         assert(result);
         if(!result)

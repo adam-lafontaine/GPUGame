@@ -329,7 +329,7 @@ static void gpu_next_blue_positions(DeviceMemory* device_p, u32 n_threads)
 
 
 GPU_KERNAL 
-static void gpu_player_wall(DeviceMemoryOld* device_ptr, DeviceMemory* device_p, u32 n_threads)
+static void gpu_player_wall(DeviceMemory* device_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -339,19 +339,22 @@ static void gpu_player_wall(DeviceMemoryOld* device_ptr, DeviceMemory* device_p,
 
     assert(n_threads == N_PLAYER_WALL_COLLISIONS);
 
-    auto& device = *device_ptr;
+    auto& device = *device_p;
 
     auto offset = (u32)t;
 
     auto player_offset = offset / N_BROWN_ENTITIES;
     auto wall_offset = offset - player_offset * N_BROWN_ENTITIES;
 
-    gpuf::stop_wall(device_p->user_player, device.wall_entities_old.data[wall_offset]);
+    auto& player = device.user_player;
+    auto& wall = device.wall_entities.data[wall_offset];
+
+    gpuf::stop_wall(player, wall);
 }
 
 
 GPU_KERNAL
-static void gpu_blue_wall(DeviceMemoryOld* device_ptr, DeviceMemory* device_p, u32 n_threads)
+static void gpu_blue_wall(DeviceMemory* device_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -369,7 +372,8 @@ static void gpu_blue_wall(DeviceMemoryOld* device_ptr, DeviceMemory* device_p, u
     auto wall_offset = offset - blue_offset * N_BROWN_ENTITIES;
 
     auto& blue = device.blue_entities.data[blue_offset];
-    auto& wall = device_ptr->wall_entities_old.data[wall_offset];
+    auto& wall = device.wall_entities.data[wall_offset];
+
     gpuf::bounce_wall(blue, wall);
 }
 
@@ -500,11 +504,11 @@ namespace gpu
         result = cuda::launch_success("gpu_next_blue_positions");
         assert(result);
         
-        cuda_launch_kernel(gpu_player_wall, player_wall_blocks, THREADS_PER_BLOCK, state.device_old_p, device_p, player_wall_threads);
+        cuda_launch_kernel(gpu_player_wall, player_wall_blocks, THREADS_PER_BLOCK, device_p, player_wall_threads);
         result = cuda::launch_success("gpu_player_wall");
         assert(result);
         
-        cuda_launch_kernel(gpu_blue_wall, blue_wall_blocks, THREADS_PER_BLOCK, state.device_old_p, device_p, blue_wall_threads);
+        cuda_launch_kernel(gpu_blue_wall, blue_wall_blocks, THREADS_PER_BLOCK, device_p, blue_wall_threads);
         result = cuda::launch_success("gpu_blue_wall");
         assert(result);
         

@@ -129,7 +129,7 @@ public:
     
     DeviceEntityArray blue_entities;
 
-    //DeviceEntityArray wall_entities;  
+    DeviceEntityArray wall_entities;  
 };
 
 
@@ -163,8 +163,6 @@ public:
     MemoryBuffer<UnifiedMemory> unified_buffer;
     MemoryBuffer<Pixel> unified_pixel_buffer;
     MemoryBuffer<InputRecord> unified_input_record_buffer;
-
-
 };
 
 
