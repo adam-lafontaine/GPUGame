@@ -180,7 +180,7 @@ static void gpu_init_tiles(DeviceMemory* device_p, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_init_players(DeviceMemoryOld* device_ptr, u32 n_threads)
+static void gpu_init_players(DeviceMemory* device_ptr, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -192,7 +192,7 @@ static void gpu_init_players(DeviceMemoryOld* device_ptr, u32 n_threads)
 
     assert(n_threads == N_PLAYER_ENTITIES);
 
-    gpuf::init_player(device.user_player_old);
+    gpuf::init_player(device.user_player);
 }
 
 
@@ -260,7 +260,7 @@ namespace gpu
         constexpr auto tile_blocks = calc_thread_blocks(tile_threads);
         
         
-        cuda_launch_kernel(gpu_init_players, player_blocks, THREADS_PER_BLOCK, state.device_old_p, player_threads);
+        cuda_launch_kernel(gpu_init_players, player_blocks, THREADS_PER_BLOCK, state.device_buffer.data, player_threads);
         result = cuda::launch_success("gpu_init_players");
         assert(result);
         if(!result)

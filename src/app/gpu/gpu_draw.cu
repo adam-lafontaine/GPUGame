@@ -157,11 +157,11 @@ static void gpu_draw_players(DrawProps props, u32 n_threads)
         return;
     }
 
-    auto& device = *props.device_ptr;
+    auto& device = *props.device;
 
     assert(n_threads == N_PLAYER_ENTITIES);
 
-    gpuf::draw_entity(device.user_player_old, props);
+    gpuf::draw_entity(device.user_player, props);
 }
 
 

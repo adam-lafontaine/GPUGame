@@ -125,7 +125,7 @@ public:
 
     DeviceTileMatrix tilemap;
 
-    //Entity user_player;  
+    Entity user_player;  
     
     
     
