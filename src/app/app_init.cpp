@@ -81,10 +81,14 @@ static bool load_device_assets(MemoryBuffer<Pixel>& buffer, DeviceAssets& assets
     tile_img.width = Tile::width;
     tile_img.height = Tile::height;
 
+    Image player_img{};
+    img::make_image(player_img, PlayerBitmap::width, PlayerBitmap::height);
+
     auto const cleanup = [&]()
     {
         img::destroy_image(read_img);
         img::destroy_image(tile_img);
+        img::destroy_image(player_img);
     };
 
     img::read_image_from_file(GRASS_TILE_PATH, read_img);
@@ -126,6 +130,23 @@ static bool load_device_assets(MemoryBuffer<Pixel>& buffer, DeviceAssets& assets
         return false;
     }
 
+
+    // player
+    auto red = to_pixel(200, 0, 0);
+    for(u32 i = 0; i < player_img.width * player_img.height; ++i)
+    {
+        player_img.data[i] = red;
+    }
+
+    if(!init_bitmap(buffer, player_img, assets.player_bitmap))
+    {
+        cleanup();
+        print_error("init player bitmap");
+        return false;
+    }
+
+    cleanup();
+
     return true;
 }
 
@@ -165,16 +186,10 @@ static bool init_input_list(InputList& list, MemoryBuffer<InputRecord>& buffer)
 
 bool init_device_memory(AppState& state)
 {
-    DeviceMemory device{};
-
-    auto const n_pixels_per_tile = N_TILE_PIXELS;     
-    auto const n_asset_tiles = N_TILE_BITMAPS;
-    
+    DeviceMemory device{};    
 
     // tiles/pixels
-    auto const  n_pixels = n_pixels_per_tile * n_asset_tiles;
-
-    if(!cuda::device_malloc(state.device_pixel_buffer, n_pixels * sizeof(Pixel)))
+    if(!cuda::device_malloc(state.device_pixel_buffer, total_asset_pixel_size()))
     {
         print_error("device pixel_buffer");
         return false;

@@ -88,6 +88,19 @@ namespace libimage
 
 		assert(result);
 	}
+
+
+	void make_image(image_t& image_dst, u32 width, u32 height)
+	{
+		assert(width);
+		assert(height);
+
+		image_dst.width = width;
+		image_dst.height = height;
+		image_dst.data = (pixel_t*)malloc(sizeof(pixel_t) * width * height);
+
+		assert(image_dst.data);
+	}
 }
 
 

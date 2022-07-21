@@ -53,12 +53,17 @@ public:
 constexpr u32 TILE_WIDTH_PX = 64;
 constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;
 
+constexpr u32 PLAYER_WIDTH_PX = 64;
+constexpr u32 PLAYER_HEIGHT_PX = PLAYER_WIDTH_PX;
+
 
 using Tile = Bitmap<TILE_WIDTH_PX, TILE_HEIGHT_PX>;
+using PlayerBitmap = Bitmap<PLAYER_WIDTH_PX, PLAYER_HEIGHT_PX>;
 
 
 // bitmap + avg_color
 constexpr auto N_TILE_PIXELS = TILE_WIDTH_PX * TILE_HEIGHT_PX + 1;
+constexpr auto N_PLAYER_PIXELS = PLAYER_WIDTH_PX * PLAYER_HEIGHT_PX + 1;
 
 
 class WorldPosition
@@ -122,10 +127,22 @@ public:
     
     Tile brown_tile;
     Tile black_tile;
+
+    PlayerBitmap player_bitmap;
 };
 
 
-constexpr auto N_TILE_BITMAPS = sizeof(DeviceAssets) / sizeof(Tile);
+constexpr size_t total_asset_pixel_size()
+{
+    u32 n_tiles = 3;
+    u32 n_players = 1;
+
+    u32 n_pixels = 
+        n_tiles * N_TILE_PIXELS +
+        n_players * N_PLAYER_PIXELS;
+
+    return n_pixels;
+}
 
 
 using EntityArray = Array<Entity>;

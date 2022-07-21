@@ -430,7 +430,7 @@ $(app_o): $(app_c) $(app_include_h)
 	$(GPP) -o $@ -c $<
 
 $(app_init_o): $(app_init_c) $(app_include_h) $(libimage_h)
-	@echo "\n app"
+	@echo "\n app_init"
 	$(GPP) -o $@ -c $<
 
 $(main_o): $(main_c) $(app_h) $(sdl_input_h) $(stopwatch_h)
