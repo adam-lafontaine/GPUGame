@@ -1,5 +1,5 @@
 #include "sdl_input.hpp"
-#include "../input/input_state.hpp"
+#include "../../input/input_state.hpp"
 
 
 static r32 normalize_axis_value(r32 axis)

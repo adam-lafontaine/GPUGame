@@ -1,7 +1,7 @@
 #pragma once
 
 #include "app.hpp"
-#include "gpu/gpu_app.hpp"
+#include "../gpu/gpu_app.hpp"
 
 #ifndef NDEBUG
 #define PRINT_APP_ERROR

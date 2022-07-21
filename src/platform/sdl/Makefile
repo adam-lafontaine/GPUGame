@@ -277,7 +277,7 @@ SDL2 := `sdl2-config --cflags --libs`
 exe_name := gpu_game_sdl
 
 # directories
-root   := ../..
+root   := ../../..
 build  := $(root)/build/sdl
 build_lib := $(build)/lib
 build_app := $(build)/app
@@ -285,13 +285,12 @@ build_app := $(build)/app
 code   := $(root)/src
 img    := $(code)/libimage
 stb    := $(img)/stb_wrapper
-sdl    := $(code)/sdl
+sdl    := $(code)/platform/sdl
 input  := $(code)/input
 utils  := $(code)/utils
 device := $(code)/device
 app    := $(code)/app
-gpu    := $(app)/gpu
-tiles  := $(app)/tiles
+gpu    := $(code)/gpu
 input_record := $(app)/input_record
 device_image := $(app)/device_image
 

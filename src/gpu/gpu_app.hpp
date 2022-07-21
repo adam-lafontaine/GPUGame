@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../app_types.hpp"
+#include "../app/app_types.hpp"
 #include "gpu_constants.hpp"
 
 

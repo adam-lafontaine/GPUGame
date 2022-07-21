@@ -1,8 +1,8 @@
 // D-Bus not build with -rdynamic...
 // sudo killall ibus-daemon
 
-#include "../app/app.hpp"
-#include "../utils/stopwatch.hpp"
+#include "../../app/app.hpp"
+#include "../../utils/stopwatch.hpp"
 #include "sdl_input.hpp"
 
 #include <cstdio>
