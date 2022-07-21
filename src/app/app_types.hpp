@@ -7,10 +7,10 @@ using uInput = u32;
 
 namespace INPUT
 {
-    constexpr uInput PLAYER_UP    = 0b0000'0000'0000'0000'0000'0000'0000'0001;
-    constexpr uInput PLAYER_DOWN  = 0b0000'0000'0000'0000'0000'0000'0000'0010;
-    constexpr uInput PLAYER_LEFT  = 0b0000'0000'0000'0000'0000'0000'0000'0100;
-    constexpr uInput PLAYER_RIGHT = 0b0000'0000'0000'0000'0000'0000'0000'1000;
+    constexpr uInput PLAYER_UP    = 1;
+    constexpr uInput PLAYER_DOWN  = PLAYER_UP * 2;
+    constexpr uInput PLAYER_LEFT  = PLAYER_DOWN * 2;
+    constexpr uInput PLAYER_RIGHT = PLAYER_LEFT * 2;
 
     constexpr u32 MAX_RECORDS = 5000;
 }
@@ -38,16 +38,24 @@ public:
 };
 
 
-class Tile
+template <u32 W, u32 H>
+class Bitmap
 {
 public:
-
     Pixel* bitmap_data;
     Pixel* avg_color;
+
+    static constexpr u32 width = W;
+    static constexpr u32 height = H;
 };
+
 
 constexpr u32 TILE_WIDTH_PX = 64;
 constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;
+
+
+using Tile = Bitmap<TILE_WIDTH_PX, TILE_HEIGHT_PX>;
+
 
 // bitmap + avg_color
 constexpr auto N_TILE_PIXELS = TILE_WIDTH_PX * TILE_HEIGHT_PX + 1;

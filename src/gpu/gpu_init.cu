@@ -167,7 +167,7 @@ static void gpu_init_tiles(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
-    auto& world_tiles = device_p->tilemap;   //.tilemap_old;
+    auto& world_tiles = device_p->tilemap;
     auto& assets = device_p->assets;
 
     assert(n_threads == world_tiles.width * world_tiles.height);

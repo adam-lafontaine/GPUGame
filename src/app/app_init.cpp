@@ -1,6 +1,8 @@
 #include "app_include.hpp"
 #include "../libimage/libimage.hpp"
 
+#include <cassert>
+
 namespace img = libimage;
 
 
@@ -32,33 +34,37 @@ static Pixel get_avg_color(image_t const& image)
 }
 
 
-static bool init_tile(MemoryBuffer<Pixel>& buffer, Image const& host_image, Tile& tile)
+template <u32 W, u32 H>
+static bool init_bitmap(MemoryBuffer<Pixel>& buffer, Image const& host_image, Bitmap<W, H>& bitmap)
 {
+    assert(host_image.width == bitmap.width);
+    assert(host_image.height == bitmap.height);
+
     auto const n_pixels = host_image.width * host_image.height;
 
-    tile.bitmap_data = cuda::push_elements(buffer, n_pixels);
-    if(!tile.bitmap_data)
+    bitmap.bitmap_data = cuda::push_elements(buffer, n_pixels);
+    if(!bitmap.bitmap_data)
     {
-        print_error("tile.bitmap_data");
+        print_error("bitmap bitmap_data");
         return false;
     }
 
-    if(!cuda::memcpy_to_device(host_image.data, tile.bitmap_data, n_pixels * sizeof(Pixel)))
+    if(!cuda::memcpy_to_device(host_image.data, bitmap.bitmap_data, n_pixels * sizeof(Pixel)))
     {
-        print_error("tile memcpy");
+        print_error("bitmap memcpy");
         return false;
     }
 
     auto avg_image_color = get_avg_color(host_image);    
 
-    tile.avg_color = cuda::push_elements(buffer, 1);
-    if(!tile.avg_color)
+    bitmap.avg_color = cuda::push_elements(buffer, 1);
+    if(!bitmap.avg_color)
     {
-        print_error("tile.avg_color");
+        print_error("bitmap avg_color");
         return false;
     }
 
-    if(!cuda::memcpy_to_device(&avg_image_color, tile.avg_color, sizeof(Pixel)))
+    if(!cuda::memcpy_to_device(&avg_image_color, bitmap.avg_color, sizeof(Pixel)))
     {
         print_error("avg_color memcpy");
         return false;
@@ -72,8 +78,8 @@ static bool load_device_assets(MemoryBuffer<Pixel>& buffer, DeviceAssets& assets
 {
     Image read_img{};
     Image tile_img{};
-    tile_img.width = TILE_WIDTH_PX;
-    tile_img.height = TILE_HEIGHT_PX;
+    tile_img.width = Tile::width;
+    tile_img.height = Tile::height;
 
     auto const cleanup = [&]()
     {
@@ -84,7 +90,7 @@ static bool load_device_assets(MemoryBuffer<Pixel>& buffer, DeviceAssets& assets
     img::read_image_from_file(GRASS_TILE_PATH, read_img);
     img::resize_image(read_img, tile_img);
 
-    if(!init_tile(buffer, tile_img, assets.grass_tile))
+    if(!init_bitmap(buffer, tile_img, assets.grass_tile))
     {
         cleanup();
         print_error("init grass");
@@ -98,7 +104,7 @@ static bool load_device_assets(MemoryBuffer<Pixel>& buffer, DeviceAssets& assets
         tile_img.data[i] = brown;
     }
 
-    if(!init_tile(buffer, tile_img, assets.brown_tile))
+    if(!init_bitmap(buffer, tile_img, assets.brown_tile))
     {
         cleanup();
         print_error("init brown");
@@ -113,7 +119,7 @@ static bool load_device_assets(MemoryBuffer<Pixel>& buffer, DeviceAssets& assets
         tile_img.data[i] = black;
     }
 
-    if(!init_tile(buffer, tile_img, assets.black_tile))
+    if(!init_bitmap(buffer, tile_img, assets.black_tile))
     {
         cleanup();
         print_error("init black");
