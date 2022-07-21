@@ -56,14 +56,24 @@ constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;
 constexpr u32 PLAYER_WIDTH_PX = 64;
 constexpr u32 PLAYER_HEIGHT_PX = PLAYER_WIDTH_PX;
 
+constexpr u32 BLUE_WIDTH_PX = 20;
+constexpr u32 BLUE_HEIGHT_PX = BLUE_WIDTH_PX;
+
+constexpr u32 WALL_WIDTH_PX = 64;
+constexpr u32 WALL_HEIGHT_PX = WALL_WIDTH_PX;
+
 
 using Tile = Bitmap<TILE_WIDTH_PX, TILE_HEIGHT_PX>;
 using PlayerBitmap = Bitmap<PLAYER_WIDTH_PX, PLAYER_HEIGHT_PX>;
+using BlueBitmap = Bitmap<BLUE_WIDTH_PX, BLUE_HEIGHT_PX>;
+using WallBitmap = Bitmap<WALL_WIDTH_PX, WALL_HEIGHT_PX>;
 
 
 // bitmap + avg_color
 constexpr auto N_TILE_PIXELS = TILE_WIDTH_PX * TILE_HEIGHT_PX + 1;
 constexpr auto N_PLAYER_PIXELS = PLAYER_WIDTH_PX * PLAYER_HEIGHT_PX + 1;
+constexpr auto N_BLUE_PIXELS = BLUE_WIDTH_PX * BLUE_HEIGHT_PX + 1;
+constexpr auto N_WALL_PIXELS = WALL_WIDTH_PX * WALL_HEIGHT_PX + 1;
 
 
 class WorldPosition
@@ -124,24 +134,28 @@ class DeviceAssets
 {
 public:
     Tile grass_tile;
-    
-    Tile brown_tile;
     Tile black_tile;
 
     PlayerBitmap player_bitmap;
+    BlueBitmap blue_bitmap;
+    WallBitmap wall_bitmap;
 };
 
 
 constexpr size_t total_asset_pixel_size()
 {
-    u32 n_tiles = 3;
+    u32 n_tiles = 2;
     u32 n_players = 1;
+    u32 n_blue = 1;
+    u32 n_wall = 1;    
 
     u32 n_pixels = 
         n_tiles * N_TILE_PIXELS +
-        n_players * N_PLAYER_PIXELS;
+        n_players * N_PLAYER_PIXELS +
+        n_blue * N_BLUE_PIXELS +
+        n_wall * N_WALL_PIXELS;
 
-    return n_pixels;
+    return n_pixels * sizeof(Pixel);
 }
 
 

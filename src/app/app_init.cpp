@@ -74,6 +74,15 @@ static bool init_bitmap(MemoryBuffer<Pixel>& buffer, Image const& host_image, Bi
 }
 
 
+static void fill_color(Image const& img, Pixel color)
+{
+    for(u32 i = 0; i < img.width * img.height; ++i)
+    {
+        img.data[i] = color;
+    }
+}
+
+
 static bool load_device_assets(MemoryBuffer<Pixel>& buffer, DeviceAssets& assets)
 {
     Image read_img{};
@@ -81,19 +90,28 @@ static bool load_device_assets(MemoryBuffer<Pixel>& buffer, DeviceAssets& assets
     tile_img.width = Tile::width;
     tile_img.height = Tile::height;
 
+    img::read_image_from_file(GRASS_TILE_PATH, read_img);
+    img::resize_image(read_img, tile_img);
+
     Image player_img{};
     img::make_image(player_img, PlayerBitmap::width, PlayerBitmap::height);
+
+    Image blue_img{};
+    img::make_image(blue_img, BlueBitmap::width, BlueBitmap::height);
+
+    Image wall_img{};
+    img::make_image(wall_img, WallBitmap::width, WallBitmap::height);
 
     auto const cleanup = [&]()
     {
         img::destroy_image(read_img);
         img::destroy_image(tile_img);
         img::destroy_image(player_img);
+        img::destroy_image(blue_img);
+        img::destroy_image(wall_img);
     };
-
-    img::read_image_from_file(GRASS_TILE_PATH, read_img);
-    img::resize_image(read_img, tile_img);
-
+    
+    // grass
     if(!init_bitmap(buffer, tile_img, assets.grass_tile))
     {
         cleanup();
@@ -101,28 +119,9 @@ static bool load_device_assets(MemoryBuffer<Pixel>& buffer, DeviceAssets& assets
         return false;
     }
 
-    // temp make brown
-    auto brown = to_pixel(150, 75, 0);
-    for(u32 i = 0; i < tile_img.width * tile_img.height; ++i)
-    {
-        tile_img.data[i] = brown;
-    }
-
-    if(!init_bitmap(buffer, tile_img, assets.brown_tile))
-    {
-        cleanup();
-        print_error("init brown");
-        return false;
-    }
-
-
     // temp make black
     auto black = to_pixel(0, 0, 0);
-    for(u32 i = 0; i < tile_img.width * tile_img.height; ++i)
-    {
-        tile_img.data[i] = black;
-    }
-
+    fill_color(tile_img, black);
     if(!init_bitmap(buffer, tile_img, assets.black_tile))
     {
         cleanup();
@@ -130,18 +129,33 @@ static bool load_device_assets(MemoryBuffer<Pixel>& buffer, DeviceAssets& assets
         return false;
     }
 
-
     // player
     auto red = to_pixel(200, 0, 0);
-    for(u32 i = 0; i < player_img.width * player_img.height; ++i)
-    {
-        player_img.data[i] = red;
-    }
-
+    fill_color(player_img, red);
     if(!init_bitmap(buffer, player_img, assets.player_bitmap))
     {
         cleanup();
         print_error("init player bitmap");
+        return false;
+    }
+
+    // blue
+    auto blue = to_pixel(0, 0, 100);
+    fill_color(blue_img, blue);
+    if(!init_bitmap(buffer, blue_img, assets.blue_bitmap))
+    {
+        cleanup();
+        print_error("init blue bitmap");
+        return false;
+    }
+
+    // wall
+    auto brown = to_pixel(150, 75, 0);
+    fill_color(wall_img, brown);
+    if(!init_bitmap(buffer, wall_img, assets.wall_bitmap))
+    {
+        cleanup();
+        print_error("init wall bitmap");
         return false;
     }
 
