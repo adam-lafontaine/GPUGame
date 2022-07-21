@@ -89,7 +89,9 @@ class Entity
 public:
     r32 width;
     r32 height;
-    Pixel color;
+
+    Image bitmap;
+    Pixel avg_color;
 
     WorldPosition position;
     Vec2Dr32 dt;
@@ -103,30 +105,6 @@ public:
 
     b32 inv_x = false;
     b32 inv_y = false;
-};
-
-
-class EntitySOA
-{
-public:
-    u32 n_elements;
-
-    r32* width;
-    r32* height;
-    Pixel* color;
-
-    WorldPosition* position;
-    Vec2Dr32* dt;
-    r32* speed;
-
-    Vec2Dr32* delta_pos_m;
-
-    WorldPosition* next_position;
-
-    b32* is_active;
-
-    b32* inv_x;
-    b32* inv_y;
 };
 
 

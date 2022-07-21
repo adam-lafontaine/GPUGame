@@ -19,8 +19,6 @@ namespace gpuf
 {
 /********************************/
 
-
-
 GPU_FUNCTION
 Pixel get_tile_color(Tile const& tile, Point2Dr32 const& offset_m, r32 screen_width_m, u32 screen_width_px)
 {
@@ -89,7 +87,7 @@ static void draw_entity(Entity const& entity, DrawProps const& props)
         auto row = screen_dst.data + y * screen_width_px;
         for(u32 x = entity_rect_px.x_begin; x < entity_rect_px.x_end; ++x)
         {
-            row[x] = entity.color;
+            row[x] = entity.avg_color;
         }
     }
 }
@@ -99,6 +97,36 @@ static void draw_entity(Entity const& entity, DrawProps const& props)
 /*******************************/
 }
 
+/*
+GPU_KERNAL
+static void gpu_draw(DrawProps props, u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
+    }
+
+    auto& device = *props.device_p;
+    auto& unified = *props.unified_p;
+    auto& screen_dst = unified.screen_pixels;
+
+    assert(n_threads == screen_dst.width * screen_dst.height);
+
+    auto pixel_id = (u32)t;
+    auto& pixel_dst = screen_dst.data[pixel_id];
+
+    auto black = gpuf::to_pixel(30, 30, 30);
+
+    // TODO: get screen pixel entity flag
+
+
+
+    auto& tiles = device.tilemap;
+
+    pixel_dst = black;
+}
+*/
 
 
 GPU_KERNAL

@@ -9,14 +9,17 @@ namespace gpuf
 
 
 GPU_FUNCTION
-static void init_player(Entity& player)
+static void init_player(Entity& player, PlayerBitmap const& bitmap)
 {
     player.is_active = true;
 
     player.width = 0.3f;
     player.height = 0.3f;
 
-    player.color = gpuf::to_pixel(200, 0, 0);
+    player.bitmap.data = bitmap.bitmap_data;
+    player.bitmap.width = bitmap.width;
+    player.bitmap.height = bitmap.height;
+    player.avg_color = *bitmap.avg_color;
 
     player.position.tile = { 4, 4 };
     player.position.offset_m = { 0.0f, 0.0f };
@@ -31,7 +34,7 @@ static void init_player(Entity& player)
 
 
 GPU_FUNCTION
-static void init_blue(Entity& entity, u32 id)
+static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 id)
 {
     assert(id < N_BLUE_ENTITIES);
 
@@ -40,7 +43,10 @@ static void init_blue(Entity& entity, u32 id)
     entity.width = 0.1f;
     entity.height = 0.1f;
 
-    entity.color = gpuf::to_pixel(0, 0, 100);
+    entity.bitmap.data = bitmap.bitmap_data;
+    entity.bitmap.width = bitmap.width;
+    entity.bitmap.height = bitmap.height;
+    entity.avg_color = *bitmap.avg_color;
 
     auto w = (i32)N_BLUE_W;
 
@@ -106,7 +112,7 @@ static void init_blue(Entity& entity, u32 id)
 
 
 GPU_FUNCTION
-static void init_wall(Entity& wall, u32 wall_id)
+static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_id)
 {
     assert(wall_id < N_BROWN_ENTITIES);
 
@@ -115,7 +121,10 @@ static void init_wall(Entity& wall, u32 wall_id)
     wall.width = TILE_LENGTH_M;
     wall.height = TILE_LENGTH_M;
 
-    wall.color = gpuf::to_pixel(150, 75, 0);
+    wall.bitmap.data = bitmap.bitmap_data;
+    wall.bitmap.width = bitmap.width;
+    wall.bitmap.height = bitmap.height;
+    wall.avg_color = *bitmap.avg_color;
     
     wall.position.offset_m = { 0.0f, 0.0f };
 
@@ -180,7 +189,7 @@ static void gpu_init_tiles(DeviceMemory* device_p, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_init_players(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_init_players(DeviceMemory* device_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -188,11 +197,12 @@ static void gpu_init_players(DeviceMemory* device_ptr, u32 n_threads)
         return;
     }
 
-    auto& device = *device_ptr;
+    auto& device = *device_p;
+    auto& assets = device.assets;
 
     assert(n_threads == N_PLAYER_ENTITIES);
 
-    gpuf::init_player(device.user_player);
+    gpuf::init_player(device.user_player, assets.player_bitmap);
 }
 
 
@@ -206,12 +216,13 @@ static void gpu_init_blue_entities(DeviceMemory* device_p, u32 n_threads)
     }
 
     auto& device = *device_p;
+    auto& assets = device.assets;
 
     assert(n_threads == N_BLUE_ENTITIES);
 
     auto offset = (u32)t;
 
-    gpuf::init_blue(device.blue_entities.data[offset], offset);
+    gpuf::init_blue(device.blue_entities.data[offset], assets.blue_bitmap, offset);
 }
 
 
@@ -225,12 +236,13 @@ static void gpu_init_wall_entities(DeviceMemory* device_p, u32 n_threads)
     }
 
     auto& device = *device_p;
+    auto& assets = device.assets;
 
     assert(n_threads == N_BROWN_ENTITIES);
 
     auto offset = (u32)t;
 
-    gpuf::init_wall(device.wall_entities.data[offset], offset);
+    gpuf::init_wall(device.wall_entities.data[offset], assets.wall_bitmap, offset);
 }
 
 
