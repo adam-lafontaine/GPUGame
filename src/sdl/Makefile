@@ -290,8 +290,7 @@ input  := $(code)/input
 utils  := $(code)/utils
 device := $(code)/device
 app    := $(code)/app
-gpu    := $(app)/gpu
-tiles  := $(app)/tiles
+gpu    := $(code)/gpu
 input_record := $(app)/input_record
 device_image := $(app)/device_image
 
