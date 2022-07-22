@@ -87,8 +87,10 @@ public:
 class Entity
 {
 public:
-    r32 width;
-    r32 height;
+    u32 id;
+
+    r32 width_m;
+    r32 height_m;
 
     Image bitmap;
     Pixel avg_color;
@@ -164,7 +166,7 @@ public:
 
     TileMatrix tilemap;
 
-    Entity user_player;   
+    Entity user_player;
     
     EntityArray blue_entities;
 

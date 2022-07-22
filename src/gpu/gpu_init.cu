@@ -9,12 +9,15 @@ namespace gpuf
 
 
 GPU_FUNCTION
-static void init_player(Entity& player, PlayerBitmap const& bitmap)
+static void init_player(Entity& player, PlayerBitmap const& bitmap, u32 player_offset)
 {
+    assert(player_offset < N_PLAYER_ENTITIES);
+
+    player.id = player_id(player_offset);
     player.is_active = true;
 
-    player.width = 0.3f;
-    player.height = 0.3f;
+    player.width_m = 0.3f;
+    player.height_m = 0.3f;
 
     player.bitmap.data = bitmap.bitmap_data;
     player.bitmap.width = bitmap.width;
@@ -34,14 +37,15 @@ static void init_player(Entity& player, PlayerBitmap const& bitmap)
 
 
 GPU_FUNCTION
-static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 id)
+static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
 {
-    assert(id < N_BLUE_ENTITIES);
+    assert(blue_offset < N_BLUE_ENTITIES);
 
+    entity.id = blue_id(blue_offset);
     entity.is_active = true;
 
-    entity.width = 0.1f;
-    entity.height = 0.1f;
+    entity.width_m = 0.1f;
+    entity.height_m = 0.1f;
 
     entity.bitmap.data = bitmap.bitmap_data;
     entity.bitmap.width = bitmap.width;
@@ -50,8 +54,8 @@ static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 id)
 
     auto w = (i32)N_BLUE_W;
 
-    auto y = (i32)id / w;
-    auto x = (i32)id - y * w;
+    auto y = (i32)blue_offset / w;
+    auto x = (i32)blue_offset - y * w;
 
     entity.position.tile = { x + 6, y + 2 };
     entity.position.offset_m = { 0.2f, 0.2f };
@@ -64,7 +68,7 @@ static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 id)
 
     entity.dt = { 0.0f, 0.0f };
 
-    switch(id % 8)
+    switch(blue_offset % 8)
     {
         case 0:
         entity.dt = { 1.0f, 0.0f };
@@ -112,14 +116,15 @@ static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 id)
 
 
 GPU_FUNCTION
-static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_id)
+static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_offset)
 {
-    assert(wall_id < N_BROWN_ENTITIES);
+    assert(wall_offset < N_BROWN_ENTITIES);
 
+    wall.id = brown_id(wall_offset);
     wall.is_active = true;
 
-    wall.width = TILE_LENGTH_M;
-    wall.height = TILE_LENGTH_M;
+    wall.width_m = TILE_LENGTH_M;
+    wall.height_m = TILE_LENGTH_M;
 
     wall.bitmap.data = bitmap.bitmap_data;
     wall.bitmap.width = bitmap.width;
@@ -134,25 +139,25 @@ static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_id)
     i32 x = 0;
     i32 y = 0;
 
-    if(wall_id < WORLD_WIDTH_TILE)
+    if(wall_offset < WORLD_WIDTH_TILE)
     {
-        x = (i32)wall_id;
+        x = (i32)wall_offset;
         y = 0;
     }
-    else if(wall_id < 2 * WORLD_WIDTH_TILE)
+    else if(wall_offset < 2 * WORLD_WIDTH_TILE)
     {
         y = (i32)WORLD_HEIGHT_TILE - 1;
-        x = wall_id - (i32)WORLD_WIDTH_TILE;        
+        x = wall_offset - (i32)WORLD_WIDTH_TILE;        
     }
-    else if(wall_id < 2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2)
+    else if(wall_offset < 2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2)
     {
         x = 0;
-        y = wall_id - (2 * WORLD_WIDTH_TILE) + 1;
+        y = wall_offset - (2 * WORLD_WIDTH_TILE) + 1;
     }
     else
     {
         x = (i32)WORLD_WIDTH_TILE - 1;
-        y = wall_id - (2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2) + 1;
+        y = wall_offset - (2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2) + 1;
     }
 
     wall.position.tile = { x, y };
@@ -202,7 +207,7 @@ static void gpu_init_players(DeviceMemory* device_p, u32 n_threads)
 
     assert(n_threads == N_PLAYER_ENTITIES);
 
-    gpuf::init_player(device.user_player, assets.player_bitmap);
+    gpuf::init_player(device.user_player, assets.player_bitmap, (u32)t);
 }
 
 

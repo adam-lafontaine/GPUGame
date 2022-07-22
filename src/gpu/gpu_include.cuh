@@ -215,9 +215,9 @@ inline Rect2Dr32 get_screen_rect(Entity const& entity, Point2Dr32 const& screen_
 
     // pos at top left
     r.x_begin = screen_pos.x;
-    r.x_end = r.x_begin + entity.width;
+    r.x_end = r.x_begin + entity.width_m;
     r.y_begin = screen_pos.y;
-    r.y_end = r.y_begin + entity.height;
+    r.y_end = r.y_begin + entity.height_m;
 
     return r;
 }

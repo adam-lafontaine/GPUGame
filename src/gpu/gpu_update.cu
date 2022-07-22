@@ -20,8 +20,8 @@ static bool entity_will_intersect(Entity const& lhs, Entity const& rhs)
 {
     auto delta_m = gpuf::sub_delta_m(lhs.next_position, rhs.next_position);
     
-    auto rhs_rect = gpuf::make_rect(rhs.width, rhs.height);
-    auto lhs_rect = gpuf::make_rect(delta_m, lhs.width, lhs.height);
+    auto rhs_rect = gpuf::make_rect(rhs.width_m, rhs.height_m);
+    auto lhs_rect = gpuf::make_rect(delta_m, lhs.width_m, lhs.height_m);
 
     return gpuf::rect_intersect(lhs_rect, rhs_rect);
 }
@@ -93,8 +93,8 @@ static void stop_wall(Entity& ent, Entity const& wall)
 
     auto delta = gpuf::sub_delta_m(ent.position, wall.position);
     
-    auto w = gpuf::make_rect(wall.width, wall.height);
-    auto e_start = gpuf::make_rect(delta, ent.width, ent.height);
+    auto w = gpuf::make_rect(wall.width_m, wall.height_m);
+    auto e_start = gpuf::make_rect(delta, ent.width_m, ent.height_m);
     auto e_finish = gpuf::add_delta(e_start, ent.delta_pos_m);
 
     if(!gpuf::rect_intersect(e_finish, w))
@@ -155,8 +155,8 @@ static void bounce_wall(Entity& ent, Entity const& wall)
 
     auto delta = gpuf::sub_delta_m(ent.position, wall.position);
     
-    auto w = gpuf::make_rect(wall.width, wall.height);
-    auto e_start = gpuf::make_rect(delta, ent.width, ent.height);
+    auto w = gpuf::make_rect(wall.width_m, wall.height_m);
+    auto e_start = gpuf::make_rect(delta, ent.width_m, ent.height_m);
     auto e_finish = gpuf::add_delta(e_start, ent.delta_pos_m);
 
     if(!gpuf::rect_intersect(e_finish, w))
@@ -194,8 +194,8 @@ static void blue_blue(Entity& a, Entity const& b)
 
     auto delta = gpuf::sub_delta_m(a.position, b.next_position);
     
-    auto b_finish = gpuf::make_rect(b.width, b.height);
-    auto a_start = gpuf::make_rect(delta, a.width, a.height);
+    auto b_finish = gpuf::make_rect(b.width_m, b.height_m);
+    auto a_start = gpuf::make_rect(delta, a.width_m, a.height_m);
     auto a_finish = gpuf::add_delta(a_start, a.delta_pos_m);
 
     if(!gpuf::rect_intersect(a_finish, b_finish))
