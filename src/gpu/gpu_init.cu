@@ -202,12 +202,14 @@ static void gpu_init_players(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
-    auto& device = *device_p;
-    auto& assets = device.assets;
-
     assert(n_threads == N_PLAYER_ENTITIES);
 
-    gpuf::init_player(device.user_player, assets.player_bitmap, (u32)t);
+    auto& device = *device_p;
+    auto& assets = device.assets;    
+
+    auto offset = (u32)t;
+
+    gpuf::init_player(device.player_entities.data[offset], assets.player_bitmap, (u32)t);
 }
 
 
@@ -220,10 +222,10 @@ static void gpu_init_blue_entities(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
+    assert(n_threads == N_BLUE_ENTITIES);
+
     auto& device = *device_p;
     auto& assets = device.assets;
-
-    assert(n_threads == N_BLUE_ENTITIES);
 
     auto offset = (u32)t;
 

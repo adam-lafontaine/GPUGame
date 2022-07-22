@@ -296,41 +296,23 @@ constexpr auto BROWN_END = BROWN_BEGIN + N_BROWN_ENTITIES;
 
 
 GPU_FUNCTION
-inline bool is_player_entity(u32 id)
+inline u32 player_id(u32 player_offset)
 {
-    return id == PLAYER_ID;
+    return PLAYER_BEGIN + player_offset;
 }
 
 
 GPU_FUNCTION
-inline bool is_blue_entity(u32 id)
+inline u32 blue_id(u32 blue_offset)
 {
-    return id >= BLUE_BEGIN && id < BLUE_END;
+    return BLUE_BEGIN + blue_offset;
 }
 
 
 GPU_FUNCTION
-inline bool is_brown_entity(u32 id)
+inline u32 brown_id(u32 brown_offset)
 {
-    return id >= BROWN_BEGIN && id < BROWN_END;
-}
-
-
-GPU_FUNCTION
-inline u32 get_blue_offset(u32 id)
-{
-    assert(gpuf::is_blue_entity(id));
-
-    return id - BLUE_BEGIN;
-}
-
-
-GPU_FUNCTION
-inline u32 get_brown_offset(u32 id)
-{
-    assert(gpuf::is_brown_entity(id));
-
-    return id - BROWN_BEGIN;
+    return BROWN_BEGIN + brown_offset;
 }
 
 

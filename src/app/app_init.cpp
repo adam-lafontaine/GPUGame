@@ -236,13 +236,22 @@ bool init_device_memory(AppState& state)
 
 
     // entities
-    auto const n_entities = N_BLUE_ENTITIES + N_BROWN_ENTITIES;
+    auto const n_entities = N_ENTITIES;
 
     if(!cuda::device_malloc(state.device_entity_buffer, n_entities * sizeof(Entity)))
     {
         print_error("entities");
         return false;
     }
+
+    auto player_data = cuda::push_elements(state.device_entity_buffer, N_PLAYER_ENTITIES);
+    if(!player_data)
+    {
+        print_error("player data");
+        return false;
+    }
+    device.player_entities.data = player_data;
+    device.player_entities.n_elements = N_PLAYER_ENTITIES;
 
     auto blue_data = cuda::push_elements(state.device_entity_buffer, N_BLUE_ENTITIES);
     if(!blue_data)

@@ -182,11 +182,12 @@ static void gpu_draw_players(DrawProps props, u32 n_threads)
         return;
     }
 
-    auto& device = *props.device_p;
-
     assert(n_threads == N_PLAYER_ENTITIES);
 
-    gpuf::draw_entity(device.user_player, props);
+    auto& device = *props.device_p;
+
+    auto offset = (u32)t;
+    gpuf::draw_entity(device.player_entities.data[offset], props);
 }
 
 
@@ -198,10 +199,9 @@ static void gpu_draw_blue_entities(DrawProps props, u32 n_threads)
     {
         return;
     }
-
-    auto& device = *props.device_p;
-
     assert(n_threads == N_BLUE_ENTITIES);
+
+    auto& device = *props.device_p;    
 
     auto offset = (u32)t;
     gpuf::draw_entity(device.blue_entities.data[offset], props);
@@ -217,9 +217,9 @@ static void gpu_draw_wall_entities(DrawProps props, u32 n_threads)
         return;
     }
 
-    auto& device = *props.device_p;
-
     assert(n_threads == N_BROWN_ENTITIES);
+
+    auto& device = *props.device_p;    
 
     auto offset = (u32)t;
     auto& wall = device.wall_entities.data[offset];

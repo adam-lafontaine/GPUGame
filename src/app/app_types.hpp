@@ -166,7 +166,9 @@ public:
 
     TileMatrix tilemap;
 
-    Entity user_player;
+    u32 player_entity_id = 0;
+
+    EntityArray player_entities;
     
     EntityArray blue_entities;
 

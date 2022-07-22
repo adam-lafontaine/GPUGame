@@ -22,23 +22,3 @@ constexpr u32 N_BLUE_ENTITIES = N_BLUE_W * N_BLUE_H;
 constexpr u32 N_PLAYER_ENTITIES = 1;
 
 constexpr u32 N_ENTITIES = N_BLUE_ENTITIES + N_BROWN_ENTITIES + N_PLAYER_ENTITIES;
-
-constexpr u32 PLAYER_ID = 0;
-
-
-constexpr u32 player_id(u32 player_offset)
-{
-    return player_offset;
-}
-
-
-constexpr u32 brown_id(u32 brown_offset)
-{
-    return brown_offset + N_PLAYER_ENTITIES;
-}
-
-
-constexpr u32 blue_id(u32 blue_offset)
-{
-    return blue_offset + N_PLAYER_ENTITIES + N_BROWN_ENTITIES;
-}

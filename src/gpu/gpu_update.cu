@@ -294,7 +294,7 @@ static void entity_update_position(Entity& entity)
 
 
 GPU_KERNAL
-static void gpu_next_player_positions(DeviceMemory* device_ptr, UnifiedMemory* unified, u32 n_threads)
+static void gpu_next_player_positions(DeviceMemory* device_p, UnifiedMemory* unified_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -302,13 +302,17 @@ static void gpu_next_player_positions(DeviceMemory* device_ptr, UnifiedMemory* u
         return;
     }
 
-    auto& device = *device_ptr;
-
     assert(n_threads == N_PLAYER_ENTITIES);
 
-    gpuf::apply_current_input(device.user_player, unified->current_inputs, unified->frame_count);
+    auto& device = *device_p;
+    auto& unified = *unified_p;
 
-    gpuf::entity_next_position(device.user_player);
+    auto offset = (u32)t;
+    auto& player = device.player_entities.data[offset];    
+
+    gpuf::apply_current_input(player, unified.current_inputs, unified.frame_count);
+
+    gpuf::entity_next_position(player);
 }
 
 
@@ -348,7 +352,7 @@ static void gpu_player_wall(DeviceMemory* device_p, u32 n_threads)
     auto player_offset = offset / N_BROWN_ENTITIES;
     auto wall_offset = offset - player_offset * N_BROWN_ENTITIES;
 
-    auto& player = device.user_player;
+    auto& player = device.player_entities.data[player_offset];
     auto& wall = device.wall_entities.data[wall_offset];
 
     gpuf::stop_wall(player, wall);
@@ -399,7 +403,7 @@ static void gpu_player_blue(DeviceMemory* device_p, u32 n_threads)
     auto blue_offset = offset - player_offset * N_BLUE_ENTITIES;
 
     auto& blue = device.blue_entities.data[blue_offset];
-    auto& player = device.user_player;
+    auto& player = device.player_entities.data[player_offset];
 
     gpuf::player_blue(player, blue);
 }
@@ -436,7 +440,7 @@ static void gpu_blue_blue(DeviceMemory* device_p, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_update_player_positions(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_update_player_positions(DeviceMemory* device_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -444,11 +448,13 @@ static void gpu_update_player_positions(DeviceMemory* device_ptr, u32 n_threads)
         return;
     }
 
-    auto& device = *device_ptr;
-
     assert(n_threads == N_PLAYER_ENTITIES);
 
-    gpuf::entity_update_position(device.user_player);    
+    auto& device = *device_p;
+
+    auto offset = (u32)t;    
+
+    gpuf::entity_update_position(device.player_entities.data[offset]);    
 }
 
 
@@ -461,11 +467,12 @@ static void gpu_update_blue_positions(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
-    auto& device = *device_p;
-
     assert(n_threads == N_BLUE_ENTITIES);
 
+    auto& device = *device_p;
+
     auto offset = (u32)t;
+        
     gpuf::entity_update_position(device.blue_entities.data[offset]);
 }
 
