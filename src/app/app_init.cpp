@@ -237,7 +237,6 @@ bool init_device_memory(AppState& state)
 
     // entities
     auto const n_entities = N_ENTITIES;
-
     if(!cuda::device_malloc(state.device_entity_buffer, n_entities * sizeof(Entity)))
     {
         print_error("entities");
@@ -271,6 +270,8 @@ bool init_device_memory(AppState& state)
     device.wall_entities.data = wall_data;
     device.wall_entities.n_elements = N_BROWN_ENTITIES;
 
+    device.entities.data = player_data;
+
 
     if(!cuda::device_malloc(state.device_buffer, 1))
     {
@@ -294,7 +295,8 @@ bool init_unified_memory(AppState& state, app::ScreenBuffer& buffer)
 
     UnifiedMemory unified{};
 
-    unified.frame_count = 0;    
+    unified.frame_count = 0;
+    unified.user_player_entity_id = 0;
     
     auto const width = buffer.width;
     auto const height = buffer.height;

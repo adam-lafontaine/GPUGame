@@ -166,12 +166,10 @@ public:
 
     TileMatrix tilemap;
 
-    u32 player_entity_id = 0;
+    EntityArray entities;
 
-    EntityArray player_entities;
-    
+    EntityArray player_entities;    
     EntityArray blue_entities;
-
     EntityArray wall_entities;  
 };
 
@@ -185,7 +183,9 @@ public:
     Image screen_pixels;
 
     InputList previous_inputs;
-    InputList current_inputs;    
+    InputList current_inputs;
+
+    u32 user_player_entity_id = 0;
 };
 
 

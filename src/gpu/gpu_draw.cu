@@ -19,34 +19,43 @@ namespace gpuf
 {
 /********************************/
 
+template <u32 W, u32 H>
 GPU_FUNCTION
-Pixel get_tile_color(Tile const& tile, Point2Dr32 const& offset_m, r32 screen_width_m, u32 screen_width_px)
+static Pixel get_bitmap_color(Bitmap<W, H> const& bitmap, r32 bitmap_w_m, Point2Dr32 const& offset_m, r32 screen_width_m, u32 screen_width_px)
 {
-    Pixel color{};
-
-    auto bitmap_w_px = TILE_WIDTH_PX;
-    auto bitmap_w_m = TILE_LENGTH_M;    
+    auto bitmap_w_px = bitmap.width;
 
     auto offset_x_px = gpuf::floor_r32_to_i32(offset_m.x * bitmap_w_px / bitmap_w_m);
     auto offset_y_px = gpuf::floor_r32_to_i32(offset_m.y * bitmap_w_px / bitmap_w_m);
 
     auto bitmap_px_id = offset_y_px * bitmap_w_px + offset_x_px;
 
-    assert(bitmap_px_id < TILE_WIDTH_PX * TILE_HEIGHT_PX);
+    assert(bitmap_px_id < bitmap.width * bitmap.height);
 
-    auto bitmap_pixel_m = TILE_LENGTH_M / TILE_WIDTH_PX;
+    auto bitmap_pixel_m = bitmap_w_m / bitmap_w_px;
     auto screen_pixel_m = screen_width_m / screen_width_px;
 
     if(screen_pixel_m > bitmap_pixel_m)
     {
-        color = *tile.avg_color;
+        return *bitmap.avg_color;
     }
     else
     {
-        color = tile.bitmap_data[bitmap_px_id];
+        return bitmap.bitmap_data[bitmap_px_id];
     }
+}
 
-    return color;
+
+GPU_FUNCTION
+static WorldPosition get_pixel_world_position(u32 pixel_id, DrawProps const& props)
+{
+    auto pixel_y_px = pixel_id / props.screen_width_px;
+    auto pixel_x_px = pixel_id - pixel_y_px * props.screen_width_px;    
+
+    auto pixel_y_m = gpuf::px_to_m(pixel_y_px, props.screen_width_m, props.screen_width_px);
+    auto pixel_x_m = gpuf::px_to_m(pixel_x_px, props.screen_width_m, props.screen_width_px);
+
+    return gpuf::add_delta(props.screen_pos, { pixel_x_m, pixel_y_m });
 }
 
 
@@ -148,13 +157,7 @@ static void gpu_draw_tiles(DrawProps props, u32 n_threads)
 
     auto pixel_id = (u32)t;
 
-    auto pixel_y_px = pixel_id / props.screen_width_px;
-    auto pixel_x_px = pixel_id - pixel_y_px * props.screen_width_px;    
-
-    auto pixel_y_m = gpuf::px_to_m(pixel_y_px, props.screen_width_m, props.screen_width_px);
-    auto pixel_x_m = gpuf::px_to_m(pixel_x_px, props.screen_width_m, props.screen_width_px);
-
-    auto pixel_world_pos = gpuf::add_delta(props.screen_pos, { pixel_x_m, pixel_y_m });
+    auto pixel_world_pos = gpuf::get_pixel_world_position(pixel_id, props);
 
     auto tile_x = pixel_world_pos.tile.x;
     auto tile_y = pixel_world_pos.tile.y;
@@ -169,8 +172,16 @@ static void gpu_draw_tiles(DrawProps props, u32 n_threads)
 
     auto& tile = tiles.data[tile_y * WORLD_WIDTH_TILE + tile_x];
 
-    screen_dst.data[pixel_id] = gpuf::get_tile_color(tile, pixel_world_pos.offset_m, props.screen_width_m, props.screen_width_px);
+    screen_dst.data[pixel_id] = gpuf::get_bitmap_color(tile, TILE_LENGTH_M, pixel_world_pos.offset_m, props.screen_width_m, props.screen_width_px);
 }
+
+/*
+GPU_KERNAL
+static void draw_entities(DrawProps props, u32 n_threads)
+{
+    
+}
+*/
 
 
 GPU_KERNAL

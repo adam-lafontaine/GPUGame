@@ -308,9 +308,16 @@ static void gpu_next_player_positions(DeviceMemory* device_p, UnifiedMemory* uni
     auto& unified = *unified_p;
 
     auto offset = (u32)t;
-    auto& player = device.player_entities.data[offset];    
+    auto& player = device.player_entities.data[offset];
 
-    gpuf::apply_current_input(player, unified.current_inputs, unified.frame_count);
+    if(player.id == unified.user_player_entity_id)
+    {
+        gpuf::apply_current_input(player, unified.current_inputs, unified.frame_count);
+    }
+    else
+    {
+        // previous input
+    }    
 
     gpuf::entity_next_position(player);
 }
@@ -472,7 +479,7 @@ static void gpu_update_blue_positions(DeviceMemory* device_p, u32 n_threads)
     auto& device = *device_p;
 
     auto offset = (u32)t;
-        
+
     gpuf::entity_update_position(device.blue_entities.data[offset]);
 }
 
