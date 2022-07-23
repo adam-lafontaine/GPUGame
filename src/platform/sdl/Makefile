@@ -449,7 +449,8 @@ run: build
 	@echo "\n"
 
 cleanall:
-	rm -rfv $(build)/*
+	rm -rfv $(build_lib)/*
+	rm -rfv $(build_app)/*
 
 clean:
 	rm -rfv $(build_app)/*

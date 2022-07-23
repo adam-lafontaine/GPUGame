@@ -19,9 +19,23 @@ namespace gpuf
 {
 /********************************/
 
+
+GPU_FUNCTION
+static WorldPosition get_pixel_world_position(u32 pixel_id, DrawProps const& props)
+{
+    auto pixel_y_px = pixel_id / props.screen_width_px;
+    auto pixel_x_px = pixel_id - pixel_y_px * props.screen_width_px;    
+
+    auto pixel_y_m = gpuf::px_to_m(pixel_y_px, props.screen_width_m, props.screen_width_px);
+    auto pixel_x_m = gpuf::px_to_m(pixel_x_px, props.screen_width_m, props.screen_width_px);
+
+    return gpuf::add_delta(props.screen_pos, { pixel_x_m, pixel_y_m });
+}
+
+/*
 template <u32 W, u32 H>
 GPU_FUNCTION
-static Pixel get_bitmap_color(Bitmap<W, H> const& bitmap, r32 bitmap_w_m, Point2Dr32 const& offset_m, r32 screen_width_m, u32 screen_width_px)
+static Pixel get_bitmap_color(Bitmap<W, H> const& bitmap, Point2Dr32 const& offset_m, r32 bitmap_w_m, r32 screen_width_m, u32 screen_width_px)
 {
     auto bitmap_w_px = bitmap.width;
 
@@ -44,18 +58,20 @@ static Pixel get_bitmap_color(Bitmap<W, H> const& bitmap, r32 bitmap_w_m, Point2
         return bitmap.bitmap_data[bitmap_px_id];
     }
 }
+*/
 
 
 GPU_FUNCTION
-static WorldPosition get_pixel_world_position(u32 pixel_id, DrawProps const& props)
+static void draw_rect(Rect2Du32 const& screen_rect, Image const& screen, Pixel color)
 {
-    auto pixel_y_px = pixel_id / props.screen_width_px;
-    auto pixel_x_px = pixel_id - pixel_y_px * props.screen_width_px;    
-
-    auto pixel_y_m = gpuf::px_to_m(pixel_y_px, props.screen_width_m, props.screen_width_px);
-    auto pixel_x_m = gpuf::px_to_m(pixel_x_px, props.screen_width_m, props.screen_width_px);
-
-    return gpuf::add_delta(props.screen_pos, { pixel_x_m, pixel_y_m });
+    for(u32 y = screen_rect.y_begin; y < screen_rect.y_end; ++y)
+    {
+        auto row = screen.data + y * screen.width;
+        for(u32 x = screen_rect.x_begin; x < screen_rect.x_end; ++x)
+        {
+            row[x] = color;
+        }
+    }
 }
 
 
@@ -88,54 +104,30 @@ static void draw_entity(Entity const& entity, DrawProps const& props)
     }
 
     gpuf::clamp_rect(entity_rect_m, screen_rect_m);
+    auto entity_screen_rect_px = gpuf::to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);
 
-    auto entity_rect_px = gpuf::to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);
-    
-    for(u32 y = entity_rect_px.y_begin; y < entity_rect_px.y_end; ++y)
+    auto bitmap = entity.bitmap;
+    auto bitmap_w_px = entity.bitmap.width;
+    auto bitmap_w_m = TILE_LENGTH_M;
+
+    auto bitmap_pixel_m = bitmap_w_m / bitmap_w_px;
+    auto screen_pixel_m = props.screen_width_m / props.screen_width_px;
+
+    if(screen_pixel_m > bitmap_pixel_m)
     {
-        auto row = screen_dst.data + y * screen_width_px;
-        for(u32 x = entity_rect_px.x_begin; x < entity_rect_px.x_end; ++x)
-        {
-            row[x] = entity.avg_color;
-        }
+        gpuf::draw_rect(entity_screen_rect_px, screen_dst, entity.avg_color);
+        return;
     }
+
+    auto black = gpuf::to_pixel(30, 30, 30);
+    
+    gpuf::draw_rect(entity_screen_rect_px, screen_dst, black);
 }
 
 
 
 /*******************************/
 }
-
-/*
-GPU_KERNAL
-static void gpu_draw(DrawProps props, u32 n_threads)
-{
-    int t = blockDim.x * blockIdx.x + threadIdx.x;
-    if (t >= n_threads)
-    {
-        return;
-    }
-
-    auto& device = *props.device_p;
-    auto& unified = *props.unified_p;
-    auto& screen_dst = unified.screen_pixels;
-
-    assert(n_threads == screen_dst.width * screen_dst.height);
-
-    auto pixel_id = (u32)t;
-    auto& pixel_dst = screen_dst.data[pixel_id];
-
-    auto black = gpuf::to_pixel(30, 30, 30);
-
-    // TODO: get screen pixel entity flag
-
-
-
-    auto& tiles = device.tilemap;
-
-    pixel_dst = black;
-}
-*/
 
 
 GPU_KERNAL
@@ -159,10 +151,10 @@ static void gpu_draw_tiles(DrawProps props, u32 n_threads)
 
     auto pixel_world_pos = gpuf::get_pixel_world_position(pixel_id, props);
 
-    auto tile_x = pixel_world_pos.tile.x;
-    auto tile_y = pixel_world_pos.tile.y;
+    int tile_x = pixel_world_pos.tile.x;
+    int tile_y = pixel_world_pos.tile.y;    
 
-    auto black = gpuf::to_pixel(30, 30, 30);
+    auto black = gpuf::to_pixel(30, 30, 30);    
 
     if(tile_x < 0 || tile_y < 0 || tile_x >= WORLD_WIDTH_TILE || tile_y >= WORLD_HEIGHT_TILE)
     {
@@ -170,9 +162,32 @@ static void gpu_draw_tiles(DrawProps props, u32 n_threads)
         return;
     }
 
-    auto& tile = tiles.data[tile_y * WORLD_WIDTH_TILE + tile_x];
+    auto tile_id = tile_y * WORLD_WIDTH_TILE + tile_x;
+    auto& tile = tiles.data[tile_id];
 
-    screen_dst.data[pixel_id] = gpuf::get_bitmap_color(tile, TILE_LENGTH_M, pixel_world_pos.offset_m, props.screen_width_m, props.screen_width_px);
+    auto bitmap = tile;
+    auto bitmap_w_px = tile.width;
+    auto bitmap_w_m = TILE_LENGTH_M;
+    auto pixel_bitmap_offset_m = pixel_world_pos.offset_m;
+
+    auto offset_x_px = gpuf::floor_r32_to_i32(pixel_bitmap_offset_m.x * bitmap_w_px / bitmap_w_m);
+    auto offset_y_px = gpuf::floor_r32_to_i32(pixel_bitmap_offset_m.y * bitmap_w_px / bitmap_w_m);
+
+    auto bitmap_px_id = offset_y_px * bitmap_w_px + offset_x_px;
+
+    assert(bitmap_px_id < bitmap.width * bitmap.height);
+
+    auto bitmap_pixel_m = bitmap_w_m / bitmap_w_px;
+    auto screen_pixel_m = props.screen_width_m / props.screen_width_px;
+
+    if(screen_pixel_m > bitmap_pixel_m)
+    {
+        screen_dst.data[pixel_id] = *bitmap.avg_color;
+    }
+    else
+    {
+        screen_dst.data[pixel_id] = bitmap.bitmap_data[bitmap_px_id];
+    }
 }
 
 
@@ -214,13 +229,13 @@ namespace gpu
         
         auto tile_threads = n_pixels;
         auto tile_blocks = calc_thread_blocks(tile_threads);
-        
-        cuda_launch_kernel(gpu_draw_tiles, tile_blocks, THREADS_PER_BLOCK, props, tile_threads);
-        result = cuda::launch_success("gpu_draw_tiles");
-        assert(result);
 
         constexpr auto entity_threads = N_ENTITIES;
         constexpr auto entity_blocks = calc_thread_blocks(entity_threads);
+        
+        cuda_launch_kernel(gpu_draw_tiles, tile_blocks, THREADS_PER_BLOCK, props, tile_threads);
+        result = cuda::launch_success("gpu_draw_tiles");
+        assert(result);        
 
         cuda_launch_kernel(gpu_draw_entities, entity_blocks, THREADS_PER_BLOCK, props, entity_threads);
         result = cuda::launch_success("gpu_draw_entities");
