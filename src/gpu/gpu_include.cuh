@@ -316,6 +316,26 @@ inline u32 brown_id(u32 brown_offset)
 }
 
 
+GPU_FUNCTION
+inline bool is_player(u32 entity_id)
+{
+    return /*entity_id >= PLAYER_BEGIN &&*/ entity_id < PLAYER_END;
+}
+
+
+GPU_FUNCTION
+inline bool is_blue(u32 entity_id)
+{
+    return entity_id <= BLUE_BEGIN && entity_id < BLUE_END;
+}
+
+
+GPU_FUNCTION
+inline bool is_wall(u32 entity_id)
+{
+    return entity_id >= BROWN_BEGIN && entity_id < BROWN_END;
+}
+
 /***********************/
 
 }

@@ -106,7 +106,7 @@ static void draw_entity(Entity const& entity, DrawProps const& props)
     gpuf::clamp_rect(entity_rect_m, screen_rect_m);
     auto entity_screen_rect_px = gpuf::to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);
 
-    auto bitmap = entity.bitmap;
+    //auto bitmap = entity.bitmap;
     auto bitmap_w_px = entity.bitmap.width;
     auto bitmap_w_m = TILE_LENGTH_M;
 
@@ -122,6 +122,8 @@ static void draw_entity(Entity const& entity, DrawProps const& props)
     auto black = gpuf::to_pixel(30, 30, 30);
     
     gpuf::draw_rect(entity_screen_rect_px, screen_dst, black);
+
+
 }
 
 
