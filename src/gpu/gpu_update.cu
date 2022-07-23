@@ -278,12 +278,12 @@ static void entity_update_position(Entity& entity)
 
     entity.position = gpuf::add_delta(entity.position, entity.delta_pos_m);
 
-    // TODO: set screen pixel flag
-
     entity.next_position = entity.position;
     entity.delta_pos_m = { 0.0f, 0.0f };
     entity.inv_x = false;
     entity.inv_y = false;
+
+    // TODO: set screen pixel flag
 }
 
 
