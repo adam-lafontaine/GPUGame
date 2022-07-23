@@ -353,27 +353,32 @@ int main(int argc, char *argv[])
     bool in_old = 1;
     Stopwatch sw;
     r64 frame_ms_elapsed = TARGET_MS_PER_FRAME;
+    char title_buffer[50];
+    r64 ms_elapsed = 0.0;
+    r64 title_refresh_ms = 500.0;
 
     auto const wait_for_framerate = [&]()
     {
         frame_ms_elapsed = sw.get_time_milli();
+
+        if(ms_elapsed >= title_refresh_ms)
+        {
+            ms_elapsed = 0.0;
+            snprintf(title_buffer, 50, "%s (%d)", WINDOW_TITLE, (int)frame_ms_elapsed);
+            SDL_SetWindowTitle(window, title_buffer);
+        }
+
         auto sleep_ms = (u32)(TARGET_MS_PER_FRAME - frame_ms_elapsed);
         if (frame_ms_elapsed < TARGET_MS_PER_FRAME && sleep_ms > 0)
-        {    
-            SDL_SetWindowTitle(window, WINDOW_TITLE);
-
+        { 
             std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
             while (frame_ms_elapsed < TARGET_MS_PER_FRAME)
             {
                 frame_ms_elapsed = sw.get_time_milli();
             }        
         }
-        else
-        {
-            char buffer[30];
-            snprintf(buffer, 30, "%s %d", WINDOW_TITLE, (int)frame_ms_elapsed);
-            SDL_SetWindowTitle(window, buffer);
-        }
+
+        ms_elapsed += frame_ms_elapsed;        
 
         sw.start();
     };

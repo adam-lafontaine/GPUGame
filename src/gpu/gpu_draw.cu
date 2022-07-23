@@ -179,7 +179,17 @@ static void gpu_draw_tiles(DrawProps props, u32 n_threads)
 GPU_KERNAL
 static void draw_entities(DrawProps props, u32 n_threads)
 {
-    
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
+    }
+
+    assert(n_threads == N_ENTITIES);
+
+    auto& device = *props.device_p;
+
+
 }
 */
 

@@ -14,7 +14,7 @@ namespace INPUT
 
     constexpr u32 MAX_RECORDS = 5000;
 }
-
+ 
 
 class InputRecord
 {
