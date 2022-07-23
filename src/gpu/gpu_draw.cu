@@ -175,9 +175,9 @@ static void gpu_draw_tiles(DrawProps props, u32 n_threads)
     screen_dst.data[pixel_id] = gpuf::get_bitmap_color(tile, TILE_LENGTH_M, pixel_world_pos.offset_m, props.screen_width_m, props.screen_width_px);
 }
 
-/*
+
 GPU_KERNAL
-static void draw_entities(DrawProps props, u32 n_threads)
+static void gpu_draw_entities(DrawProps props, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -187,65 +187,12 @@ static void draw_entities(DrawProps props, u32 n_threads)
 
     assert(n_threads == N_ENTITIES);
 
-    auto& device = *props.device_p;
-
-
-}
-*/
-
-
-GPU_KERNAL
-static void gpu_draw_players(DrawProps props, u32 n_threads)
-{
-    int t = blockDim.x * blockIdx.x + threadIdx.x;
-    if (t >= n_threads)
-    {
-        return;
-    }
-
-    assert(n_threads == N_PLAYER_ENTITIES);
-
-    auto& device = *props.device_p;
-
-    auto offset = (u32)t;
-    gpuf::draw_entity(device.player_entities.data[offset], props);
-}
-
-
-GPU_KERNAL
-static void gpu_draw_blue_entities(DrawProps props, u32 n_threads)
-{
-    int t = blockDim.x * blockIdx.x + threadIdx.x;
-    if (t >= n_threads)
-    {
-        return;
-    }
-    assert(n_threads == N_BLUE_ENTITIES);
-
     auto& device = *props.device_p;    
 
     auto offset = (u32)t;
-    gpuf::draw_entity(device.blue_entities.data[offset], props);
-}
+    auto& entity = device.entities.data[offset];
 
-
-GPU_KERNAL
-static void gpu_draw_wall_entities(DrawProps props, u32 n_threads)
-{
-    int t = blockDim.x * blockIdx.x + threadIdx.x;
-    if (t >= n_threads)
-    {
-        return;
-    }
-
-    assert(n_threads == N_BROWN_ENTITIES);
-
-    auto& device = *props.device_p;    
-
-    auto offset = (u32)t;
-    auto& wall = device.wall_entities.data[offset];
-
-    gpuf::draw_entity(wall, props);
+    gpuf::draw_entity(entity, props);
 }
 
 
@@ -264,33 +211,19 @@ namespace gpu
 
         bool result = cuda::no_errors("gpu::render");
         assert(result);
-
-        constexpr auto player_threads = N_PLAYER_ENTITIES;
-        constexpr auto player_blocks = calc_thread_blocks(player_threads);
-
-        constexpr auto blue_threads = N_BLUE_ENTITIES;
-        constexpr auto blue_blocks = calc_thread_blocks(blue_threads);
-
-        constexpr auto wall_threads = N_BROWN_ENTITIES;
-        constexpr auto wall_blocks = calc_thread_blocks(wall_threads);
-
+        
         auto tile_threads = n_pixels;
         auto tile_blocks = calc_thread_blocks(tile_threads);
         
         cuda_launch_kernel(gpu_draw_tiles, tile_blocks, THREADS_PER_BLOCK, props, tile_threads);
         result = cuda::launch_success("gpu_draw_tiles");
         assert(result);
-        
-        cuda_launch_kernel(gpu_draw_players, player_blocks, THREADS_PER_BLOCK, props, player_threads);
-        result = cuda::launch_success("gpu_draw_players");
-        assert(result);
-        
-        cuda_launch_kernel(gpu_draw_blue_entities, blue_blocks, THREADS_PER_BLOCK, props, blue_threads);
-        result = cuda::launch_success("gpu_draw_blue_entities");
-        assert(result);
-        
-        cuda_launch_kernel(gpu_draw_wall_entities, wall_blocks, THREADS_PER_BLOCK, props, wall_threads);
-        result = cuda::launch_success("gpu_draw_wall_entities");
+
+        constexpr auto entity_threads = N_ENTITIES;
+        constexpr auto entity_blocks = calc_thread_blocks(entity_threads);
+
+        cuda_launch_kernel(gpu_draw_entities, entity_blocks, THREADS_PER_BLOCK, props, entity_threads);
+        result = cuda::launch_success("gpu_draw_entities");
         assert(result);
     }
 }
