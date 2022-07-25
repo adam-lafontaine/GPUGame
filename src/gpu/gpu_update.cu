@@ -282,8 +282,6 @@ static void entity_update_position(Entity& entity)
     entity.delta_pos_m = { 0.0f, 0.0f };
     entity.inv_x = false;
     entity.inv_y = false;
-
-    // TODO: set screen pixel flag
 }
 
 
@@ -310,13 +308,18 @@ static void gpu_next_movable_positions(DeviceMemory* device_p, UnifiedMemory* un
     auto offset = (u32)t;
     auto& entity = device.entities.data[offset];
 
-    if(entity.id == unified.user_player_entity_id)
+    
+
+    if(gpuf::is_player(entity.id))
     {
-        gpuf::apply_current_input(entity, unified.current_inputs, unified.frame_count);
-    }
-    else if(gpuf::is_player(entity.id))
-    {
-        // previous input
+        if(entity.id == unified.user_player_entity_id)
+        {
+            gpuf::apply_current_input(entity, unified.current_inputs, unified.frame_count);
+        }
+        else
+        {
+            // previous input
+        }        
     }
     
     gpuf::entity_next_position(entity);

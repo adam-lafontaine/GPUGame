@@ -34,8 +34,13 @@ static WorldPosition get_pixel_world_position(u32 pixel_id, DrawProps const& pro
 
 
 GPU_FUNCTION
-static void draw_rect(Rect2Du32 const& screen_rect, Image const& screen, Pixel color)
+static void draw_rect(Rect2Di32 const& screen_rect, Image const& screen, Pixel color)
 {
+    assert(screen_rect.y_begin >= 0);
+    assert(screen_rect.y_end >= 0);
+    assert(screen_rect.x_begin >= 0);
+    assert(screen_rect.x_end >= 0);
+
     for(u32 y = screen_rect.y_begin; y < screen_rect.y_end; ++y)
     {
         auto row = screen.data + y * screen.width;
@@ -75,56 +80,83 @@ static void draw_entity(Entity const& entity, DrawProps const& props)
         return;
     }
 
-    gpuf::clamp_rect(entity_rect_m, screen_rect_m);
-    auto entity_screen_rect_px = gpuf::to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);
+    
 
-    //auto bitmap = entity.bitmap;
-    auto bitmap_w_px = entity.bitmap.width;
-    auto bitmap_w_m = TILE_LENGTH_M;
+    //gpuf::clamp_rect(entity_rect_m, screen_rect_m);
+    
+    auto bitmap = entity.bitmap;
+    auto bitmap_w_px = bitmap.width;
+    auto bitmap_w_m = entity.width_m;
 
     auto bitmap_pixel_m = bitmap_w_m / bitmap_w_px;
     auto screen_pixel_m = props.screen_width_m / props.screen_width_px;
 
     if(screen_pixel_m > bitmap_pixel_m)
     {
-        gpuf::draw_rect(entity_screen_rect_px, screen_dst, entity.avg_color);
+        gpuf::clamp_rect(entity_rect_m, screen_rect_m);
+        auto rect_px = gpuf::to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);
+
+        gpuf::draw_rect(rect_px, screen_dst, entity.avg_color);
         return;
     }
 
-    auto black = gpuf::to_pixel(30, 30, 30);
-    
-    gpuf::draw_rect(entity_screen_rect_px, screen_dst, black);
+    auto rect_px = gpuf::to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);
 
+    for(i32 y = rect_px.y_begin; y < rect_px.y_end; ++y)
+    {
+        if(y < 0 || y >= screen_height_px)
+        {
+            continue;
+        }
 
+        auto ratio = (r32)(y - rect_px.y_begin) / (rect_px.y_end - rect_px.y_begin);
+        auto bitmap_y = gpuf::round_r32_to_i32(ratio * bitmap.height);
+
+        auto dst_row = screen_dst.data + y * screen_width_px;
+
+        for(i32 x = rect_px.x_begin; x < rect_px.x_end; ++x)
+        {
+            if(x < 0 || x >= screen_width_px)
+            {
+                continue;
+            }
+
+            ratio = (r32)(x - rect_px.x_begin) / (rect_px.x_end - rect_px.x_begin);
+            auto bitmap_x = gpuf::round_r32_to_i32(ratio * bitmap.width);
+
+            auto src_pixel_id = bitmap_y * bitmap.width + bitmap_x;
+            dst_row[x] = bitmap.data[src_pixel_id];
+        }
+    }        
+
+    //auto black = gpuf::to_pixel(30, 30, 30);    
+    //gpuf::draw_rect(entity_screen_rect_px, screen_dst, black);
 }
 
 
 GPU_FUNCTION
 static Pixel get_tile_pixel(Tile const& tile, WorldPosition const& pixel_world_pos, DrawProps const& props)
 {
-    auto bitmap = tile;
     auto bitmap_w_px = tile.width;
     auto bitmap_w_m = TILE_LENGTH_M;
     auto pixel_bitmap_offset_m = pixel_world_pos.offset_m;
-
-    auto offset_x_px = gpuf::floor_r32_to_i32(pixel_bitmap_offset_m.x * bitmap_w_px / bitmap_w_m);
-    auto offset_y_px = gpuf::floor_r32_to_i32(pixel_bitmap_offset_m.y * bitmap_w_px / bitmap_w_m);
-
-    auto bitmap_px_id = offset_y_px * bitmap_w_px + offset_x_px;
-
-    assert(bitmap_px_id < bitmap.width * bitmap.height);
 
     auto bitmap_pixel_m = bitmap_w_m / bitmap_w_px;
     auto screen_pixel_m = props.screen_width_m / props.screen_width_px;
 
     if(screen_pixel_m > bitmap_pixel_m)
     {
-        return *bitmap.avg_color;
+        return *tile.avg_color;
     }
-    else
-    {
-        return bitmap.bitmap_data[bitmap_px_id];
-    }
+
+    auto offset_x_px = gpuf::floor_r32_to_i32(pixel_bitmap_offset_m.x * bitmap_w_px / bitmap_w_m);
+    auto offset_y_px = gpuf::floor_r32_to_i32(pixel_bitmap_offset_m.y * bitmap_w_px / bitmap_w_m);
+
+    auto bitmap_px_id = offset_y_px * bitmap_w_px + offset_x_px;
+
+    assert(bitmap_px_id < tile.width * tile.height);
+    
+    return tile.bitmap_data[bitmap_px_id];
 }
 
 

@@ -45,11 +45,6 @@ inline r32 px_to_m(u32 n_pixels, r32 length_m, u32 length_px)
 {
     auto dist = n_pixels * length_m / length_px;
 
-    if(fabs(dist) < 0.0001)
-    {
-        return 0.0f;
-    }
-
     return dist;
 }
 
@@ -58,12 +53,6 @@ GPU_CONSTEXPR_FUNCTION
 inline u32 m_to_px(r32 dist_m, r32 length_m, u32 length_px)
 {
     auto px = dist_m * length_px / length_m;
-
-    // never have negative pixels
-    if(px < 0.0f)
-    {
-        px = 0.0f;
-    }
 
     return (u32)gpuf::ceil_r32_to_i32(px);
 }
@@ -262,11 +251,11 @@ inline void clamp_rect(Rect2Dr32& rect, Rect2Dr32 const& boundary)
 
 
 GPU_FUNCTION
-inline Rect2Du32 to_pixel_rect(Rect2Dr32 const& rect_m, r32 length_m, u32 length_px)
+inline Rect2Di32 to_pixel_rect(Rect2Dr32 const& rect_m, r32 length_m, u32 length_px)
 {
     auto const to_px = [&](r32 m){ return gpuf::m_to_px(m, length_m, length_px); };
 
-    Rect2Du32 rect_px{};
+    Rect2Di32 rect_px{};
     rect_px.x_begin = to_px(rect_m.x_begin);
     rect_px.x_end = to_px(rect_m.x_end);
     rect_px.y_begin = to_px(rect_m.y_begin);
