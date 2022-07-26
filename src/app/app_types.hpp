@@ -84,6 +84,9 @@ public:
 };
 
 
+//typedef Pixel(*DrawFunc)(Point2Dr32 const&);
+
+
 class Entity
 {
 public:
@@ -92,8 +95,10 @@ public:
     r32 width_m;
     r32 height_m;
 
-    Image bitmap;
-    Pixel avg_color;
+    //DrawFunc draw;
+
+    //Image bitmap;
+    //Pixel avg_color;
 
     WorldPosition position;
     Vec2Dr32 dt;
@@ -170,7 +175,9 @@ public:
 
     EntityArray player_entities;    
     EntityArray blue_entities;
-    EntityArray wall_entities;  
+    EntityArray wall_entities;
+
+    Image screen_pixels;
 };
 
 
@@ -178,9 +185,7 @@ class UnifiedMemory
 {
 public:
 
-    u64 frame_count;
-
-    Image screen_pixels;
+    u64 frame_count;    
 
     InputList previous_inputs;
     InputList current_inputs;
@@ -194,12 +199,14 @@ class AppState
 public:
     AppInput app_input;
 
+    Image device_pixels;
+    Image screen_pixels;
+
     MemoryBuffer<DeviceMemory> device_buffer;
     MemoryBuffer<Pixel> device_pixel_buffer;
     MemoryBuffer<Tile> device_tile_buffer;
     MemoryBuffer<Entity> device_entity_buffer;
 
     MemoryBuffer<UnifiedMemory> unified_buffer;
-    MemoryBuffer<Pixel> unified_pixel_buffer;
     MemoryBuffer<InputRecord> unified_input_record_buffer;
 };

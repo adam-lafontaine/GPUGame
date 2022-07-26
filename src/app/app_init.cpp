@@ -198,12 +198,19 @@ static bool init_input_list(InputList& list, MemoryBuffer<InputRecord>& buffer)
 }
 
 
-bool init_device_memory(AppState& state)
+bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
 {
-    DeviceMemory device{};    
+    assert(sizeof(Pixel) == buffer.bytes_per_pixel);
+
+    DeviceMemory device{};
+
+    auto const width = buffer.width;
+    auto const height = buffer.height;
+
+    auto const screen_size = width * height * sizeof(Pixel);
 
     // tiles/pixels
-    if(!cuda::device_malloc(state.device_pixel_buffer, total_asset_pixel_size()))
+    if(!cuda::device_malloc(state.device_pixel_buffer, total_asset_pixel_size() + screen_size))
     {
         print_error("device pixel_buffer");
         return false;
@@ -214,6 +221,19 @@ bool init_device_memory(AppState& state)
         print_error("device assets");
         return false;
     }
+
+    auto& screen = device.screen_pixels;
+    if(!init_image(screen, state.device_pixel_buffer, width, height))
+    {
+        print_error("screen_pixels");
+        return false;
+    }
+
+    state.screen_pixels.data = (Pixel*)buffer.memory;
+    state.screen_pixels.width = width;
+    state.screen_pixels.height = height;
+
+    state.device_pixels = device.screen_pixels;
 
     // tilemap
     auto const n_tilemap_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;
@@ -272,7 +292,6 @@ bool init_device_memory(AppState& state)
 
     device.entities.data = player_data;
 
-
     if(!cuda::device_malloc(state.device_buffer, 1))
     {
         print_error("state.device_buffer");
@@ -289,33 +308,12 @@ bool init_device_memory(AppState& state)
 }
 
 
-bool init_unified_memory(AppState& state, app::ScreenBuffer& buffer)
+bool init_unified_memory(AppState& state)
 {
-    assert(sizeof(Pixel) == buffer.bytes_per_pixel);
-
     UnifiedMemory unified{};
 
     unified.frame_count = 0;
-    unified.user_player_entity_id = 0;
-    
-    auto const width = buffer.width;
-    auto const height = buffer.height;
-
-    auto const n_pixels = width * height;
-    if(!cuda::unified_malloc(state.unified_pixel_buffer, n_pixels))
-    {
-        print_error("unified_pixel");
-        return false;
-    }
-
-    auto& screen = unified.screen_pixels;
-    if(!init_image(screen, state.unified_pixel_buffer, width, height))
-    {
-        print_error("screen_pixels");
-        return false;
-    }    
-
-    buffer.memory = screen.data;
+    unified.user_player_entity_id = 0;   
 
     auto const n_input_records = 2 * INPUT::MAX_RECORDS;
     if(!cuda::unified_malloc(state.unified_input_record_buffer, n_input_records))

@@ -296,12 +296,12 @@ namespace app
 
         auto& state = get_initial_state(memory);
 
-        if(!init_unified_memory(state, screen))
+        if(!init_unified_memory(state))
         {
             return false;
         }
 
-        if(!init_device_memory(state))
+        if(!init_device_memory(state, screen))
         {
             return false;
         }
@@ -329,7 +329,13 @@ namespace app
         process_input(input, state); 
 
         gpu::update(state);
-        gpu::render(state);        
+        gpu::render(state);
+
+        auto src = state.device_pixels.data;
+        auto dst = state.screen_pixels.data;
+        auto size = state.device_pixels.width * state.device_pixels.height * sizeof(Pixel);
+
+        cuda::memcpy_to_host(src, dst, size);
     }
 
 	
@@ -341,8 +347,7 @@ namespace app
         cuda::free(state.device_pixel_buffer);
         cuda::free(state.device_tile_buffer);
         cuda::free(state.device_entity_buffer);
-
-        cuda::free(state.unified_pixel_buffer);
+        
         cuda::free(state.unified_input_record_buffer);
         cuda::free(state.unified_buffer);
 

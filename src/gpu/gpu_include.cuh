@@ -50,11 +50,11 @@ inline r32 px_to_m(u32 n_pixels, r32 length_m, u32 length_px)
 
 
 GPU_CONSTEXPR_FUNCTION
-inline u32 m_to_px(r32 dist_m, r32 length_m, u32 length_px)
+inline i32 m_to_px(r32 dist_m, r32 length_m, u32 length_px)
 {
     auto px = dist_m * length_px / length_m;
 
-    return (u32)gpuf::ceil_r32_to_i32(px);
+    return gpuf::ceil_r32_to_i32(px);
 }
 
 
@@ -315,7 +315,7 @@ inline bool is_player(u32 entity_id)
 GPU_FUNCTION
 inline bool is_blue(u32 entity_id)
 {
-    return entity_id <= BLUE_BEGIN && entity_id < BLUE_END;
+    return entity_id >= BLUE_BEGIN && entity_id < BLUE_END;
 }
 
 

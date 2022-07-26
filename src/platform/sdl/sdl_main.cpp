@@ -26,7 +26,7 @@ GlobalVariable b32 g_running = false;
 class BitmapBuffer
 {
 public:
-    u32 bytes_per_pixel;
+    u32 bytes_per_pixel = 4;
 
     void* memory;
     int width;
@@ -53,6 +53,15 @@ static void destroy_app_memory(app::AppMemory& memory)
     {
         free(memory.permanent_storage);
     }    
+}
+
+
+static void set_app_screen_buffer(BitmapBuffer const& back_buffer, app::ScreenBuffer& app_buffer)
+{
+    app_buffer.memory = back_buffer.memory;
+    app_buffer.width = back_buffer.width;
+    app_buffer.height = back_buffer.height;
+    app_buffer.bytes_per_pixel = back_buffer.bytes_per_pixel;
 }
 
 
@@ -117,29 +126,23 @@ static void close_game_controllers(SDLInput& sdl, Input const& input)
 }
 
 
-static void init_app_screen_buffer(app::ScreenBuffer& app_screen_buffer)
+static void init_app_screen_buffer(app::ScreenBuffer& screen_buffer)
 {
-    app_screen_buffer.width = WINDOW_WIDTH;
-    app_screen_buffer.height = WINDOW_HEIGHT;
-    app_screen_buffer.bytes_per_pixel = SCREEN_BYTES_PER_PIXEL;
+    screen_buffer.width = WINDOW_WIDTH;
+    screen_buffer.height = WINDOW_HEIGHT;
+    screen_buffer.bytes_per_pixel = SCREEN_BYTES_PER_PIXEL;
 }
 
 
-static bool init_bitmap_buffer(BitmapBuffer& buffer, app::ScreenBuffer const& screen_buffer, SDL_Window* window)
-{
-    buffer.width = (int)screen_buffer.width;
-    buffer.height = (int)screen_buffer.height;
-    buffer.bytes_per_pixel = screen_buffer.bytes_per_pixel;
-
-    buffer.memory = screen_buffer.memory;
-
-    buffer.renderer = SDL_CreateRenderer(window, -1, 0);
-    
-    if(!buffer.renderer)
+static void resize_offscreen_buffer(BitmapBuffer& buffer, int width, int height)
+{ 
+    if(width == buffer.width && height == buffer.height)
     {
-        printf("SDL_CreateRenderer failed\n%s\n", SDL_GetError());
-        return false;
-    }    
+        return;
+    }
+
+    buffer.width = width;
+    buffer.height = height;
 
     if(buffer.texture)
     {
@@ -150,14 +153,40 @@ static bool init_bitmap_buffer(BitmapBuffer& buffer, app::ScreenBuffer const& sc
         buffer.renderer,
         SDL_PIXELFORMAT_ARGB8888,
         SDL_TEXTUREACCESS_STREAMING,
-        buffer.width,
-        buffer.height);
+        width,
+        height);
 
     if(!buffer.texture)
     {
         printf("SDL_CreateTexture failed\n%s\n", SDL_GetError());
+    }
+
+    if(buffer.memory)
+    {
+        free(buffer.memory);
+    }
+    
+    buffer.memory = malloc(width * height * buffer.bytes_per_pixel);    
+}
+
+
+static bool init_bitmap_buffer(BitmapBuffer& buffer, SDL_Window* window, int width, int height)
+{
+    buffer.renderer = SDL_CreateRenderer(window, -1, 0);
+    
+    if(!buffer.renderer)
+    {
+        printf("SDL_CreateRenderer failed\n%s\n", SDL_GetError());
         return false;
-    }    
+    }
+
+    resize_offscreen_buffer(buffer, width, height);
+    
+    if(!buffer.memory)
+    {
+        printf("Back buffer memory failed\n");
+        return false;
+    }
 
     return true;
 }
@@ -168,6 +197,11 @@ static void destroy_bitmap_buffer(BitmapBuffer& buffer)
     if(buffer.texture)
     {
         SDL_DestroyTexture(buffer.texture);
+    }
+
+    if(buffer.memory)
+    {
+        free(buffer.memory);
     }
 }
 
@@ -282,6 +316,27 @@ static void close_sdl()
 }
 
 
+SDL_Window* create_window()
+{
+    auto window = SDL_CreateWindow(
+        WINDOW_TITLE,
+        SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_UNDEFINED,
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
+        SDL_WINDOW_RESIZABLE);
+
+    if (!window)
+    {
+        return window;
+    }
+
+    SDL_SetWindowTitle(window, WINDOW_TITLE);
+
+    return window;
+}
+
+
 int main(int argc, char *argv[])
 {
     printf("\n");
@@ -291,13 +346,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    auto window = SDL_CreateWindow(
-                    WINDOW_TITLE,
-                    SDL_WINDOWPOS_UNDEFINED,
-                    SDL_WINDOWPOS_UNDEFINED,
-                    WINDOW_WIDTH,
-                    WINDOW_HEIGHT,
-                    SDL_WINDOW_RESIZABLE);
+    auto window = create_window();
     if(!window)
     {
         display_error("SDL_CreateWindow failed");
@@ -320,7 +369,19 @@ int main(int argc, char *argv[])
 
     open_game_controllers(sdl_input, input[0]);
     input[1].num_controllers = input[0].num_controllers;
-    printf("controllers = %d\n", input[0].num_controllers);    
+    printf("controllers = %d\n", input[0].num_controllers);
+
+    init_app_screen_buffer(app_screen_buffer);
+
+    if(!init_bitmap_buffer(back_buffer, window, WINDOW_WIDTH, WINDOW_HEIGHT))
+    {
+        display_error("Creating back buffer failed");
+        cleanup();
+
+        return EXIT_FAILURE;
+    }
+
+    set_app_screen_buffer(back_buffer, app_screen_buffer);
     
     allocate_app_memory(app_memory);
     if (!app_memory.permanent_storage)
@@ -328,9 +389,7 @@ int main(int argc, char *argv[])
         display_error("Allocating application memory failed");
         cleanup();
         return EXIT_FAILURE;
-    }
-
-    init_app_screen_buffer(app_screen_buffer);
+    }    
 
     if(!app::initialize_memory(app_memory, app_screen_buffer))
     {
@@ -338,14 +397,6 @@ int main(int argc, char *argv[])
         cleanup();
         return EXIT_FAILURE;
     }
-    
-    if(!init_bitmap_buffer(back_buffer, app_screen_buffer, window))
-    {
-        display_error("Creating back buffer failed");
-        cleanup();
-
-        return EXIT_FAILURE;
-    }    
 
     g_running = true;   
     

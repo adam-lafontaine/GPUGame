@@ -45,8 +45,8 @@ constexpr size_t host_memory_sz()
 }
 
 
-bool init_device_memory(AppState& state);
+bool init_device_memory(AppState& state, app::ScreenBuffer& buffer);
 
-bool init_unified_memory(AppState& state, app::ScreenBuffer& buffer);
+bool init_unified_memory(AppState& state);
 
 void init_app_input(AppInput& app_input);

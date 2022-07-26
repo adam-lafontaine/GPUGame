@@ -21,6 +21,56 @@ namespace gpuf
 
 
 GPU_FUNCTION
+static Pixel player_pixel(Point2Dr32 const& position_offset)
+{
+    return to_pixel(200, 0, 0);
+}
+
+
+GPU_FUNCTION
+static Pixel blue_pixel(Point2Dr32 const& position_offset)
+{
+    return to_pixel(0, 0, 100);
+}
+
+
+GPU_FUNCTION
+static Pixel wall_pixel(Point2Dr32 const& position_offset)
+{
+    return to_pixel(150, 75, 0);
+}
+
+
+GPU_FUNCTION
+static Pixel black_pixel(Point2Dr32 const& position_offset)
+{
+    return to_pixel(30, 30, 30);
+}
+
+
+GPU_FUNCTION
+static void draw_entity_offset(Entity const& entity, Pixel& dst, Point2Dr32 const& offset)
+{
+    if(gpuf::is_player(entity.id))
+    {
+        dst = player_pixel(offset);
+    }
+    else if(gpuf::is_blue(entity.id))
+    {
+        dst = blue_pixel(offset);
+    }
+    else if(gpuf::is_wall(entity.id))
+    {
+        dst = wall_pixel(offset);
+    }
+    else
+    {
+        dst = black_pixel(offset);
+    }    
+}
+
+
+GPU_FUNCTION
 static WorldPosition get_pixel_world_position(u32 pixel_id, DrawProps const& props)
 {
     auto pixel_y_px = pixel_id / props.screen_width_px;
@@ -32,26 +82,6 @@ static WorldPosition get_pixel_world_position(u32 pixel_id, DrawProps const& pro
     return gpuf::add_delta(props.screen_pos, { pixel_x_m, pixel_y_m });
 }
 
-
-GPU_FUNCTION
-static void draw_rect(Rect2Di32 const& screen_rect, Image const& screen, Pixel color)
-{
-    assert(screen_rect.y_begin >= 0);
-    assert(screen_rect.y_end >= 0);
-    assert(screen_rect.x_begin >= 0);
-    assert(screen_rect.x_end >= 0);
-
-    for(u32 y = screen_rect.y_begin; y < screen_rect.y_end; ++y)
-    {
-        auto row = screen.data + y * screen.width;
-        for(u32 x = screen_rect.x_begin; x < screen_rect.x_end; ++x)
-        {
-            row[x] = color;
-        }
-    }
-}
-
-
 GPU_FUNCTION
 static void draw_entity(Entity const& entity, DrawProps const& props)
 {
@@ -60,12 +90,12 @@ static void draw_entity(Entity const& entity, DrawProps const& props)
         return;
     }
 
-    auto& screen_dst = props.unified_p->screen_pixels;
+    auto& screen_dst = props.device_p->screen_pixels;
 
     auto screen_width_px = screen_dst.width;
     auto screen_height_px = screen_dst.height;
     auto screen_width_m = props.screen_width_m;
-    auto screen_height_m = screen_height_px * props.screen_width_m / screen_width_px;
+    auto screen_height_m = gpuf::px_to_m(screen_height_px, props.screen_width_m, screen_width_px);
 
     auto entity_screen_pos_m = gpuf::sub_delta_m(entity.position, props.screen_pos);
 
@@ -80,37 +110,17 @@ static void draw_entity(Entity const& entity, DrawProps const& props)
         return;
     }
 
-    
-
-    //gpuf::clamp_rect(entity_rect_m, screen_rect_m);
-    
-    auto bitmap = entity.bitmap;
-    auto bitmap_w_px = bitmap.width;
-    auto bitmap_w_m = entity.width_m;
-
-    auto bitmap_pixel_m = bitmap_w_m / bitmap_w_px;
-    auto screen_pixel_m = props.screen_width_m / props.screen_width_px;
-
-    if(screen_pixel_m > bitmap_pixel_m)
-    {
-        gpuf::clamp_rect(entity_rect_m, screen_rect_m);
-        auto rect_px = gpuf::to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);
-
-        gpuf::draw_rect(rect_px, screen_dst, entity.avg_color);
-        return;
-    }
-
     auto rect_px = gpuf::to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);
+    Point2Dr32 offset = { 0.0f, 0.0f };
 
     for(i32 y = rect_px.y_begin; y < rect_px.y_end; ++y)
-    {
+    {        
         if(y < 0 || y >= screen_height_px)
         {
             continue;
         }
 
-        auto ratio = (r32)(y - rect_px.y_begin) / (rect_px.y_end - rect_px.y_begin);
-        auto bitmap_y = gpuf::round_r32_to_i32(ratio * bitmap.height);
+        offset.y = (r32)(y - rect_px.y_begin) / (rect_px.y_end - rect_px.y_begin);
 
         auto dst_row = screen_dst.data + y * screen_width_px;
 
@@ -121,17 +131,16 @@ static void draw_entity(Entity const& entity, DrawProps const& props)
                 continue;
             }
 
-            ratio = (r32)(x - rect_px.x_begin) / (rect_px.x_end - rect_px.x_begin);
-            auto bitmap_x = gpuf::round_r32_to_i32(ratio * bitmap.width);
+            offset.x = (r32)(x - rect_px.x_begin) / (rect_px.x_end - rect_px.x_begin);    
 
-            auto src_pixel_id = bitmap_y * bitmap.width + bitmap_x;
-            dst_row[x] = bitmap.data[src_pixel_id];
+            gpuf::draw_entity_offset(entity, dst_row[x], offset);
         }
-    }        
-
-    //auto black = gpuf::to_pixel(30, 30, 30);    
-    //gpuf::draw_rect(entity_screen_rect_px, screen_dst, black);
+    }    
 }
+
+
+
+
 
 
 GPU_FUNCTION
@@ -175,9 +184,8 @@ static void gpu_draw_tiles(DrawProps props, u32 n_threads)
     }
 
     auto& device = *props.device_p;
-    auto& unified = *props.unified_p;
 
-    auto& screen_dst = unified.screen_pixels;
+    auto& screen_dst = device.screen_pixels;
     auto& tiles = device.tilemap;
 
     assert(n_threads == screen_dst.width * screen_dst.height);
@@ -220,6 +228,31 @@ static void gpu_draw_entities(DrawProps props, u32 n_threads)
 
     auto offset = (u32)t;
     auto& entity = device.entities.data[offset];
+
+    if(!entity.is_active)
+    {
+        return;
+    }
+
+    auto& screen_dst = props.device_p->screen_pixels;
+
+    auto screen_width_px = screen_dst.width;
+    auto screen_height_px = screen_dst.height;
+    auto screen_width_m = props.screen_width_m;
+    auto screen_height_m = screen_height_px * props.screen_width_m / screen_width_px;
+
+    auto entity_screen_pos_m = gpuf::sub_delta_m(entity.position, props.screen_pos);
+
+    auto entity_rect_m = gpuf::get_screen_rect(entity, entity_screen_pos_m);
+
+    auto screen_rect_m = gpuf::make_rect(screen_width_m, screen_height_m);
+    
+    auto is_offscreen = !gpuf::rect_intersect(entity_rect_m, screen_rect_m);
+
+    if(is_offscreen)
+    {
+        return;
+    }
 
     gpuf::draw_entity(entity, props);
 }
