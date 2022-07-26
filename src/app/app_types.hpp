@@ -84,8 +84,6 @@ public:
 };
 
 
-//typedef Pixel(*DrawFunc)(Point2Dr32 const&);
-
 
 class Entity
 {
@@ -94,11 +92,8 @@ public:
 
     r32 width_m;
     r32 height_m;
-
-    //DrawFunc draw;
-
-    //Image bitmap;
-    //Pixel avg_color;
+    
+    Pixel color;
 
     WorldPosition position;
     Vec2Dr32 dt;

@@ -19,17 +19,10 @@ static void init_player(Entity& player, PlayerBitmap const& bitmap, u32 player_o
     player.id = player_id(player_offset);
     player.is_active = true;
 
+    player.color = *bitmap.avg_color;
+
     player.width_m = 0.3f;
     player.height_m = 0.3f;
-
-    //player.draw = &player_pixel;
-
-/*
-    player.bitmap.data = bitmap.bitmap_data;
-    player.bitmap.width = bitmap.width;
-    player.bitmap.height = bitmap.height;
-    player.avg_color = *bitmap.avg_color;
-    */
 
     player.position.tile = { 4, 4 };
     player.position.offset_m = { 0.0f, 0.0f };
@@ -51,16 +44,11 @@ static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
     entity.id = blue_id(blue_offset);
     entity.is_active = true;
 
+    entity.color = *bitmap.avg_color;
+
     entity.width_m = 0.1f;
     entity.height_m = 0.1f;
 
-    //entity.draw = &blue_pixel;
-/*
-    entity.bitmap.data = bitmap.bitmap_data;
-    entity.bitmap.width = bitmap.width;
-    entity.bitmap.height = bitmap.height;
-    entity.avg_color = *bitmap.avg_color;
-*/
     auto w = (i32)N_BLUE_W;
 
     auto y = (i32)blue_offset / w;
@@ -132,16 +120,11 @@ static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_offset)
     wall.id = brown_id(wall_offset);
     wall.is_active = true;
 
+    wall.color = *bitmap.avg_color;
+
     wall.width_m = TILE_LENGTH_M;
     wall.height_m = TILE_LENGTH_M;
-
-    //wall.draw = &wall_pixel;
-/*
-    wall.bitmap.data = bitmap.bitmap_data;
-    wall.bitmap.width = bitmap.width;
-    wall.bitmap.height = bitmap.height;
-    wall.avg_color = *bitmap.avg_color;
-    */
+    
     wall.position.offset_m = { 0.0f, 0.0f };
 
     wall.speed = 0.0f;

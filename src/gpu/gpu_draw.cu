@@ -7,7 +7,6 @@ class DrawProps
 {
 public:
     DeviceMemory* device_p;
-    UnifiedMemory* unified_p;
 
     WorldPosition screen_pos;
     u32 screen_width_px;
@@ -18,56 +17,6 @@ public:
 namespace gpuf
 {
 /********************************/
-
-
-GPU_FUNCTION
-static Pixel player_pixel(Point2Dr32 const& position_offset)
-{
-    return to_pixel(200, 0, 0);
-}
-
-
-GPU_FUNCTION
-static Pixel blue_pixel(Point2Dr32 const& position_offset)
-{
-    return to_pixel(0, 0, 100);
-}
-
-
-GPU_FUNCTION
-static Pixel wall_pixel(Point2Dr32 const& position_offset)
-{
-    return to_pixel(150, 75, 0);
-}
-
-
-GPU_FUNCTION
-static Pixel black_pixel(Point2Dr32 const& position_offset)
-{
-    return to_pixel(30, 30, 30);
-}
-
-
-GPU_FUNCTION
-static void draw_entity_offset(Entity const& entity, Pixel& dst, Point2Dr32 const& offset)
-{
-    if(gpuf::is_player(entity.id))
-    {
-        dst = player_pixel(offset);
-    }
-    else if(gpuf::is_blue(entity.id))
-    {
-        dst = blue_pixel(offset);
-    }
-    else if(gpuf::is_wall(entity.id))
-    {
-        dst = wall_pixel(offset);
-    }
-    else
-    {
-        dst = black_pixel(offset);
-    }    
-}
 
 
 GPU_FUNCTION
@@ -110,7 +59,19 @@ static void draw_entity(Entity const& entity, DrawProps const& props)
         return;
     }
 
+    gpuf::clamp_rect(entity_rect_m, screen_rect_m);
     auto rect_px = gpuf::to_pixel_rect(entity_rect_m, screen_width_m, screen_width_px);
+    for(i32 y = rect_px.y_begin; y < rect_px.y_end; ++y)
+    {
+        auto dst_row = screen_dst.data + y * screen_width_px;
+        for(i32 x = rect_px.x_begin; x < rect_px.x_end; ++x)
+        {
+            dst_row[x] = entity.color;
+        }
+    }
+
+
+    /*
     Point2Dr32 offset = { 0.0f, 0.0f };
 
     for(i32 y = rect_px.y_begin; y < rect_px.y_end; ++y)
@@ -135,12 +96,9 @@ static void draw_entity(Entity const& entity, DrawProps const& props)
 
             gpuf::draw_entity_offset(entity, dst_row[x], offset);
         }
-    }    
+    }
+    */
 }
-
-
-
-
 
 
 GPU_FUNCTION
@@ -266,7 +224,6 @@ namespace gpu
 
         DrawProps props{};
         props.device_p = state.device_buffer.data;
-        props.unified_p = state.unified_buffer.data;
         props.screen_width_px = state.app_input.screen_width_px;
         props.screen_width_m = state.app_input.screen_width_m;
         props.screen_pos = state.app_input.screen_position;
