@@ -253,13 +253,13 @@ inline void clamp_rect(Rect2Dr32& rect, Rect2Dr32 const& boundary)
 GPU_FUNCTION
 inline Rect2Di32 to_pixel_rect(Rect2Dr32 const& rect_m, r32 length_m, u32 length_px)
 {
-    auto const to_px = [&](r32 m){ return gpuf::m_to_px(m, length_m, length_px); };
+    auto const m_px = length_px / length_m;
 
     Rect2Di32 rect_px{};
-    rect_px.x_begin = to_px(rect_m.x_begin);
-    rect_px.x_end = to_px(rect_m.x_end);
-    rect_px.y_begin = to_px(rect_m.y_begin);
-    rect_px.y_end = to_px(rect_m.y_end);
+    rect_px.x_begin = gpuf::floor_r32_to_i32(rect_m.x_begin * m_px);
+    rect_px.x_end = gpuf::ceil_r32_to_i32(rect_m.x_end * m_px);
+    rect_px.y_begin = gpuf::floor_r32_to_i32(rect_m.y_begin * m_px);
+    rect_px.y_end = gpuf::ceil_r32_to_i32(rect_m.y_end * m_px);
 
     return rect_px;
 }
