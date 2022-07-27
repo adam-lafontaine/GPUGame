@@ -179,18 +179,34 @@ namespace cuda
 
     bool no_errors(cstr label)
     {
+        #ifndef	NDEBUG
+
         cudaError_t err = cudaGetLastError();
         check_error(err, label);
 
         return err == cudaSuccess;
+
+        #else
+
+        return true;
+
+        #endif
     }
 
 
     bool launch_success(cstr label)
     {
+        #ifndef	NDEBUG
+
         cudaError_t err = cudaDeviceSynchronize();
         check_error(err, label);
 
         return err == cudaSuccess;
+
+        #else
+
+        return true;
+
+        #endif
     }
 }
