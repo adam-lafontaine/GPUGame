@@ -149,8 +149,8 @@ public:
 
     bool reset_frame_count;
 
-    u32 screen_width_px;
-    u32 screen_height_px;
+    //u32 screen_width_px;
+    //u32 screen_height_px;
 
     r32 screen_width_m;
 

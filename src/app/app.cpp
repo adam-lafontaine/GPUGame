@@ -60,7 +60,7 @@ static void process_camera_input(Input const& input, AppState& state)
         (app_input.screen_width_m - MIN_SCREEN_WIDTH_M) / (MAX_SCREEN_WIDTH_M - MIN_SCREEN_WIDTH_M) * (max_camera_speed_px - min_camera_speed_px);
   
     auto camera_movement_px = camera_speed_px * dt;
-    auto camera_movement_m = px_to_m(camera_movement_px, app_input.screen_width_m, app_input.screen_width_px);    
+    auto camera_movement_m = px_to_m(camera_movement_px, app_input.screen_width_m, state.screen_pixels.width);    
 
     Vec2Dr32 camera_d_m = { 0.0f, 0.0f };
 
@@ -109,7 +109,7 @@ static void process_camera_input(Input const& input, AppState& state)
 
         camera_d_m.x += 0.5f * (old_w - new_w);
         camera_d_m.y += 0.5f * (old_h - new_h);
-    } 
+    }
 
     apply_delta(app_input.screen_position, camera_d_m);
 }

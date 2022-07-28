@@ -3,7 +3,15 @@
 #include "gpu_app.hpp"
 #include "../device/cuda_def.cuh"
 
-#include <cassert>
+class ScreenProps
+{
+public:
+    DeviceMemory* device_p;
+
+    WorldPosition screen_pos;
+    r32 screen_width_m;
+    r32 screen_height_m;
+};
 
 
 constexpr int THREADS_PER_BLOCK = 1024;
@@ -54,7 +62,7 @@ inline i32 m_to_px(r32 dist_m, r32 length_m, u32 length_px)
 {
     auto px = dist_m * length_px / length_m;
 
-    return gpuf::ceil_r32_to_i32(px);
+    return gpuf::floor_r32_to_i32(px);
 }
 
 
