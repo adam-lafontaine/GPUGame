@@ -257,13 +257,8 @@ static void entity_next_position(Entity& entity)
 
 
 GPU_FUNCTION
-static void entity_update_position(Entity& entity)
+static void update_entity_position(Entity& entity, ScreenProps const& props)
 {
-    if(!entity.is_active)
-    {
-        return;
-    }
-
     if(entity.inv_x)
     {
         entity.delta_pos_m.x = 0.0f;
@@ -281,7 +276,21 @@ static void entity_update_position(Entity& entity)
     entity.next_position = entity.position;
     entity.delta_pos_m = { 0.0f, 0.0f };
     entity.inv_x = false;
-    entity.inv_y = false;
+    entity.inv_y = false;    
+}
+
+
+GPU_FUNCTION
+static void update_entity_on_screen(Entity& entity, ScreenProps const& props)
+{
+    auto screen_width_m = props.screen_width_m;
+    auto screen_height_m = props.screen_height_m;
+
+    auto entity_screen_pos_m = gpuf::sub_delta_m(entity.position, props.screen_pos);
+    auto entity_rect_m = gpuf::get_screen_rect(entity, entity_screen_pos_m);
+    auto screen_rect_m = gpuf::make_rect(screen_width_m, screen_height_m);  
+
+    entity.is_offscreen = !gpuf::rect_intersect(entity_rect_m, screen_rect_m);
 }
 
 
@@ -431,8 +440,8 @@ static void gpu_blue_blue(DeviceMemory* device_p, u32 n_threads)
 }
 
 
-GPU_KERNAL
-static void gpu_update_movable_positions(DeviceMemory* device_p, u32 n_threads)
+GPU_KERNAL 
+static void gpu_update_entity_positions(ScreenProps props, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -440,13 +449,20 @@ static void gpu_update_movable_positions(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
-    assert(n_threads == N_MOVABLE_ENTITIES);
+    assert(n_threads == N_ENTITIES);
 
-    auto& device = *device_p;
+    auto& device = *props.device_p;
 
-    auto offset = (u32)t;    
+    auto offset = (u32)t;
 
-    gpuf::entity_update_position(device.entities.data[offset]);
+    auto& entity = device.entities.data[offset];
+    if(!entity.is_active)
+    {
+        return;
+    }
+
+    gpuf::update_entity_position(entity, props);
+    gpuf::update_entity_on_screen(entity, props);
 }
 
 
@@ -456,6 +472,9 @@ namespace gpu
     {        
         bool result = cuda::no_errors("gpu::update");
         assert(result);
+
+        constexpr auto entity_threads = N_ENTITIES;
+        constexpr auto entity_blocks = calc_thread_blocks(entity_threads);
         
         constexpr auto movable_threads = N_MOVABLE_ENTITIES;
         constexpr auto movable_blocks = calc_thread_blocks(movable_threads);
@@ -494,9 +513,16 @@ namespace gpu
         cuda_launch_kernel(gpu_blue_blue, blue_blue_blocks, THREADS_PER_BLOCK, device_p, blue_blue_threads);
         result = cuda::launch_success("gpu_blue_blue");
         assert(result);
-        
-        cuda_launch_kernel(gpu_update_movable_positions, movable_blocks, THREADS_PER_BLOCK, device_p, movable_threads);
-        result = cuda::launch_success("gpu_update_movable_positions");
+
+        ScreenProps props{};
+        props.device_p = state.device_buffer.data;
+        props.screen_width_m = state.app_input.screen_width_m;
+        props.screen_height_m = props.screen_width_m * state.screen_pixels.height / state.screen_pixels.width;
+        props.screen_pos = state.app_input.screen_position;
+
+        cuda_launch_kernel(gpu_update_entity_positions, entity_blocks, THREADS_PER_BLOCK, props, entity_threads);
+        result = cuda::launch_success("gpu_update_entity_positions");
         assert(result);
+        
     }
 }

@@ -99,14 +99,17 @@ public:
     Vec2Dr32 dt;
     r32 speed;
 
+    b32 inv_x = false;
+    b32 inv_y = false;
+
     Vec2Dr32 delta_pos_m;
 
     WorldPosition next_position;
 
     b32 is_active = false;
+    b32 is_offscreen = false;
 
-    b32 inv_x = false;
-    b32 inv_y = false;
+    
 };
 
 

@@ -333,6 +333,9 @@ inline bool is_wall(u32 entity_id)
     return entity_id >= BROWN_BEGIN && entity_id < BROWN_END;
 }
 
+
+
+
 /***********************/
 
 }
