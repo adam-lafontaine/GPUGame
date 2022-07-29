@@ -53,13 +53,13 @@ public:
 constexpr u32 TILE_WIDTH_PX = 64;
 constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;
 
-constexpr u32 PLAYER_WIDTH_PX = 64;
+constexpr u32 PLAYER_WIDTH_PX = 10;
 constexpr u32 PLAYER_HEIGHT_PX = PLAYER_WIDTH_PX;
 
-constexpr u32 BLUE_WIDTH_PX = 20;
+constexpr u32 BLUE_WIDTH_PX = 10;
 constexpr u32 BLUE_HEIGHT_PX = BLUE_WIDTH_PX;
 
-constexpr u32 WALL_WIDTH_PX = 64;
+constexpr u32 WALL_WIDTH_PX = 20;
 constexpr u32 WALL_HEIGHT_PX = WALL_WIDTH_PX;
 
 

@@ -2,9 +2,21 @@
 
 #include <cassert>
 
-constexpr auto N_SECTIONS_PER_ENTITY = 4;
-constexpr auto N_ENTITY_SECTIONS = N_ENTITIES * N_SECTIONS_PER_ENTITY;
 
+constexpr u32 ENTITY_PIXEL_WIDTH = 10;
+constexpr u32 ENTITY_PIXEL_HEIGHT = 10;
+constexpr auto N_PIXELS_PER_ENTITY = ENTITY_PIXEL_WIDTH * ENTITY_PIXEL_HEIGHT;
+constexpr auto N_ENTITY_PIXELS = N_ENTITIES * N_PIXELS_PER_ENTITY;
+
+/*
+constexpr auto N_PIXELS_PER_PLAYER = PLAYER_WIDTH_PX * PLAYER_HEIGHT_PX;
+constexpr auto N_PIXELS_PER_BLUE = BLUE_WIDTH_PX * BLUE_HEIGHT_PX;
+constexpr auto N_PIXELS_PER_WALL = WALL_WIDTH_PX * WALL_HEIGHT_PX;
+constexpr auto N_ENTITY_PIXELS = 
+    N_PLAYER_ENTITIES * N_PIXELS_PER_PLAYER +
+    N_BLUE_ENTITIES * N_PIXELS_PER_BLUE +
+    N_BROWN_ENTITIES * N_PIXELS_PER_WALL;
+*/
 
 namespace gpuf
 {
@@ -107,12 +119,12 @@ static void gpu_draw_entity_sections(ScreenProps props, u32 n_threads)
         return;
     }
 
-    assert(n_threads == N_ENTITY_SECTIONS);
+    assert(n_threads == N_ENTITY_PIXELS);
 
     auto& device = *props.device_p;    
 
     auto entity_section_id = (u32)t;
-    auto entity_id = entity_section_id / N_SECTIONS_PER_ENTITY;
+    auto entity_id = entity_section_id / N_PIXELS_PER_ENTITY;
     auto& entity = device.entities.data[entity_id];
 
     if(!gpuf::is_drawable(entity))
@@ -120,31 +132,38 @@ static void gpu_draw_entity_sections(ScreenProps props, u32 n_threads)
         return;
     }
 
-    auto section_id = entity_section_id - entity_id * N_SECTIONS_PER_ENTITY;
+    auto section_id = entity_section_id - entity_id * N_PIXELS_PER_ENTITY;
 
     auto& screen_dst = props.device_p->screen_pixels;
 
     auto entity_screen_pos_m = gpuf::sub_delta_m(entity.position, props.screen_pos);
 
-    auto entity_rect_m = gpuf::get_screen_rect(entity, entity_screen_pos_m);
+    auto draw_rect_m = gpuf::get_screen_rect(entity, entity_screen_pos_m);
 
-    auto section_height = entity.height_m / N_SECTIONS_PER_ENTITY;
+    auto section_height = entity.height_m / ENTITY_PIXEL_HEIGHT;
+    auto section_width = entity.width_m / ENTITY_PIXEL_WIDTH;
 
-    entity_rect_m.y_begin += section_id * entity.height_m / N_SECTIONS_PER_ENTITY;
-    entity_rect_m.y_end = entity_rect_m.y_begin + section_height;
+    auto section_y = section_id / ENTITY_PIXEL_WIDTH;
+    auto section_x = section_id - section_y * ENTITY_PIXEL_WIDTH;    
+
+    draw_rect_m.y_begin += section_y * section_height;
+    draw_rect_m.y_end = draw_rect_m.y_begin + section_height;
+
+    draw_rect_m.x_begin += section_x * section_width;
+    draw_rect_m.x_end = draw_rect_m.x_begin + section_width;
 
     auto screen_rect_m = gpuf::make_rect(props.screen_width_m, props.screen_height_m);    
 
-    auto is_offscreen = !gpuf::rect_intersect(entity_rect_m, screen_rect_m);
+    auto is_offscreen = !gpuf::rect_intersect(draw_rect_m, screen_rect_m);
     if(is_offscreen)
     {
         return;
     }
 
-    auto color = section_id == N_SECTIONS_PER_ENTITY / 2 ? gpuf::to_pixel(100, 100, 100) : entity.color;
+    auto color = section_id == N_PIXELS_PER_ENTITY / 2 ? gpuf::to_pixel(100, 100, 100) : entity.color;
 
-    gpuf::clamp_rect(entity_rect_m, screen_rect_m);
-    auto rect_px = gpuf::to_pixel_rect(entity_rect_m, props.screen_width_m, screen_dst.width);
+    gpuf::clamp_rect(draw_rect_m, screen_rect_m);
+    auto rect_px = gpuf::to_pixel_rect(draw_rect_m, props.screen_width_m, screen_dst.width);
 
     for(i32 y = rect_px.y_begin; y < rect_px.y_end; ++y)
     {
@@ -175,14 +194,14 @@ namespace gpu
         auto tile_threads = n_pixels;
         auto tile_blocks = calc_thread_blocks(tile_threads);
 
-        constexpr auto entity_section_threads = N_ENTITY_SECTIONS;
-        constexpr auto entity_section_blocks = calc_thread_blocks(entity_section_threads);
+        constexpr auto entity_pixel_threads = N_ENTITY_PIXELS;
+        constexpr auto entity_pixel_blocks = calc_thread_blocks(entity_pixel_threads);
         
         cuda_launch_kernel(gpu_draw_tiles, tile_blocks, THREADS_PER_BLOCK, props, tile_threads);
         result = cuda::launch_success("gpu_draw_tiles");
         assert(result); 
 
-        cuda_launch_kernel(gpu_draw_entity_sections, entity_section_blocks, THREADS_PER_BLOCK, props, entity_section_threads);
+        cuda_launch_kernel(gpu_draw_entity_sections, entity_pixel_blocks, THREADS_PER_BLOCK, props, entity_pixel_threads);
         result = cuda::launch_success("gpu_draw_entities");
         assert(result);
     }
