@@ -17,7 +17,7 @@ static void init_player(Entity& player, PlayerBitmap const& bitmap, u32 player_o
     assert(player_offset < N_PLAYER_ENTITIES);
 
     player.id = player_id(player_offset);
-    player.is_active = true;
+    gpuf::set_active(player);
 
     player.color = *bitmap.avg_color;
 
@@ -42,7 +42,7 @@ static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
     assert(blue_offset < N_BLUE_ENTITIES);
 
     entity.id = blue_id(blue_offset);
-    entity.is_active = true;
+    gpuf::set_active(entity);
 
     entity.color = *bitmap.avg_color;
 
@@ -118,7 +118,7 @@ static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_offset)
     assert(wall_offset < N_BROWN_ENTITIES);
 
     wall.id = brown_id(wall_offset);
-    wall.is_active = true;
+    gpuf::set_active(wall);
 
     wall.color = *bitmap.avg_color;
 

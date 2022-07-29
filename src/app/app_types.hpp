@@ -84,6 +84,13 @@ public:
 };
 
 
+using uStatus = u32;
+
+namespace STATUS
+{
+    constexpr uStatus ACTIVE = 1;
+    constexpr uStatus ONSCREEN = 2 * ACTIVE;
+}
 
 class Entity
 {
@@ -106,10 +113,7 @@ public:
 
     WorldPosition next_position;
 
-    b32 is_active = false;
-    b32 is_onscreen = false;
-
-    
+    uStatus status = 0;    
 };
 
 

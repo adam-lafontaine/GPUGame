@@ -337,42 +337,49 @@ inline bool is_wall(u32 entity_id)
 GPU_FUNCTION
 inline bool is_active(Entity const& entity)
 {
-    return entity.is_active;
+    return entity.status && STATUS::ACTIVE;
+}
+
+
+GPU_FUNCTION
+inline bool is_onscreen(Entity const& entity)
+{
+    return entity.status && STATUS::ONSCREEN;
 }
 
 
 GPU_FUNCTION
 inline bool is_drawable(Entity const& entity)
 {
-    return entity.is_active && entity.is_onscreen;
+    return entity.status && STATUS::ACTIVE && STATUS::ONSCREEN;
 }
 
 
 GPU_FUNCTION
 inline void set_active(Entity& entity)
 {
-    entity.is_active = true;
+    entity.status |= STATUS::ACTIVE;
 }
 
 
 GPU_FUNCTION
 inline void set_inactive(Entity& entity)
 {
-    entity.is_active = false;
+    entity.status &= ~STATUS::ACTIVE;
 }
 
 
 GPU_FUNCTION
 inline void set_onscreen(Entity& entity)
 {
-    entity.is_onscreen = true;
+    entity.status |= STATUS::ONSCREEN;
 }
 
 
 GPU_FUNCTION
 inline void set_offscreen(Entity& entity)
 {
-    entity.is_onscreen = false;
+    entity.status &= ~STATUS::ONSCREEN;
 }
 
 /***********************/
