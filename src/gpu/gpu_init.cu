@@ -19,7 +19,10 @@ static void init_player(Entity& player, PlayerBitmap const& bitmap, u32 player_o
     player.id = player_id(player_offset);
     gpuf::set_active(player);
 
-    player.color = *bitmap.avg_color;
+    player.bitmap.width = bitmap.width;
+    player.bitmap.height = bitmap.height;
+    player.bitmap.data = bitmap.bitmap_data;
+    player.avg_color = *bitmap.avg_color;
 
     player.width_m = 0.3f;
     player.height_m = 0.3f;
@@ -44,7 +47,10 @@ static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
     entity.id = blue_id(blue_offset);
     gpuf::set_active(entity);
 
-    entity.color = *bitmap.avg_color;
+    entity.bitmap.width = bitmap.width;
+    entity.bitmap.height = bitmap.height;
+    entity.bitmap.data = bitmap.bitmap_data;
+    entity.avg_color = *bitmap.avg_color;
 
     entity.width_m = 0.1f;
     entity.height_m = 0.1f;
@@ -120,7 +126,10 @@ static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_offset)
     wall.id = brown_id(wall_offset);
     gpuf::set_active(wall);
 
-    wall.color = *bitmap.avg_color;
+    wall.bitmap.width = bitmap.width;
+    wall.bitmap.height = bitmap.height;
+    wall.bitmap.data = bitmap.bitmap_data;
+    wall.avg_color = *bitmap.avg_color;
 
     wall.width_m = TILE_LENGTH_M;
     wall.height_m = TILE_LENGTH_M;

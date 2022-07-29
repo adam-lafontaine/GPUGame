@@ -160,7 +160,7 @@ static void gpu_draw_entity_sections(ScreenProps props, u32 n_threads)
         return;
     }
 
-    auto color = section_id == N_PIXELS_PER_ENTITY / 2 ? gpuf::to_pixel(100, 100, 100) : entity.color;
+    auto color = section_id == N_PIXELS_PER_ENTITY / 2 ? gpuf::to_pixel(100, 100, 100) : entity.avg_color;
 
     gpuf::clamp_rect(draw_rect_m, screen_rect_m);
     auto rect_px = gpuf::to_pixel_rect(draw_rect_m, props.screen_width_m, screen_dst.width);

@@ -100,7 +100,8 @@ public:
     r32 width_m;
     r32 height_m;
     
-    Pixel color;
+    Image bitmap;
+    Pixel avg_color;
 
     WorldPosition position;
     Vec2Dr32 dt;
