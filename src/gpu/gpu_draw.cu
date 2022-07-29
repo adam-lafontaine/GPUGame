@@ -115,7 +115,7 @@ static void gpu_draw_entity_sections(ScreenProps props, u32 n_threads)
     auto entity_id = entity_section_id / N_SECTIONS_PER_ENTITY;
     auto& entity = device.entities.data[entity_id];
 
-    if(!entity.is_active || entity.is_offscreen)
+    if(!gpuf::is_drawable(entity))
     {
         return;
     }

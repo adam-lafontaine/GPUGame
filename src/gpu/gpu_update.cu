@@ -86,7 +86,7 @@ void apply_current_input(Entity& entity, InputList const& inputs, u64 frame)
 GPU_FUNCTION
 static void stop_wall(Entity& ent, Entity const& wall)
 {   
-    if(!ent.is_active || !wall.is_active)
+    if(!gpuf::is_active(ent) || !is_active(wall))
     {
         return;
     }
@@ -143,7 +143,7 @@ static void stop_wall(Entity& ent, Entity const& wall)
 GPU_FUNCTION
 static void bounce_wall(Entity& ent, Entity const& wall)
 {
-    if(!ent.is_active || !wall.is_active)
+    if(!gpuf::is_active(ent) || !is_active(wall))
     {
         return;
     }
@@ -182,7 +182,7 @@ static void bounce_wall(Entity& ent, Entity const& wall)
 GPU_FUNCTION
 static void blue_blue(Entity& a, Entity const& b)
 {
-    if(!a.is_active || !b.is_active)
+    if(!gpuf::is_active(a) || !is_active(b))
     {
         return;
     }
@@ -220,7 +220,7 @@ static void blue_blue(Entity& a, Entity const& b)
 GPU_FUNCTION
 static void player_blue(Entity const& player, Entity& blue)
 {   
-    if(!player.is_active || !blue.is_active || !gpuf::entity_will_intersect(player, blue))
+    if(!gpuf::is_active(player) || !gpuf::is_active(blue) || !gpuf::entity_will_intersect(player, blue))
     {
         return;
     }
@@ -239,14 +239,14 @@ static void player_blue(Entity const& player, Entity& blue)
     */
 
     //blue_blue(blue, player);
-    blue.is_active = false;
+    gpuf::set_inactive(blue);
 }
 
 
 GPU_FUNCTION
 static void entity_next_position(Entity& entity)
 {
-    if(!entity.is_active)
+    if(!gpuf::is_active(entity))
     {
         return;
     }
@@ -290,7 +290,15 @@ static void update_entity_on_screen(Entity& entity, ScreenProps const& props)
     auto entity_rect_m = gpuf::get_screen_rect(entity, entity_screen_pos_m);
     auto screen_rect_m = gpuf::make_rect(screen_width_m, screen_height_m);  
 
-    entity.is_offscreen = !gpuf::rect_intersect(entity_rect_m, screen_rect_m);
+    auto is_onscreen = gpuf::rect_intersect(entity_rect_m, screen_rect_m);
+    if(is_onscreen)
+    {
+        gpuf::set_onscreen(entity);
+    }
+    else
+    {
+        gpuf::set_offscreen(entity);
+    }
 }
 
 
@@ -456,7 +464,7 @@ static void gpu_update_entity_positions(ScreenProps props, u32 n_threads)
     auto offset = (u32)t;
 
     auto& entity = device.entities.data[offset];
-    if(!entity.is_active)
+    if(!gpuf::is_active(entity))
     {
         return;
     }

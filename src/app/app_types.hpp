@@ -107,7 +107,7 @@ public:
     WorldPosition next_position;
 
     b32 is_active = false;
-    b32 is_offscreen = false;
+    b32 is_onscreen = false;
 
     
 };
