@@ -337,21 +337,21 @@ inline bool is_wall(u32 entity_id)
 GPU_FUNCTION
 inline bool is_active(Entity const& entity)
 {
-    return entity.status && STATUS::ACTIVE;
+    return entity.status & STATUS::ACTIVE;
 }
 
 
 GPU_FUNCTION
 inline bool is_onscreen(Entity const& entity)
 {
-    return entity.status && STATUS::ONSCREEN;
+    return entity.status & STATUS::ONSCREEN;
 }
 
 
 GPU_FUNCTION
 inline bool is_drawable(Entity const& entity)
 {
-    return entity.status && STATUS::ACTIVE && STATUS::ONSCREEN;
+    return gpuf::is_active(entity) && gpuf::is_onscreen(entity);
 }
 
 
