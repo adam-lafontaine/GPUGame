@@ -74,6 +74,16 @@ public:
 };
 
 
+class Rect2Di32
+{
+public:
+	i32 x_begin;
+	i32 x_end;
+	i32 y_begin;
+	i32 y_end;
+};
+
+
 class Rect2Dr32
 {
 public:

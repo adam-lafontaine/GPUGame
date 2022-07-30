@@ -8,15 +8,22 @@ namespace gpuf
 /********************************/
 
 
+
 GPU_FUNCTION
-static void init_player(Entity& player)
+static void init_player(Entity& player, PlayerBitmap const& bitmap, u32 player_offset)
 {
-    player.is_active = true;
+    assert(player_offset < N_PLAYER_ENTITIES);
 
-    player.width = 0.3f;
-    player.height = 0.3f;
+    player.id = player_id(player_offset);
+    gpuf::set_active(player);
 
-    player.color = gpuf::to_pixel(200, 0, 0);
+    player.bitmap.width = bitmap.width;
+    player.bitmap.height = bitmap.height;
+    player.bitmap.data = bitmap.bitmap_data;
+    player.avg_color = *bitmap.avg_color;
+
+    player.width_m = 0.3f;
+    player.height_m = 0.3f;
 
     player.position.tile = { 4, 4 };
     player.position.offset_m = { 0.0f, 0.0f };
@@ -31,21 +38,25 @@ static void init_player(Entity& player)
 
 
 GPU_FUNCTION
-static void init_blue(Entity& entity, u32 id)
+static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
 {
-    assert(id < N_BLUE_ENTITIES);
+    assert(blue_offset < N_BLUE_ENTITIES);
 
-    entity.is_active = true;
+    entity.id = blue_id(blue_offset);
+    gpuf::set_active(entity);
 
-    entity.width = 0.1f;
-    entity.height = 0.1f;
+    entity.bitmap.width = bitmap.width;
+    entity.bitmap.height = bitmap.height;
+    entity.bitmap.data = bitmap.bitmap_data;
+    entity.avg_color = *bitmap.avg_color;
 
-    entity.color = gpuf::to_pixel(0, 0, 100);
+    entity.width_m = 0.1f;
+    entity.height_m = 0.1f;
 
     auto w = (i32)N_BLUE_W;
 
-    auto y = (i32)id / w;
-    auto x = (i32)id - y * w;
+    auto y = (i32)blue_offset / w;
+    auto x = (i32)blue_offset - y * w;
 
     entity.position.tile = { x + 6, y + 2 };
     entity.position.offset_m = { 0.2f, 0.2f };
@@ -58,7 +69,7 @@ static void init_blue(Entity& entity, u32 id)
 
     entity.dt = { 0.0f, 0.0f };
 
-    switch(id % 8)
+    switch(blue_offset % 8)
     {
         case 0:
         entity.dt = { 1.0f, 0.0f };
@@ -101,21 +112,25 @@ static void init_blue(Entity& entity, u32 id)
         break;
     }
 
-    entity.dt = gpuf::vec_mul(entity.dt, 1.0f / 60.0f);
+    entity.dt = gpuf::vec_mul(entity.dt, 1.0f / 60.0f); // assume 60 FPS
 }
 
 
 GPU_FUNCTION
-static void init_wall(Entity& wall, u32 wall_id)
+static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_offset)
 {
-    assert(wall_id < N_BROWN_ENTITIES);
+    assert(wall_offset < N_BROWN_ENTITIES);
 
-    wall.is_active = true;
+    wall.id = brown_id(wall_offset);
+    gpuf::set_active(wall);
 
-    wall.width = TILE_LENGTH_M;
-    wall.height = TILE_LENGTH_M;
+    wall.bitmap.width = bitmap.width;
+    wall.bitmap.height = bitmap.height;
+    wall.bitmap.data = bitmap.bitmap_data;
+    wall.avg_color = *bitmap.avg_color;
 
-    wall.color = gpuf::to_pixel(150, 75, 0);
+    wall.width_m = TILE_LENGTH_M;
+    wall.height_m = TILE_LENGTH_M;
     
     wall.position.offset_m = { 0.0f, 0.0f };
 
@@ -125,25 +140,25 @@ static void init_wall(Entity& wall, u32 wall_id)
     i32 x = 0;
     i32 y = 0;
 
-    if(wall_id < WORLD_WIDTH_TILE)
+    if(wall_offset < WORLD_WIDTH_TILE)
     {
-        x = (i32)wall_id;
+        x = (i32)wall_offset;
         y = 0;
     }
-    else if(wall_id < 2 * WORLD_WIDTH_TILE)
+    else if(wall_offset < 2 * WORLD_WIDTH_TILE)
     {
         y = (i32)WORLD_HEIGHT_TILE - 1;
-        x = wall_id - (i32)WORLD_WIDTH_TILE;        
+        x = wall_offset - (i32)WORLD_WIDTH_TILE;        
     }
-    else if(wall_id < 2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2)
+    else if(wall_offset < 2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2)
     {
         x = 0;
-        y = wall_id - (2 * WORLD_WIDTH_TILE) + 1;
+        y = wall_offset - (2 * WORLD_WIDTH_TILE) + 1;
     }
     else
     {
         x = (i32)WORLD_WIDTH_TILE - 1;
-        y = wall_id - (2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2) + 1;
+        y = wall_offset - (2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2) + 1;
     }
 
     wall.position.tile = { x, y };
@@ -167,7 +182,7 @@ static void gpu_init_tiles(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
-    auto& world_tiles = device_p->tilemap;   //.tilemap_old;
+    auto& world_tiles = device_p->tilemap;
     auto& assets = device_p->assets;
 
     assert(n_threads == world_tiles.width * world_tiles.height);
@@ -180,7 +195,7 @@ static void gpu_init_tiles(DeviceMemory* device_p, u32 n_threads)
 
 
 GPU_KERNAL
-static void gpu_init_players(DeviceMemory* device_ptr, u32 n_threads)
+static void gpu_init_players(DeviceMemory* device_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -188,11 +203,14 @@ static void gpu_init_players(DeviceMemory* device_ptr, u32 n_threads)
         return;
     }
 
-    auto& device = *device_ptr;
-
     assert(n_threads == N_PLAYER_ENTITIES);
 
-    gpuf::init_player(device.user_player);
+    auto& device = *device_p;
+    auto& assets = device.assets;    
+
+    auto offset = (u32)t;
+
+    gpuf::init_player(device.player_entities.data[offset], assets.player_bitmap, (u32)t);
 }
 
 
@@ -205,13 +223,14 @@ static void gpu_init_blue_entities(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
-    auto& device = *device_p;
-
     assert(n_threads == N_BLUE_ENTITIES);
+
+    auto& device = *device_p;
+    auto& assets = device.assets;
 
     auto offset = (u32)t;
 
-    gpuf::init_blue(device.blue_entities.data[offset], offset);
+    gpuf::init_blue(device.blue_entities.data[offset], assets.blue_bitmap, offset);
 }
 
 
@@ -225,12 +244,13 @@ static void gpu_init_wall_entities(DeviceMemory* device_p, u32 n_threads)
     }
 
     auto& device = *device_p;
+    auto& assets = device.assets;
 
     assert(n_threads == N_BROWN_ENTITIES);
 
     auto offset = (u32)t;
 
-    gpuf::init_wall(device.wall_entities.data[offset], offset);
+    gpuf::init_wall(device.wall_entities.data[offset], assets.wall_bitmap, offset);
 }
 
 

@@ -9,8 +9,6 @@
 #include <thread>
 
 constexpr auto WINDOW_TITLE = app::APP_TITLE;
-constexpr int WINDOW_WIDTH = app::SCREEN_BUFFER_WIDTH;
-constexpr int WINDOW_HEIGHT = app::SCREEN_BUFFER_HEIGHT;
 
 constexpr u32 SCREEN_BYTES_PER_PIXEL = 4;
 
@@ -26,7 +24,7 @@ GlobalVariable b32 g_running = false;
 class BitmapBuffer
 {
 public:
-    u32 bytes_per_pixel;
+    u32 bytes_per_pixel = SCREEN_BYTES_PER_PIXEL;
 
     void* memory;
     int width;
@@ -117,29 +115,15 @@ static void close_game_controllers(SDLInput& sdl, Input const& input)
 }
 
 
-static void init_app_screen_buffer(app::ScreenBuffer& app_screen_buffer)
-{
-    app_screen_buffer.width = WINDOW_WIDTH;
-    app_screen_buffer.height = WINDOW_HEIGHT;
-    app_screen_buffer.bytes_per_pixel = SCREEN_BYTES_PER_PIXEL;
-}
-
-
-static bool init_bitmap_buffer(BitmapBuffer& buffer, app::ScreenBuffer const& screen_buffer, SDL_Window* window)
-{
-    buffer.width = (int)screen_buffer.width;
-    buffer.height = (int)screen_buffer.height;
-    buffer.bytes_per_pixel = screen_buffer.bytes_per_pixel;
-
-    buffer.memory = screen_buffer.memory;
-
-    buffer.renderer = SDL_CreateRenderer(window, -1, 0);
-    
-    if(!buffer.renderer)
+static void resize_offscreen_buffer(BitmapBuffer& buffer, int width, int height)
+{ 
+    if(buffer.memory && buffer.texture && width == buffer.width && height == buffer.height)
     {
-        printf("SDL_CreateRenderer failed\n%s\n", SDL_GetError());
-        return false;
-    }    
+        return;
+    }
+
+    buffer.width = width;
+    buffer.height = height;
 
     if(buffer.texture)
     {
@@ -150,14 +134,45 @@ static bool init_bitmap_buffer(BitmapBuffer& buffer, app::ScreenBuffer const& sc
         buffer.renderer,
         SDL_PIXELFORMAT_ARGB8888,
         SDL_TEXTUREACCESS_STREAMING,
-        buffer.width,
-        buffer.height);
+        width,
+        height);
 
     if(!buffer.texture)
     {
         printf("SDL_CreateTexture failed\n%s\n", SDL_GetError());
+    }
+
+    if(buffer.memory)
+    {
+        free(buffer.memory);
+    }
+    
+    buffer.memory = malloc(width * height * buffer.bytes_per_pixel);    
+}
+
+
+static bool init_screen_memory(SDL_Window* window, BitmapBuffer& buffer, app::ScreenBuffer& app_buffer)
+{
+    buffer.renderer = SDL_CreateRenderer(window, -1, 0);
+    
+    if(!buffer.renderer)
+    {
+        printf("SDL_CreateRenderer failed\n%s\n", SDL_GetError());
         return false;
-    }    
+    }
+
+    resize_offscreen_buffer(buffer, app::screen_buffer_width(), app::screen_buffer_height());
+    
+    if(!buffer.memory)
+    {
+        printf("Back buffer memory failed\n");
+        return false;
+    }
+
+    app_buffer.memory = buffer.memory;
+    app_buffer.width = buffer.width;
+    app_buffer.height = buffer.height;
+    app_buffer.bytes_per_pixel = buffer.bytes_per_pixel;
 
     return true;
 }
@@ -168,6 +183,11 @@ static void destroy_bitmap_buffer(BitmapBuffer& buffer)
     if(buffer.texture)
     {
         SDL_DestroyTexture(buffer.texture);
+    }
+
+    if(buffer.memory)
+    {
+        free(buffer.memory);
     }
 }
 
@@ -282,6 +302,27 @@ static void close_sdl()
 }
 
 
+SDL_Window* create_window()
+{
+    auto window = SDL_CreateWindow(
+        WINDOW_TITLE,
+        SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_UNDEFINED,
+        app::screen_buffer_width(),
+        app::screen_buffer_height(),
+        SDL_WINDOW_RESIZABLE);
+
+    if (!window)
+    {
+        return window;
+    }
+
+    SDL_SetWindowTitle(window, WINDOW_TITLE);
+
+    return window;
+}
+
+
 int main(int argc, char *argv[])
 {
     printf("\n");
@@ -291,13 +332,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    auto window = SDL_CreateWindow(
-                    WINDOW_TITLE,
-                    SDL_WINDOWPOS_UNDEFINED,
-                    SDL_WINDOWPOS_UNDEFINED,
-                    WINDOW_WIDTH,
-                    WINDOW_HEIGHT,
-                    SDL_WINDOW_RESIZABLE);
+    auto window = create_window();
     if(!window)
     {
         display_error("SDL_CreateWindow failed");
@@ -320,7 +355,15 @@ int main(int argc, char *argv[])
 
     open_game_controllers(sdl_input, input[0]);
     input[1].num_controllers = input[0].num_controllers;
-    printf("controllers = %d\n", input[0].num_controllers);    
+    printf("controllers = %d\n", input[0].num_controllers);
+
+    if(!init_screen_memory(window, back_buffer, app_screen_buffer))
+    {
+        display_error("initializing screen memory failed");
+        cleanup();
+
+        return EXIT_FAILURE;
+    }
     
     allocate_app_memory(app_memory);
     if (!app_memory.permanent_storage)
@@ -328,9 +371,7 @@ int main(int argc, char *argv[])
         display_error("Allocating application memory failed");
         cleanup();
         return EXIT_FAILURE;
-    }
-
-    init_app_screen_buffer(app_screen_buffer);
+    }    
 
     if(!app::initialize_memory(app_memory, app_screen_buffer))
     {
@@ -338,14 +379,6 @@ int main(int argc, char *argv[])
         cleanup();
         return EXIT_FAILURE;
     }
-    
-    if(!init_bitmap_buffer(back_buffer, app_screen_buffer, window))
-    {
-        display_error("Creating back buffer failed");
-        cleanup();
-
-        return EXIT_FAILURE;
-    }    
 
     g_running = true;   
     
@@ -353,27 +386,32 @@ int main(int argc, char *argv[])
     bool in_old = 1;
     Stopwatch sw;
     r64 frame_ms_elapsed = TARGET_MS_PER_FRAME;
+    char title_buffer[50];
+    r64 ms_elapsed = 0.0;
+    r64 title_refresh_ms = 500.0;
 
     auto const wait_for_framerate = [&]()
     {
         frame_ms_elapsed = sw.get_time_milli();
+
+        if(ms_elapsed >= title_refresh_ms)
+        {
+            ms_elapsed = 0.0;
+            snprintf(title_buffer, 50, "%s (%d)", WINDOW_TITLE, (int)frame_ms_elapsed);
+            SDL_SetWindowTitle(window, title_buffer);
+        }
+
         auto sleep_ms = (u32)(TARGET_MS_PER_FRAME - frame_ms_elapsed);
         if (frame_ms_elapsed < TARGET_MS_PER_FRAME && sleep_ms > 0)
-        {    
-            SDL_SetWindowTitle(window, WINDOW_TITLE);
-
+        { 
             std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
             while (frame_ms_elapsed < TARGET_MS_PER_FRAME)
             {
                 frame_ms_elapsed = sw.get_time_milli();
             }        
         }
-        else
-        {
-            char buffer[30];
-            snprintf(buffer, 30, "%s %d", WINDOW_TITLE, (int)frame_ms_elapsed);
-            SDL_SetWindowTitle(window, buffer);
-        }
+
+        ms_elapsed += frame_ms_elapsed;        
 
         sw.start();
     };

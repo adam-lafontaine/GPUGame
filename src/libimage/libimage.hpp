@@ -7,6 +7,8 @@ namespace libimage
 
     void resize_image(image_t const& image_src, image_t& image_dst);
 
-    inline void destroy_image(image_t& image) { free(image.data); }
+    void make_image(image_t& image_dst, u32 width, u32 height);
+
+    inline void destroy_image(image_t& image) { if(image.data) { free(image.data); } }
 }
 

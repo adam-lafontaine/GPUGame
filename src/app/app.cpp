@@ -60,7 +60,7 @@ static void process_camera_input(Input const& input, AppState& state)
         (app_input.screen_width_m - MIN_SCREEN_WIDTH_M) / (MAX_SCREEN_WIDTH_M - MIN_SCREEN_WIDTH_M) * (max_camera_speed_px - min_camera_speed_px);
   
     auto camera_movement_px = camera_speed_px * dt;
-    auto camera_movement_m = px_to_m(camera_movement_px, app_input.screen_width_m, app_input.screen_width_px);    
+    auto camera_movement_m = px_to_m(camera_movement_px, app_input.screen_width_m, state.screen_pixels.width);    
 
     Vec2Dr32 camera_d_m = { 0.0f, 0.0f };
 
@@ -87,12 +87,13 @@ static void process_camera_input(Input const& input, AppState& state)
     if(app_input.screen_width_m > MIN_SCREEN_WIDTH_M && controller.stick_right_y.end > 0.5f)
     {
         auto old_w = app_input.screen_width_m;
-        auto old_h = screen_height_m(old_w);
+        auto old_h = app_input.screen_height_m;
 
         app_input.screen_width_m = std::max(app_input.screen_width_m - zoom_m, MIN_SCREEN_WIDTH_M);
+        app_input.screen_height_m = screen_height_m(app_input.screen_width_m);
 
         auto new_w = app_input.screen_width_m;
-        auto new_h = screen_height_m(new_w);
+        auto new_h = app_input.screen_height_m;
 
         camera_d_m.x += 0.5f * (old_w - new_w);
         camera_d_m.y += 0.5f * (old_h - new_h);
@@ -100,16 +101,17 @@ static void process_camera_input(Input const& input, AppState& state)
     else if(app_input.screen_width_m < MAX_SCREEN_WIDTH_M && controller.stick_right_y.end < -0.5f)
     {
         auto old_w = app_input.screen_width_m;
-        auto old_h = screen_height_m(old_w);
+        auto old_h = app_input.screen_height_m;
 
         app_input.screen_width_m = std::min(app_input.screen_width_m + zoom_m, MAX_SCREEN_WIDTH_M);
+        app_input.screen_height_m = screen_height_m(app_input.screen_width_m);
 
         auto new_w = app_input.screen_width_m;
-        auto new_h = screen_height_m(new_w);
+        auto new_h = app_input.screen_height_m;
 
         camera_d_m.x += 0.5f * (old_w - new_w);
         camera_d_m.y += 0.5f * (old_h - new_h);
-    } 
+    }
 
     apply_delta(app_input.screen_position, camera_d_m);
 }
@@ -296,12 +298,12 @@ namespace app
 
         auto& state = get_initial_state(memory);
 
-        if(!init_unified_memory(state, screen))
+        if(!init_unified_memory(state))
         {
             return false;
         }
 
-        if(!init_device_memory(state))
+        if(!init_device_memory(state, screen))
         {
             return false;
         }
@@ -329,7 +331,13 @@ namespace app
         process_input(input, state); 
 
         gpu::update(state);
-        gpu::render(state);        
+        gpu::render(state);
+
+        auto src = state.device_pixels.data;
+        auto dst = state.screen_pixels.data;
+        auto size = state.device_pixels.width * state.device_pixels.height * sizeof(Pixel);
+
+        cuda::memcpy_to_host(src, dst, size);
     }
 
 	
@@ -341,10 +349,21 @@ namespace app
         cuda::free(state.device_pixel_buffer);
         cuda::free(state.device_tile_buffer);
         cuda::free(state.device_entity_buffer);
-
-        cuda::free(state.unified_pixel_buffer);
+        
         cuda::free(state.unified_input_record_buffer);
         cuda::free(state.unified_buffer);
 
+    }
+
+
+    u32 screen_buffer_width()
+    {
+        return SCREEN_WIDTH_PX;
+    }
+
+	
+	u32 screen_buffer_height()
+    {
+        return SCREEN_HEIGHT_PX;
     }
 }

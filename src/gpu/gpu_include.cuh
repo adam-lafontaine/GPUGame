@@ -3,7 +3,27 @@
 #include "gpu_app.hpp"
 #include "../device/cuda_def.cuh"
 
-#include <cassert>
+class ScreenProps
+{
+public:
+    DeviceMemory* device_p;
+
+    WorldPosition screen_pos;
+    r32 screen_width_m;
+    r32 screen_height_m;
+};
+
+
+inline ScreenProps make_screen_props(AppState const& state)
+{
+    ScreenProps props{};
+    props.device_p = state.device_buffer.data;
+    props.screen_width_m = state.app_input.screen_width_m;
+    props.screen_height_m = state.app_input.screen_height_m;
+    props.screen_pos = state.app_input.screen_position;
+
+    return props;
+}
 
 
 constexpr int THREADS_PER_BLOCK = 1024;
@@ -45,27 +65,16 @@ inline r32 px_to_m(u32 n_pixels, r32 length_m, u32 length_px)
 {
     auto dist = n_pixels * length_m / length_px;
 
-    if(fabs(dist) < 0.0001)
-    {
-        return 0.0f;
-    }
-
     return dist;
 }
 
 
 GPU_CONSTEXPR_FUNCTION
-inline u32 m_to_px(r32 dist_m, r32 length_m, u32 length_px)
+inline i32 m_to_px(r32 dist_m, r32 length_m, u32 length_px)
 {
     auto px = dist_m * length_px / length_m;
 
-    // never have negative pixels
-    if(px < 0.0f)
-    {
-        px = 0.0f;
-    }
-
-    return (u32)gpuf::ceil_r32_to_i32(px);
+    return gpuf::floor_r32_to_i32(px);
 }
 
 
@@ -215,9 +224,9 @@ inline Rect2Dr32 get_screen_rect(Entity const& entity, Point2Dr32 const& screen_
 
     // pos at top left
     r.x_begin = screen_pos.x;
-    r.x_end = r.x_begin + entity.width;
+    r.x_end = r.x_begin + entity.width_m;
     r.y_begin = screen_pos.y;
-    r.y_end = r.y_begin + entity.height;
+    r.y_end = r.y_begin + entity.height_m;
 
     return r;
 }
@@ -262,15 +271,15 @@ inline void clamp_rect(Rect2Dr32& rect, Rect2Dr32 const& boundary)
 
 
 GPU_FUNCTION
-inline Rect2Du32 to_pixel_rect(Rect2Dr32 const& rect_m, r32 length_m, u32 length_px)
+inline Rect2Di32 to_pixel_rect(Rect2Dr32 const& rect_m, r32 length_m, u32 length_px)
 {
-    auto const to_px = [&](r32 m){ return gpuf::m_to_px(m, length_m, length_px); };
+    auto const m_px = length_px / length_m;
 
-    Rect2Du32 rect_px{};
-    rect_px.x_begin = to_px(rect_m.x_begin);
-    rect_px.x_end = to_px(rect_m.x_end);
-    rect_px.y_begin = to_px(rect_m.y_begin);
-    rect_px.y_end = to_px(rect_m.y_end);
+    Rect2Di32 rect_px{};
+    rect_px.x_begin = gpuf::floor_r32_to_i32(rect_m.x_begin * m_px);
+    rect_px.x_end = gpuf::ceil_r32_to_i32(rect_m.x_end * m_px);
+    rect_px.y_begin = gpuf::floor_r32_to_i32(rect_m.y_begin * m_px);
+    rect_px.y_end = gpuf::ceil_r32_to_i32(rect_m.y_end * m_px);
 
     return rect_px;
 }
@@ -287,6 +296,18 @@ inline Vec2Dr32 vec_mul(Vec2Dr32 const& vec, r32 scale)
 }
 
 
+GPU_FUNCTION
+inline bool id_in_range(u32 id, u32 begin, u32 end)
+{
+    if(begin == 0)
+    {
+        return id < end;
+    }
+
+    return begin <= id && id < end;
+}
+
+
 constexpr auto PLAYER_BEGIN = 0U;
 constexpr auto PLAYER_END = N_PLAYER_ENTITIES;
 constexpr auto BLUE_BEGIN = PLAYER_END;
@@ -296,43 +317,94 @@ constexpr auto BROWN_END = BROWN_BEGIN + N_BROWN_ENTITIES;
 
 
 GPU_FUNCTION
-inline bool is_player_entity(u32 id)
+inline u32 player_id(u32 player_offset)
 {
-    return id == PLAYER_ID;
+    return PLAYER_BEGIN + player_offset;
 }
 
 
 GPU_FUNCTION
-inline bool is_blue_entity(u32 id)
+inline u32 blue_id(u32 blue_offset)
 {
-    return id >= BLUE_BEGIN && id < BLUE_END;
+    return BLUE_BEGIN + blue_offset;
 }
 
 
 GPU_FUNCTION
-inline bool is_brown_entity(u32 id)
+inline u32 brown_id(u32 brown_offset)
 {
-    return id >= BROWN_BEGIN && id < BROWN_END;
+    return BROWN_BEGIN + brown_offset;
 }
 
 
 GPU_FUNCTION
-inline u32 get_blue_offset(u32 id)
+inline bool is_player(u32 entity_id)
 {
-    assert(gpuf::is_blue_entity(id));
-
-    return id - BLUE_BEGIN;
+    return gpuf::id_in_range(entity_id, PLAYER_BEGIN, PLAYER_END);
 }
 
 
 GPU_FUNCTION
-inline u32 get_brown_offset(u32 id)
+inline bool is_blue(u32 entity_id)
 {
-    assert(gpuf::is_brown_entity(id));
-
-    return id - BROWN_BEGIN;
+    return gpuf::id_in_range(entity_id, BLUE_BEGIN, BLUE_END);
 }
 
+
+GPU_FUNCTION
+inline bool is_wall(u32 entity_id)
+{
+    return gpuf::id_in_range(entity_id, BROWN_BEGIN, BROWN_END);
+}
+
+
+GPU_FUNCTION
+inline bool is_active(Entity const& entity)
+{
+    return entity.status & STATUS::ACTIVE;
+}
+
+
+GPU_FUNCTION
+inline bool is_onscreen(Entity const& entity)
+{
+    return entity.status & STATUS::ONSCREEN;
+}
+
+
+GPU_FUNCTION
+inline bool is_drawable(Entity const& entity)
+{
+    return gpuf::is_active(entity) && gpuf::is_onscreen(entity);
+}
+
+
+GPU_FUNCTION
+inline void set_active(Entity& entity)
+{
+    entity.status |= STATUS::ACTIVE;
+}
+
+
+GPU_FUNCTION
+inline void set_inactive(Entity& entity)
+{
+    entity.status &= ~STATUS::ACTIVE;
+}
+
+
+GPU_FUNCTION
+inline void set_onscreen(Entity& entity)
+{
+    entity.status |= STATUS::ONSCREEN;
+}
+
+
+GPU_FUNCTION
+inline void set_offscreen(Entity& entity)
+{
+    entity.status &= ~STATUS::ONSCREEN;
+}
 
 /***********************/
 

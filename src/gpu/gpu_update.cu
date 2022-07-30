@@ -20,8 +20,8 @@ static bool entity_will_intersect(Entity const& lhs, Entity const& rhs)
 {
     auto delta_m = gpuf::sub_delta_m(lhs.next_position, rhs.next_position);
     
-    auto rhs_rect = gpuf::make_rect(rhs.width, rhs.height);
-    auto lhs_rect = gpuf::make_rect(delta_m, lhs.width, lhs.height);
+    auto rhs_rect = gpuf::make_rect(rhs.width_m, rhs.height_m);
+    auto lhs_rect = gpuf::make_rect(delta_m, lhs.width_m, lhs.height_m);
 
     return gpuf::rect_intersect(lhs_rect, rhs_rect);
 }
@@ -86,15 +86,15 @@ void apply_current_input(Entity& entity, InputList const& inputs, u64 frame)
 GPU_FUNCTION
 static void stop_wall(Entity& ent, Entity const& wall)
 {   
-    if(!ent.is_active || !wall.is_active)
+    if(!gpuf::is_active(ent) || !is_active(wall))
     {
         return;
     }
 
     auto delta = gpuf::sub_delta_m(ent.position, wall.position);
     
-    auto w = gpuf::make_rect(wall.width, wall.height);
-    auto e_start = gpuf::make_rect(delta, ent.width, ent.height);
+    auto w = gpuf::make_rect(wall.width_m, wall.height_m);
+    auto e_start = gpuf::make_rect(delta, ent.width_m, ent.height_m);
     auto e_finish = gpuf::add_delta(e_start, ent.delta_pos_m);
 
     if(!gpuf::rect_intersect(e_finish, w))
@@ -143,7 +143,7 @@ static void stop_wall(Entity& ent, Entity const& wall)
 GPU_FUNCTION
 static void bounce_wall(Entity& ent, Entity const& wall)
 {
-    if(!ent.is_active || !wall.is_active)
+    if(!gpuf::is_active(ent) || !is_active(wall))
     {
         return;
     }
@@ -155,8 +155,8 @@ static void bounce_wall(Entity& ent, Entity const& wall)
 
     auto delta = gpuf::sub_delta_m(ent.position, wall.position);
     
-    auto w = gpuf::make_rect(wall.width, wall.height);
-    auto e_start = gpuf::make_rect(delta, ent.width, ent.height);
+    auto w = gpuf::make_rect(wall.width_m, wall.height_m);
+    auto e_start = gpuf::make_rect(delta, ent.width_m, ent.height_m);
     auto e_finish = gpuf::add_delta(e_start, ent.delta_pos_m);
 
     if(!gpuf::rect_intersect(e_finish, w))
@@ -182,7 +182,7 @@ static void bounce_wall(Entity& ent, Entity const& wall)
 GPU_FUNCTION
 static void blue_blue(Entity& a, Entity const& b)
 {
-    if(!a.is_active || !b.is_active)
+    if(!gpuf::is_active(a) || !is_active(b))
     {
         return;
     }
@@ -194,8 +194,8 @@ static void blue_blue(Entity& a, Entity const& b)
 
     auto delta = gpuf::sub_delta_m(a.position, b.next_position);
     
-    auto b_finish = gpuf::make_rect(b.width, b.height);
-    auto a_start = gpuf::make_rect(delta, a.width, a.height);
+    auto b_finish = gpuf::make_rect(b.width_m, b.height_m);
+    auto a_start = gpuf::make_rect(delta, a.width_m, a.height_m);
     auto a_finish = gpuf::add_delta(a_start, a.delta_pos_m);
 
     if(!gpuf::rect_intersect(a_finish, b_finish))
@@ -220,7 +220,7 @@ static void blue_blue(Entity& a, Entity const& b)
 GPU_FUNCTION
 static void player_blue(Entity const& player, Entity& blue)
 {   
-    if(!player.is_active || !blue.is_active || !gpuf::entity_will_intersect(player, blue))
+    if(!gpuf::is_active(player) || !gpuf::is_active(blue) || !gpuf::entity_will_intersect(player, blue))
     {
         return;
     }
@@ -239,14 +239,14 @@ static void player_blue(Entity const& player, Entity& blue)
     */
 
     //blue_blue(blue, player);
-    blue.is_active = false;
+    gpuf::set_inactive(blue);
 }
 
 
 GPU_FUNCTION
 static void entity_next_position(Entity& entity)
 {
-    if(!entity.is_active)
+    if(!gpuf::is_active(entity))
     {
         return;
     }
@@ -257,13 +257,8 @@ static void entity_next_position(Entity& entity)
 
 
 GPU_FUNCTION
-static void entity_update_position(Entity& entity)
+static void update_entity_position(Entity& entity, ScreenProps const& props)
 {
-    if(!entity.is_active)
-    {
-        return;
-    }
-
     if(entity.inv_x)
     {
         entity.delta_pos_m.x = 0.0f;
@@ -281,7 +276,29 @@ static void entity_update_position(Entity& entity)
     entity.next_position = entity.position;
     entity.delta_pos_m = { 0.0f, 0.0f };
     entity.inv_x = false;
-    entity.inv_y = false;
+    entity.inv_y = false;    
+}
+
+
+GPU_FUNCTION
+static void update_entity_on_screen(Entity& entity, ScreenProps const& props)
+{
+    auto screen_width_m = props.screen_width_m;
+    auto screen_height_m = props.screen_height_m;
+
+    auto entity_screen_pos_m = gpuf::sub_delta_m(entity.position, props.screen_pos);
+    auto entity_rect_m = gpuf::get_screen_rect(entity, entity_screen_pos_m);
+    auto screen_rect_m = gpuf::make_rect(screen_width_m, screen_height_m);  
+
+    auto is_onscreen = gpuf::rect_intersect(entity_rect_m, screen_rect_m);
+    if(is_onscreen)
+    {
+        gpuf::set_onscreen(entity);
+    }
+    else
+    {
+        gpuf::set_offscreen(entity);
+    }
 }
 
 
@@ -292,7 +309,7 @@ static void entity_update_position(Entity& entity)
 
 
 GPU_KERNAL
-static void gpu_next_player_positions(DeviceMemory* device_ptr, UnifiedMemory* unified, u32 n_threads)
+static void gpu_next_movable_positions(DeviceMemory* device_p, UnifiedMemory* unified_p, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -300,31 +317,29 @@ static void gpu_next_player_positions(DeviceMemory* device_ptr, UnifiedMemory* u
         return;
     }
 
-    auto& device = *device_ptr;
-
-    assert(n_threads == N_PLAYER_ENTITIES);
-
-    gpuf::apply_current_input(device.user_player, unified->current_inputs, unified->frame_count);
-
-    gpuf::entity_next_position(device.user_player);
-}
-
-
-GPU_KERNAL
-static void gpu_next_blue_positions(DeviceMemory* device_p, u32 n_threads)
-{
-    int t = blockDim.x * blockIdx.x + threadIdx.x;
-    if (t >= n_threads)
-    {
-        return;
-    }
+    assert(n_threads == N_MOVABLE_ENTITIES);
 
     auto& device = *device_p;
-
-    assert(n_threads == N_BLUE_ENTITIES);
+    auto& unified = *unified_p;
 
     auto offset = (u32)t;
-    gpuf::entity_next_position(device.blue_entities.data[offset]);
+    auto& entity = device.entities.data[offset];
+
+    
+
+    if(gpuf::is_player(entity.id))
+    {
+        if(entity.id == unified.user_player_entity_id)
+        {
+            gpuf::apply_current_input(entity, unified.current_inputs, unified.frame_count);
+        }
+        else
+        {
+            // previous input
+        }        
+    }
+    
+    gpuf::entity_next_position(entity);
 }
 
 
@@ -346,7 +361,7 @@ static void gpu_player_wall(DeviceMemory* device_p, u32 n_threads)
     auto player_offset = offset / N_BROWN_ENTITIES;
     auto wall_offset = offset - player_offset * N_BROWN_ENTITIES;
 
-    auto& player = device.user_player;
+    auto& player = device.player_entities.data[player_offset];
     auto& wall = device.wall_entities.data[wall_offset];
 
     gpuf::stop_wall(player, wall);
@@ -397,7 +412,7 @@ static void gpu_player_blue(DeviceMemory* device_p, u32 n_threads)
     auto blue_offset = offset - player_offset * N_BLUE_ENTITIES;
 
     auto& blue = device.blue_entities.data[blue_offset];
-    auto& player = device.user_player;
+    auto& player = device.player_entities.data[player_offset];
 
     gpuf::player_blue(player, blue);
 }
@@ -433,8 +448,8 @@ static void gpu_blue_blue(DeviceMemory* device_p, u32 n_threads)
 }
 
 
-GPU_KERNAL
-static void gpu_update_player_positions(DeviceMemory* device_ptr, u32 n_threads)
+GPU_KERNAL 
+static void gpu_update_entity_positions(ScreenProps props, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
     if (t >= n_threads)
@@ -442,29 +457,20 @@ static void gpu_update_player_positions(DeviceMemory* device_ptr, u32 n_threads)
         return;
     }
 
-    auto& device = *device_ptr;
+    assert(n_threads == N_ENTITIES);
 
-    assert(n_threads == N_PLAYER_ENTITIES);
-
-    gpuf::entity_update_position(device.user_player);    
-}
-
-
-GPU_KERNAL
-static void gpu_update_blue_positions(DeviceMemory* device_p, u32 n_threads)
-{
-    int t = blockDim.x * blockIdx.x + threadIdx.x;
-    if (t >= n_threads)
-    {
-        return;
-    }
-
-    auto& device = *device_p;
-
-    assert(n_threads == N_BLUE_ENTITIES);
+    auto& device = *props.device_p;
 
     auto offset = (u32)t;
-    gpuf::entity_update_position(device.blue_entities.data[offset]);
+
+    auto& entity = device.entities.data[offset];
+    if(!gpuf::is_active(entity))
+    {
+        return;
+    }
+
+    gpuf::update_entity_position(entity, props);
+    gpuf::update_entity_on_screen(entity, props);
 }
 
 
@@ -475,11 +481,11 @@ namespace gpu
         bool result = cuda::no_errors("gpu::update");
         assert(result);
 
-        constexpr auto player_threads = N_PLAYER_ENTITIES;
-        constexpr auto player_blocks = calc_thread_blocks(player_threads);
-
-        constexpr auto blue_threads = N_BLUE_ENTITIES;
-        constexpr auto blue_blocks = calc_thread_blocks(blue_threads);
+        constexpr auto entity_threads = N_ENTITIES;
+        constexpr auto entity_blocks = calc_thread_blocks(entity_threads);
+        
+        constexpr auto movable_threads = N_MOVABLE_ENTITIES;
+        constexpr auto movable_blocks = calc_thread_blocks(movable_threads);
 
         constexpr auto player_wall_threads = N_PLAYER_WALL_COLLISIONS;
         constexpr auto player_wall_blocks = calc_thread_blocks(player_wall_threads);
@@ -496,12 +502,8 @@ namespace gpu
         auto device_p = state.device_buffer.data;
         auto unified_p = state.unified_buffer.data;
         
-        cuda_launch_kernel(gpu_next_player_positions, player_blocks, THREADS_PER_BLOCK, device_p, unified_p, player_threads);
-        result = cuda::launch_success("gpu_next_player_positions");
-        assert(result);
-        
-        cuda_launch_kernel(gpu_next_blue_positions, blue_blocks, THREADS_PER_BLOCK, device_p, blue_threads);
-        result = cuda::launch_success("gpu_next_blue_positions");
+        cuda_launch_kernel(gpu_next_movable_positions, movable_blocks, THREADS_PER_BLOCK, device_p, unified_p, movable_threads);
+        result = cuda::launch_success("gpu_next_movable_positions");
         assert(result);
         
         cuda_launch_kernel(gpu_player_wall, player_wall_blocks, THREADS_PER_BLOCK, device_p, player_wall_threads);
@@ -519,13 +521,12 @@ namespace gpu
         cuda_launch_kernel(gpu_blue_blue, blue_blue_blocks, THREADS_PER_BLOCK, device_p, blue_blue_threads);
         result = cuda::launch_success("gpu_blue_blue");
         assert(result);
-        
-        cuda_launch_kernel(gpu_update_player_positions, player_blocks, THREADS_PER_BLOCK, device_p, player_threads);
-        result = cuda::launch_success("gpu_update_player_positions");
+
+        auto props = make_screen_props(state);
+
+        cuda_launch_kernel(gpu_update_entity_positions, entity_blocks, THREADS_PER_BLOCK, props, entity_threads);
+        result = cuda::launch_success("gpu_update_entity_positions");
         assert(result);
         
-        cuda_launch_kernel(gpu_update_blue_positions, blue_blocks, THREADS_PER_BLOCK, device_p, blue_threads);
-        result = cuda::launch_success("gpu_update_blue_positions");
-        assert(result);
     }
 }

@@ -2,19 +2,22 @@
 
 #include "../device/device.hpp"
 
+constexpr u32 SCREEN_HEIGHT_PX = 800;
+constexpr u32 SCREEN_WIDTH_PX = SCREEN_HEIGHT_PX * 10 / 8;
+
 
 using uInput = u32;
 
 namespace INPUT
 {
-    constexpr uInput PLAYER_UP    = 0b0000'0000'0000'0000'0000'0000'0000'0001;
-    constexpr uInput PLAYER_DOWN  = 0b0000'0000'0000'0000'0000'0000'0000'0010;
-    constexpr uInput PLAYER_LEFT  = 0b0000'0000'0000'0000'0000'0000'0000'0100;
-    constexpr uInput PLAYER_RIGHT = 0b0000'0000'0000'0000'0000'0000'0000'1000;
+    constexpr uInput PLAYER_UP    = 1;
+    constexpr uInput PLAYER_DOWN  = PLAYER_UP * 2;
+    constexpr uInput PLAYER_LEFT  = PLAYER_DOWN * 2;
+    constexpr uInput PLAYER_RIGHT = PLAYER_LEFT * 2;
 
     constexpr u32 MAX_RECORDS = 5000;
 }
-
+ 
 
 class InputRecord
 {
@@ -38,19 +41,71 @@ public:
 };
 
 
-class Tile
+template <u32 W, u32 H>
+class Bitmap
 {
 public:
-
     Pixel* bitmap_data;
     Pixel* avg_color;
+
+    static constexpr u32 width = W;
+    static constexpr u32 height = H;
 };
+
 
 constexpr u32 TILE_WIDTH_PX = 64;
 constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;
 
+constexpr u32 PLAYER_WIDTH_PX = 12;
+constexpr u32 PLAYER_HEIGHT_PX = PLAYER_WIDTH_PX;
+
+constexpr u32 BLUE_WIDTH_PX = 5;
+constexpr u32 BLUE_HEIGHT_PX = BLUE_WIDTH_PX;
+
+constexpr u32 WALL_WIDTH_PX = 16;
+constexpr u32 WALL_HEIGHT_PX = WALL_WIDTH_PX;
+
+
+using Tile = Bitmap<TILE_WIDTH_PX, TILE_HEIGHT_PX>;
+using PlayerBitmap = Bitmap<PLAYER_WIDTH_PX, PLAYER_HEIGHT_PX>;
+using BlueBitmap = Bitmap<BLUE_WIDTH_PX, BLUE_HEIGHT_PX>;
+using WallBitmap = Bitmap<WALL_WIDTH_PX, WALL_HEIGHT_PX>;
+
+
 // bitmap + avg_color
-constexpr auto N_TILE_PIXELS = TILE_WIDTH_PX * TILE_HEIGHT_PX + 1;
+constexpr auto N_TILE_BITMAP_PIXELS = TILE_WIDTH_PX * TILE_HEIGHT_PX + 1;
+constexpr auto N_PLAYER_BITMAP_PIXELS = PLAYER_WIDTH_PX * PLAYER_HEIGHT_PX + 1;
+constexpr auto N_BLUE_BITMAP_PIXELS = BLUE_WIDTH_PX * BLUE_HEIGHT_PX + 1;
+constexpr auto N_WALL_BITMAP_PIXELS = WALL_WIDTH_PX * WALL_HEIGHT_PX + 1;
+
+
+class DeviceAssets
+{
+public:
+    Tile grass_tile;
+    Tile black_tile;
+
+    PlayerBitmap player_bitmap;
+    BlueBitmap blue_bitmap;
+    WallBitmap wall_bitmap;
+};
+
+
+constexpr size_t total_asset_pixel_size()
+{
+    u32 n_tiles = 2;
+    u32 n_players = 1;
+    u32 n_blue = 1;
+    u32 n_wall = 1;    
+
+    u32 n_pixels = 
+        n_tiles * N_TILE_BITMAP_PIXELS +
+        n_players * N_PLAYER_BITMAP_PIXELS +
+        n_blue * N_BLUE_BITMAP_PIXELS +
+        n_wall * N_WALL_BITMAP_PIXELS;
+
+    return n_pixels * sizeof(Pixel);
+}
 
 
 class WorldPosition
@@ -61,63 +116,41 @@ public:
 };
 
 
+using uStatus = u32;
+
+namespace STATUS
+{
+    constexpr uStatus ACTIVE = 1;
+    constexpr uStatus ONSCREEN = 2 * ACTIVE;
+}
+
 class Entity
 {
 public:
-    r32 width;
-    r32 height;
-    Pixel color;
+    u32 id;
+
+    r32 width_m;
+    r32 height_m;
+    
+    Image bitmap;
+    Pixel avg_color;
 
     WorldPosition position;
     Vec2Dr32 dt;
     r32 speed;
 
+    b32 inv_x = false;
+    b32 inv_y = false;
+
     Vec2Dr32 delta_pos_m;
 
     WorldPosition next_position;
 
-    b32 is_active = false;
-
-    b32 inv_x = false;
-    b32 inv_y = false;
+    uStatus status = 0;    
 };
 
 
-class EntitySOA
-{
-public:
-    u32 n_elements;
 
-    r32* width;
-    r32* height;
-    Pixel* color;
-
-    WorldPosition* position;
-    Vec2Dr32* dt;
-    r32* speed;
-
-    Vec2Dr32* delta_pos_m;
-
-    WorldPosition* next_position;
-
-    b32* is_active;
-
-    b32* inv_x;
-    b32* inv_y;
-};
-
-
-class DeviceAssets
-{
-public:
-    Tile grass_tile;
-    
-    Tile brown_tile;
-    Tile black_tile;
-};
-
-
-constexpr auto N_TILE_BITMAPS = sizeof(DeviceAssets) / sizeof(Tile);
 
 
 using EntityArray = Array<Entity>;
@@ -130,10 +163,8 @@ public:
 
     bool reset_frame_count;
 
-    u32 screen_width_px;
-    u32 screen_height_px;
-
     r32 screen_width_m;
+    r32 screen_height_m;
 
     WorldPosition screen_position;
 };
@@ -147,11 +178,13 @@ public:
 
     TileMatrix tilemap;
 
-    Entity user_player;   
-    
-    EntityArray blue_entities;
+    EntityArray entities;
 
-    EntityArray wall_entities;  
+    EntityArray player_entities;    
+    EntityArray blue_entities;
+    EntityArray wall_entities;
+
+    Image screen_pixels;
 };
 
 
@@ -159,12 +192,12 @@ class UnifiedMemory
 {
 public:
 
-    u64 frame_count;
-
-    Image screen_pixels;
+    u64 frame_count;    
 
     InputList previous_inputs;
-    InputList current_inputs;    
+    InputList current_inputs;
+
+    u32 user_player_entity_id = 0;
 };
 
 
@@ -173,12 +206,14 @@ class AppState
 public:
     AppInput app_input;
 
+    Image device_pixels;
+    Image screen_pixels;
+
     MemoryBuffer<DeviceMemory> device_buffer;
     MemoryBuffer<Pixel> device_pixel_buffer;
     MemoryBuffer<Tile> device_tile_buffer;
     MemoryBuffer<Entity> device_entity_buffer;
 
     MemoryBuffer<UnifiedMemory> unified_buffer;
-    MemoryBuffer<Pixel> unified_pixel_buffer;
     MemoryBuffer<InputRecord> unified_input_record_buffer;
 };
