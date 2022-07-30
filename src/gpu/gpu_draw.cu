@@ -2,12 +2,9 @@
 
 #include <cassert>
 
-/*
-constexpr u32 ENTITY_PIXEL_WIDTH = 10;
-constexpr u32 ENTITY_PIXEL_HEIGHT = 10;
-constexpr auto N_PIXELS_PER_ENTITY = ENTITY_PIXEL_WIDTH * ENTITY_PIXEL_HEIGHT;
-constexpr auto N_ENTITY_PIXELS = N_ENTITIES * N_PIXELS_PER_ENTITY;
-*/
+
+constexpr auto N_SCREEN_PIXELS = SCREEN_HEIGHT_PX * SCREEN_WIDTH_PX;
+
 
 constexpr auto N_PIXELS_PER_PLAYER = PLAYER_WIDTH_PX * PLAYER_HEIGHT_PX;
 constexpr auto N_PIXELS_PER_BLUE = BLUE_WIDTH_PX * BLUE_HEIGHT_PX;
@@ -240,24 +237,19 @@ namespace gpu
 {
     void render(AppState& state)
     {
-        u32 n_pixels = state.screen_pixels.width * state.screen_pixels.height;
-
-        ScreenProps props{};
-        props.device_p = state.device_buffer.data;
-        props.screen_width_m = state.app_input.screen_width_m;
-        props.screen_height_m = props.screen_width_m * state.screen_pixels.height / state.screen_pixels.width;
-        props.screen_pos = state.app_input.screen_position;
-
         bool result = cuda::no_errors("gpu::render");
         assert(result);
         
-        auto tile_threads = n_pixels;
-        auto tile_blocks = calc_thread_blocks(tile_threads);
+        constexpr auto tile_pixel_threads = N_SCREEN_PIXELS;
+        constexpr auto tile_pixel_blocks = calc_thread_blocks(tile_pixel_threads);
 
         constexpr auto entity_pixel_threads = N_ENTITY_PIXELS;
         constexpr auto entity_pixel_blocks = calc_thread_blocks(entity_pixel_threads);
+
+
+        auto props = make_screen_props(state);
         
-        cuda_launch_kernel(gpu_draw_tiles, tile_blocks, THREADS_PER_BLOCK, props, tile_threads);
+        cuda_launch_kernel(gpu_draw_tiles, tile_pixel_blocks, THREADS_PER_BLOCK, props, tile_pixel_threads);
         result = cuda::launch_success("gpu_draw_tiles");
         assert(result); 
 

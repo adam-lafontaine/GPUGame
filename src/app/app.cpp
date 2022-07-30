@@ -87,12 +87,13 @@ static void process_camera_input(Input const& input, AppState& state)
     if(app_input.screen_width_m > MIN_SCREEN_WIDTH_M && controller.stick_right_y.end > 0.5f)
     {
         auto old_w = app_input.screen_width_m;
-        auto old_h = screen_height_m(old_w);
+        auto old_h = app_input.screen_height_m;
 
         app_input.screen_width_m = std::max(app_input.screen_width_m - zoom_m, MIN_SCREEN_WIDTH_M);
+        app_input.screen_height_m = screen_height_m(app_input.screen_width_m);
 
         auto new_w = app_input.screen_width_m;
-        auto new_h = screen_height_m(new_w);
+        auto new_h = app_input.screen_height_m;
 
         camera_d_m.x += 0.5f * (old_w - new_w);
         camera_d_m.y += 0.5f * (old_h - new_h);
@@ -100,12 +101,13 @@ static void process_camera_input(Input const& input, AppState& state)
     else if(app_input.screen_width_m < MAX_SCREEN_WIDTH_M && controller.stick_right_y.end < -0.5f)
     {
         auto old_w = app_input.screen_width_m;
-        auto old_h = screen_height_m(old_w);
+        auto old_h = app_input.screen_height_m;
 
         app_input.screen_width_m = std::min(app_input.screen_width_m + zoom_m, MAX_SCREEN_WIDTH_M);
+        app_input.screen_height_m = screen_height_m(app_input.screen_width_m);
 
         auto new_w = app_input.screen_width_m;
-        auto new_h = screen_height_m(new_w);
+        auto new_h = app_input.screen_height_m;
 
         camera_d_m.x += 0.5f * (old_w - new_w);
         camera_d_m.y += 0.5f * (old_h - new_h);

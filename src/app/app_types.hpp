@@ -164,6 +164,7 @@ public:
     bool reset_frame_count;
 
     r32 screen_width_m;
+    r32 screen_height_m;
 
     WorldPosition screen_position;
 };

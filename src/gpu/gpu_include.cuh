@@ -14,6 +14,18 @@ public:
 };
 
 
+inline ScreenProps make_screen_props(AppState const& state)
+{
+    ScreenProps props{};
+    props.device_p = state.device_buffer.data;
+    props.screen_width_m = state.app_input.screen_width_m;
+    props.screen_height_m = state.app_input.screen_height_m;
+    props.screen_pos = state.app_input.screen_position;
+
+    return props;
+}
+
+
 constexpr int THREADS_PER_BLOCK = 1024;
 
 constexpr int calc_thread_blocks(u32 n_threads)

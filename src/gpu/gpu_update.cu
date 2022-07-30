@@ -522,11 +522,7 @@ namespace gpu
         result = cuda::launch_success("gpu_blue_blue");
         assert(result);
 
-        ScreenProps props{};
-        props.device_p = state.device_buffer.data;
-        props.screen_width_m = state.app_input.screen_width_m;
-        props.screen_height_m = props.screen_width_m * state.screen_pixels.height / state.screen_pixels.width;
-        props.screen_pos = state.app_input.screen_position;
+        auto props = make_screen_props(state);
 
         cuda_launch_kernel(gpu_update_entity_positions, entity_blocks, THREADS_PER_BLOCK, props, entity_threads);
         result = cuda::launch_success("gpu_update_entity_positions");

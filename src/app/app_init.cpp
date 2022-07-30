@@ -356,7 +356,8 @@ void init_app_input(AppInput& app_input)
     //app_input.frame_count = 0;
     app_input.reset_frame_count = false;
     
-    app_input.screen_width_m = MIN_SCREEN_WIDTH_M;    
+    app_input.screen_width_m = MIN_SCREEN_WIDTH_M;
+    app_input.screen_height_m = screen_height_m(app_input.screen_width_m);
 
     app_input.screen_position.tile = { 0, 0 };
     app_input.screen_position.offset_m = { 0.0f, 0.0f };
