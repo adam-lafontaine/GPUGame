@@ -8,8 +8,8 @@ namespace img = libimage;
 
 static Pixel get_avg_color(image_t const& image)
 {
-    auto sub_h = image.height / 10;
-    auto sub_w = image.width / 10;
+    auto sub_h = image.height / 2;
+    auto sub_w = image.width / 2;
 
     u32 r = 0;
     u32 g = 0;
@@ -76,9 +76,11 @@ static bool init_bitmap(MemoryBuffer<Pixel>& buffer, Image const& host_image, Bi
 
 static void fill_color(Image const& img, Pixel color)
 {
+    auto black = to_pixel(30, 30, 30);
+
     for(u32 i = 0; i < img.width * img.height; ++i)
     {
-        img.data[i] = color;
+        img.data[i] = i % 2 == 0 ? black : color;
     }
 }
 

@@ -284,6 +284,18 @@ inline Vec2Dr32 vec_mul(Vec2Dr32 const& vec, r32 scale)
 }
 
 
+GPU_FUNCTION
+inline bool id_in_range(u32 id, u32 begin, u32 end)
+{
+    if(begin == 0)
+    {
+        return id < end;
+    }
+
+    return begin <= id && id < end;
+}
+
+
 constexpr auto PLAYER_BEGIN = 0U;
 constexpr auto PLAYER_END = N_PLAYER_ENTITIES;
 constexpr auto BLUE_BEGIN = PLAYER_END;
@@ -316,21 +328,21 @@ inline u32 brown_id(u32 brown_offset)
 GPU_FUNCTION
 inline bool is_player(u32 entity_id)
 {
-    return /*entity_id >= PLAYER_BEGIN &&*/ entity_id < PLAYER_END;
+    return gpuf::id_in_range(entity_id, PLAYER_BEGIN, PLAYER_END);
 }
 
 
 GPU_FUNCTION
 inline bool is_blue(u32 entity_id)
 {
-    return entity_id >= BLUE_BEGIN && entity_id < BLUE_END;
+    return gpuf::id_in_range(entity_id, BLUE_BEGIN, BLUE_END);
 }
 
 
 GPU_FUNCTION
 inline bool is_wall(u32 entity_id)
 {
-    return entity_id >= BROWN_BEGIN && entity_id < BROWN_END;
+    return gpuf::id_in_range(entity_id, BROWN_BEGIN, BROWN_END);
 }
 
 
