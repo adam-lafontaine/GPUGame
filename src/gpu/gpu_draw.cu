@@ -41,44 +41,42 @@ static EntityPixel get_entity_pixel(u32 entity_pixel_id)
 {
     assert(entity_pixel_id < N_ENTITY_PIXELS);
 
+    u32 p_begin = 0;
+    u32 pixels_per_entity = 0;
+    auto get_id = gpuf::player_id;
+
     if(gpuf::id_in_range(entity_pixel_id, PLAYER_PIXELS_BEGIN, PLAYER_PIXELS_END))
     {
-        auto entity_pixel_offset = entity_pixel_id - PLAYER_PIXELS_BEGIN;
-        auto entity_offset = entity_pixel_offset / N_PIXELS_PER_PLAYER;
-        auto entity_id = gpuf::player_id(entity_offset);
-
-        auto bitmap_offset = entity_pixel_offset - entity_offset * N_PIXELS_PER_PLAYER;
-
-        return { entity_pixel_id, entity_id, bitmap_offset };
+        p_begin = PLAYER_PIXELS_BEGIN;
+        pixels_per_entity = N_PIXELS_PER_PLAYER;
+        get_id = gpuf::player_id;
     }
-
-    if(gpuf::id_in_range(entity_pixel_id, BLUE_PIXELS_BEGIN, BLUE_PIXELS_END))
+    else if(gpuf::id_in_range(entity_pixel_id, BLUE_PIXELS_BEGIN, BLUE_PIXELS_END))
     {
-        auto entity_pixel_offset = entity_pixel_id - BLUE_PIXELS_BEGIN;
-        auto entity_offset = entity_pixel_offset / N_PIXELS_PER_BLUE;
-        auto entity_id = gpuf::blue_id(entity_offset);
-
-        auto bitmap_offset = entity_pixel_offset - entity_offset * N_PIXELS_PER_BLUE;
-
-        return { entity_pixel_id, entity_id, bitmap_offset };
+        p_begin = BLUE_PIXELS_BEGIN;
+        pixels_per_entity = N_PIXELS_PER_BLUE;
+        get_id = gpuf::blue_id;
     }
-
-    if(gpuf::id_in_range(entity_pixel_id, BROWN_PIXELS_BEGIN, BROWN_PIXELS_END))
+    else if(gpuf::id_in_range(entity_pixel_id, BROWN_PIXELS_BEGIN, BROWN_PIXELS_END))
     {
-        auto entity_pixel_offset = entity_pixel_id - BROWN_PIXELS_BEGIN;
-        auto entity_offset = entity_pixel_offset / N_PIXELS_PER_WALL;
-        auto entity_id = gpuf::brown_id(entity_offset);
-
-        auto bitmap_offset = entity_pixel_offset - entity_offset * N_PIXELS_PER_WALL;
-
-        return { entity_pixel_id, entity_id, bitmap_offset };
+        p_begin = BROWN_PIXELS_BEGIN;
+        pixels_per_entity = N_PIXELS_PER_WALL;
+        get_id = gpuf::brown_id;        
+    }
+    else
+    {
+        assert(false);
+        auto error = 0u - 1;
+        return { error, error, error };
     }
 
-    assert(false);
+    auto entity_pixel_offset = entity_pixel_id - p_begin;
+    auto entity_offset = entity_pixel_offset / pixels_per_entity;
+    auto entity_id = get_id(entity_offset);
 
-    auto error = 0u - 1;
+    auto bitmap_offset = entity_pixel_offset - entity_offset * pixels_per_entity;
 
-    return { error, error, error };
+    return { entity_pixel_id, entity_id, bitmap_offset };
 }
 
 

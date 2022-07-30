@@ -112,7 +112,7 @@ static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
         break;
     }
 
-    entity.dt = gpuf::vec_mul(entity.dt, 1.0f / 60.0f);
+    entity.dt = gpuf::vec_mul(entity.dt, 1.0f / 60.0f); // assume 60 FPS
 }
 
 
