@@ -11,8 +11,8 @@ constexpr auto GRASS_TILE_PATH = "/home/adam/Repos/GPUGame/assets/tiles/basic_gr
 
 static Pixel get_avg_color(image_t const& image)
 {
-    auto sub_h = image.height / 2;
-    auto sub_w = image.width / 2;
+    auto sub_h = image.height;
+    auto sub_w = image.width;
 
     u32 r = 0;
     u32 g = 0;
@@ -80,10 +80,33 @@ static bool init_bitmap(MemoryBuffer<Pixel>& buffer, Image const& host_image, Bi
 static void fill_color(Image const& img, Pixel color)
 {
     auto black = to_pixel(30, 30, 30);
+    auto white = to_pixel(200, 200, 200);
 
-    for(u32 i = 0; i < img.width * img.height; ++i)
+    auto width = img.width;
+    auto height = img.height;
+
+    for(u32 y = 0; y < height; ++y)
     {
-        img.data[i] = i % 3 == 0 ? black : color;
+        auto dst_row = img.data + y * width;
+        for(u32 x = 0; x < width; ++x)
+        {
+            if(y == height / 2 && x != 0 && x != width - 1)
+            {
+                dst_row[x] = white;
+            }
+            else if(y == height / 2 - 1 && x != 0 && x != width - 1)
+            {
+                dst_row[x] = black;
+            }
+            else if(y == height / 2 + 1 && x != 0 && x != width - 1)
+            {
+                dst_row[x] = black;
+            }
+            else
+            {
+                dst_row[x] = color;
+            }            
+        }
     }
 }
 

@@ -43,27 +43,33 @@ static EntityPixel get_entity_pixel(u32 entity_pixel_id)
 
     if(gpuf::id_in_range(entity_pixel_id, PLAYER_PIXELS_BEGIN, PLAYER_PIXELS_END))
     {
-        auto player_offset = (entity_pixel_id - PLAYER_PIXELS_BEGIN) / N_PIXELS_PER_PLAYER;
-        auto entity_id = player_id(player_offset);
-        auto bitmap_offset = entity_pixel_id - entity_id * N_PIXELS_PER_PLAYER;
+        auto entity_pixel_offset = entity_pixel_id - PLAYER_PIXELS_BEGIN;
+        auto entity_offset = entity_pixel_offset / N_PIXELS_PER_PLAYER;
+        auto entity_id = gpuf::player_id(entity_offset);
+
+        auto bitmap_offset = entity_pixel_offset - entity_offset * N_PIXELS_PER_PLAYER;
 
         return { entity_pixel_id, entity_id, bitmap_offset };
     }
 
     if(gpuf::id_in_range(entity_pixel_id, BLUE_PIXELS_BEGIN, BLUE_PIXELS_END))
     {
-        auto blue_offset = (entity_pixel_id - BLUE_PIXELS_BEGIN) / N_PIXELS_PER_BLUE;
-        auto entity_id = blue_id(blue_offset);
-        auto bitmap_offset = entity_pixel_id - entity_id * N_PIXELS_PER_BLUE;        
+        auto entity_pixel_offset = entity_pixel_id - BLUE_PIXELS_BEGIN;
+        auto entity_offset = entity_pixel_offset / N_PIXELS_PER_BLUE;
+        auto entity_id = gpuf::blue_id(entity_offset);
+
+        auto bitmap_offset = entity_pixel_offset - entity_offset * N_PIXELS_PER_BLUE;
 
         return { entity_pixel_id, entity_id, bitmap_offset };
     }
 
     if(gpuf::id_in_range(entity_pixel_id, BROWN_PIXELS_BEGIN, BROWN_PIXELS_END))
     {
-        auto brown_offset = (entity_pixel_id - BROWN_PIXELS_BEGIN) / N_PIXELS_PER_WALL;
-        auto entity_id = brown_id(brown_offset);
-        auto bitmap_offset = entity_pixel_id - entity_id * N_PIXELS_PER_WALL;
+        auto entity_pixel_offset = entity_pixel_id - BROWN_PIXELS_BEGIN;
+        auto entity_offset = entity_pixel_offset / N_PIXELS_PER_WALL;
+        auto entity_id = gpuf::brown_id(entity_offset);
+
+        auto bitmap_offset = entity_pixel_offset - entity_offset * N_PIXELS_PER_WALL;
 
         return { entity_pixel_id, entity_id, bitmap_offset };
     }
