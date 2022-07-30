@@ -9,8 +9,6 @@ namespace gpuf
 
 
 
-
-
 GPU_FUNCTION
 static void init_player(Entity& player, PlayerBitmap const& bitmap, u32 player_offset)
 {

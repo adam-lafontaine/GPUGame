@@ -9,8 +9,6 @@
 #include <thread>
 
 constexpr auto WINDOW_TITLE = app::APP_TITLE;
-constexpr int WINDOW_WIDTH = app::SCREEN_BUFFER_WIDTH;
-constexpr int WINDOW_HEIGHT = app::SCREEN_BUFFER_HEIGHT;
 
 constexpr u32 SCREEN_BYTES_PER_PIXEL = 4;
 
@@ -26,7 +24,7 @@ GlobalVariable b32 g_running = false;
 class BitmapBuffer
 {
 public:
-    u32 bytes_per_pixel = 4;
+    u32 bytes_per_pixel = SCREEN_BYTES_PER_PIXEL;
 
     void* memory;
     int width;
@@ -53,15 +51,6 @@ static void destroy_app_memory(app::AppMemory& memory)
     {
         free(memory.permanent_storage);
     }    
-}
-
-
-static void set_app_screen_buffer(BitmapBuffer const& back_buffer, app::ScreenBuffer& app_buffer)
-{
-    app_buffer.memory = back_buffer.memory;
-    app_buffer.width = back_buffer.width;
-    app_buffer.height = back_buffer.height;
-    app_buffer.bytes_per_pixel = back_buffer.bytes_per_pixel;
 }
 
 
@@ -126,17 +115,9 @@ static void close_game_controllers(SDLInput& sdl, Input const& input)
 }
 
 
-static void init_app_screen_buffer(app::ScreenBuffer& screen_buffer)
-{
-    screen_buffer.width = WINDOW_WIDTH;
-    screen_buffer.height = WINDOW_HEIGHT;
-    screen_buffer.bytes_per_pixel = SCREEN_BYTES_PER_PIXEL;
-}
-
-
 static void resize_offscreen_buffer(BitmapBuffer& buffer, int width, int height)
 { 
-    if(width == buffer.width && height == buffer.height)
+    if(buffer.memory && buffer.texture && width == buffer.width && height == buffer.height)
     {
         return;
     }
@@ -170,7 +151,7 @@ static void resize_offscreen_buffer(BitmapBuffer& buffer, int width, int height)
 }
 
 
-static bool init_bitmap_buffer(BitmapBuffer& buffer, SDL_Window* window, int width, int height)
+static bool init_screen_memory(SDL_Window* window, BitmapBuffer& buffer, app::ScreenBuffer& app_buffer)
 {
     buffer.renderer = SDL_CreateRenderer(window, -1, 0);
     
@@ -180,13 +161,18 @@ static bool init_bitmap_buffer(BitmapBuffer& buffer, SDL_Window* window, int wid
         return false;
     }
 
-    resize_offscreen_buffer(buffer, width, height);
+    resize_offscreen_buffer(buffer, app::screen_buffer_width(), app::screen_buffer_height());
     
     if(!buffer.memory)
     {
         printf("Back buffer memory failed\n");
         return false;
     }
+
+    app_buffer.memory = buffer.memory;
+    app_buffer.width = buffer.width;
+    app_buffer.height = buffer.height;
+    app_buffer.bytes_per_pixel = buffer.bytes_per_pixel;
 
     return true;
 }
@@ -322,8 +308,8 @@ SDL_Window* create_window()
         WINDOW_TITLE,
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
-        WINDOW_WIDTH,
-        WINDOW_HEIGHT,
+        app::screen_buffer_width(),
+        app::screen_buffer_height(),
         SDL_WINDOW_RESIZABLE);
 
     if (!window)
@@ -371,17 +357,13 @@ int main(int argc, char *argv[])
     input[1].num_controllers = input[0].num_controllers;
     printf("controllers = %d\n", input[0].num_controllers);
 
-    init_app_screen_buffer(app_screen_buffer);
-
-    if(!init_bitmap_buffer(back_buffer, window, WINDOW_WIDTH, WINDOW_HEIGHT))
+    if(!init_screen_memory(window, back_buffer, app_screen_buffer))
     {
-        display_error("Creating back buffer failed");
+        display_error("initializing screen memory failed");
         cleanup();
 
         return EXIT_FAILURE;
     }
-
-    set_app_screen_buffer(back_buffer, app_screen_buffer);
     
     allocate_app_memory(app_memory);
     if (!app_memory.permanent_storage)

@@ -6,10 +6,6 @@ namespace app
 {
 	constexpr auto APP_TITLE = "GPU Game";
 
-	// allocate memory
-	constexpr u32 SCREEN_BUFFER_HEIGHT = 800;
-	constexpr u32 SCREEN_BUFFER_WIDTH = SCREEN_BUFFER_HEIGHT * 10 / 8;
-
 
 	class AppMemory
 	{
@@ -39,6 +35,10 @@ namespace app
 
 	// app.cpp
 	void end_program(AppMemory& memory);
+	
+	u32 screen_buffer_width();
+	
+	u32 screen_buffer_height();	
 }
 
 

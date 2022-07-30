@@ -6,6 +6,9 @@
 namespace img = libimage;
 
 
+constexpr auto GRASS_TILE_PATH = "/home/adam/Repos/GPUGame/assets/tiles/basic_grass.png";
+
+
 static Pixel get_avg_color(image_t const& image)
 {
     auto sub_h = image.height / 2;
@@ -80,7 +83,7 @@ static void fill_color(Image const& img, Pixel color)
 
     for(u32 i = 0; i < img.width * img.height; ++i)
     {
-        img.data[i] = i % 2 == 0 ? black : color;
+        img.data[i] = i % 3 == 0 ? black : color;
     }
 }
 

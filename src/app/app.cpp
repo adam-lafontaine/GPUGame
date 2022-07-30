@@ -352,4 +352,16 @@ namespace app
         cuda::free(state.unified_buffer);
 
     }
+
+
+    u32 screen_buffer_width()
+    {
+        return SCREEN_WIDTH_PX;
+    }
+
+	
+	u32 screen_buffer_height()
+    {
+        return SCREEN_HEIGHT_PX;
+    }
 }

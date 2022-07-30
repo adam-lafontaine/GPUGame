@@ -2,6 +2,9 @@
 
 #include "../device/device.hpp"
 
+constexpr u32 SCREEN_HEIGHT_PX = 800;
+constexpr u32 SCREEN_WIDTH_PX = SCREEN_HEIGHT_PX * 10 / 8;
+
 
 using uInput = u32;
 
@@ -70,10 +73,39 @@ using WallBitmap = Bitmap<WALL_WIDTH_PX, WALL_HEIGHT_PX>;
 
 
 // bitmap + avg_color
-constexpr auto N_TILE_PIXELS = TILE_WIDTH_PX * TILE_HEIGHT_PX + 1;
-constexpr auto N_PLAYER_PIXELS = PLAYER_WIDTH_PX * PLAYER_HEIGHT_PX + 1;
-constexpr auto N_BLUE_PIXELS = BLUE_WIDTH_PX * BLUE_HEIGHT_PX + 1;
-constexpr auto N_WALL_PIXELS = WALL_WIDTH_PX * WALL_HEIGHT_PX + 1;
+constexpr auto N_TILE_BITMAP_PIXELS = TILE_WIDTH_PX * TILE_HEIGHT_PX + 1;
+constexpr auto N_PLAYER_BITMAP_PIXELS = PLAYER_WIDTH_PX * PLAYER_HEIGHT_PX + 1;
+constexpr auto N_BLUE_BITMAP_PIXELS = BLUE_WIDTH_PX * BLUE_HEIGHT_PX + 1;
+constexpr auto N_WALL_BITMAP_PIXELS = WALL_WIDTH_PX * WALL_HEIGHT_PX + 1;
+
+
+class DeviceAssets
+{
+public:
+    Tile grass_tile;
+    Tile black_tile;
+
+    PlayerBitmap player_bitmap;
+    BlueBitmap blue_bitmap;
+    WallBitmap wall_bitmap;
+};
+
+
+constexpr size_t total_asset_pixel_size()
+{
+    u32 n_tiles = 2;
+    u32 n_players = 1;
+    u32 n_blue = 1;
+    u32 n_wall = 1;    
+
+    u32 n_pixels = 
+        n_tiles * N_TILE_BITMAP_PIXELS +
+        n_players * N_PLAYER_BITMAP_PIXELS +
+        n_blue * N_BLUE_BITMAP_PIXELS +
+        n_wall * N_WALL_BITMAP_PIXELS;
+
+    return n_pixels * sizeof(Pixel);
+}
 
 
 class WorldPosition
@@ -118,33 +150,7 @@ public:
 };
 
 
-class DeviceAssets
-{
-public:
-    Tile grass_tile;
-    Tile black_tile;
 
-    PlayerBitmap player_bitmap;
-    BlueBitmap blue_bitmap;
-    WallBitmap wall_bitmap;
-};
-
-
-constexpr size_t total_asset_pixel_size()
-{
-    u32 n_tiles = 2;
-    u32 n_players = 1;
-    u32 n_blue = 1;
-    u32 n_wall = 1;    
-
-    u32 n_pixels = 
-        n_tiles * N_TILE_PIXELS +
-        n_players * N_PLAYER_PIXELS +
-        n_blue * N_BLUE_PIXELS +
-        n_wall * N_WALL_PIXELS;
-
-    return n_pixels * sizeof(Pixel);
-}
 
 
 using EntityArray = Array<Entity>;
@@ -156,9 +162,6 @@ class AppInput
 public:
 
     bool reset_frame_count;
-
-    //u32 screen_width_px;
-    //u32 screen_height_px;
 
     r32 screen_width_m;
 

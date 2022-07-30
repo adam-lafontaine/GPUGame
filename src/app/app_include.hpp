@@ -21,12 +21,9 @@ static void print_error(cstr msg)
 }
 
 
-constexpr auto GRASS_TILE_PATH = "/home/adam/Repos/GPUGame/assets/tiles/basic_grass.png";
-
-
 constexpr r32 screen_height_m(r32 screen_width_m)
 {
-    return screen_width_m * app::SCREEN_BUFFER_HEIGHT / app::SCREEN_BUFFER_WIDTH;
+    return screen_width_m * SCREEN_HEIGHT_PX / SCREEN_WIDTH_PX;
 }
 
 
@@ -39,9 +36,9 @@ constexpr r32 px_to_m(r32 n_pixels, r32 width_m, u32 width_px)
 constexpr size_t host_memory_sz()
 {
     // HostImage screen_pixels;
-    auto screen_pixels_data_sz = app::SCREEN_BUFFER_WIDTH * app::SCREEN_BUFFER_HEIGHT * sizeof(Pixel);
+    //auto screen_pixels_data_sz = app::SCREEN_BUFFER_WIDTH * app::SCREEN_BUFFER_HEIGHT * sizeof(Pixel);
 
-    return screen_pixels_data_sz;
+    return  0; //screen_pixels_data_sz;
 }
 
 
