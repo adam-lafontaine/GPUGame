@@ -178,8 +178,8 @@ static bool load_device_assets(MemoryBuffer<Pixel>& buffer, DeviceAssets& assets
     }
 
     // wall
-    auto brown = to_pixel(150, 75, 0);
-    fill_color(wall_img, brown);
+    auto wall = to_pixel(150, 75, 0);
+    fill_color(wall_img, wall);
     if(!init_bitmap(buffer, wall_img, assets.wall_bitmap))
     {
         cleanup();
@@ -309,14 +309,14 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
     device.blue_entities.data = blue_data;
     device.blue_entities.n_elements = N_BLUE_ENTITIES;
 
-    auto wall_data = cuda::push_elements(state.device_entity_buffer, N_BROWN_ENTITIES);
+    auto wall_data = cuda::push_elements(state.device_entity_buffer, N_WALL_ENTITIES);
     if(!wall_data)
     {
         print_error("wall data");
         return false;
     }
     device.wall_entities.data = wall_data;
-    device.wall_entities.n_elements = N_BROWN_ENTITIES;
+    device.wall_entities.n_elements = N_WALL_ENTITIES;
 
     device.entities.data = player_data;
 

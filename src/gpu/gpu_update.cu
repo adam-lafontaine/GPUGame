@@ -3,8 +3,8 @@
 #include <cassert>
 
 
-constexpr auto N_PLAYER_WALL_COLLISIONS = N_PLAYER_ENTITIES * N_BROWN_ENTITIES;
-constexpr auto N_BLUE_WALL_COLLISIONS = N_BLUE_ENTITIES * N_BROWN_ENTITIES;
+constexpr auto N_PLAYER_WALL_COLLISIONS = N_PLAYER_ENTITIES * N_WALL_ENTITIES;
+constexpr auto N_BLUE_WALL_COLLISIONS = N_BLUE_ENTITIES * N_WALL_ENTITIES;
 constexpr auto N_PLAYER_BLUE_COLLISIONS =  N_PLAYER_ENTITIES * N_BLUE_ENTITIES;
 constexpr auto N_BLUE_BLUE_COLLISIONS = N_BLUE_ENTITIES * N_BLUE_ENTITIES;
 
@@ -358,8 +358,8 @@ static void gpu_player_wall(DeviceMemory* device_p, u32 n_threads)
 
     auto offset = (u32)t;
 
-    auto player_offset = offset / N_BROWN_ENTITIES;
-    auto wall_offset = offset - player_offset * N_BROWN_ENTITIES;
+    auto player_offset = offset / N_WALL_ENTITIES;
+    auto wall_offset = offset - player_offset * N_WALL_ENTITIES;
 
     auto& player = device.player_entities.data[player_offset];
     auto& wall = device.wall_entities.data[wall_offset];
@@ -383,8 +383,8 @@ static void gpu_blue_wall(DeviceMemory* device_p, u32 n_threads)
 
     auto offset = (u32)t;
 
-    auto blue_offset = offset / N_BROWN_ENTITIES;
-    auto wall_offset = offset - blue_offset * N_BROWN_ENTITIES;
+    auto blue_offset = offset / N_WALL_ENTITIES;
+    auto wall_offset = offset - blue_offset * N_WALL_ENTITIES;
 
     auto& blue = device.blue_entities.data[blue_offset];
     auto& wall = device.wall_entities.data[wall_offset];

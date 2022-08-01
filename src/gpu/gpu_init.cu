@@ -119,9 +119,9 @@ static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
 GPU_FUNCTION
 static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_offset)
 {
-    assert(wall_offset < N_BROWN_ENTITIES);
+    assert(wall_offset < N_WALL_ENTITIES);
 
-    wall.id = brown_id(wall_offset);
+    wall.id = wall_id(wall_offset);
     gpuf::set_active(wall);
 
     wall.bitmap.width = bitmap.width;
@@ -246,7 +246,7 @@ static void gpu_init_wall_entities(DeviceMemory* device_p, u32 n_threads)
     auto& device = *device_p;
     auto& assets = device.assets;
 
-    assert(n_threads == N_BROWN_ENTITIES);
+    assert(n_threads == N_WALL_ENTITIES);
 
     auto offset = (u32)t;
 
@@ -275,7 +275,7 @@ namespace gpu
         constexpr auto blue_threads = N_BLUE_ENTITIES;
         constexpr auto blue_blocks = calc_thread_blocks(blue_threads);
 
-        constexpr auto wall_threads = N_BROWN_ENTITIES;
+        constexpr auto wall_threads = N_WALL_ENTITIES;
         constexpr auto wall_blocks = calc_thread_blocks(wall_threads);
 
         constexpr auto tile_threads = N_WORLD_TILES;

@@ -323,9 +323,9 @@ inline u32 blue_id(u32 blue_offset)
 
 
 GPU_FUNCTION
-inline u32 brown_id(u32 brown_offset)
+inline u32 wall_id(u32 wall_offset)
 {
-    return BROWN_BEGIN + brown_offset;
+    return WALL_BEGIN + wall_offset;
 }
 
 
@@ -346,7 +346,7 @@ inline bool is_blue(u32 entity_id)
 GPU_FUNCTION
 inline bool is_wall(u32 entity_id)
 {
-    return gpuf::id_in_range(entity_id, BROWN_BEGIN, BROWN_END);
+    return gpuf::id_in_range(entity_id, WALL_BEGIN, WALL_END);
 }
 
 

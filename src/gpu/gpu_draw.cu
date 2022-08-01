@@ -12,7 +12,7 @@ constexpr auto N_PIXELS_PER_WALL = WALL_WIDTH_PX * WALL_HEIGHT_PX;
 constexpr auto N_ENTITY_PIXELS = 
     N_PLAYER_ENTITIES * N_PIXELS_PER_PLAYER +
     N_BLUE_ENTITIES * N_PIXELS_PER_BLUE +
-    N_BROWN_ENTITIES * N_PIXELS_PER_WALL;
+    N_WALL_ENTITIES * N_PIXELS_PER_WALL;
 
 
 namespace gpuf
@@ -23,8 +23,8 @@ constexpr auto PLAYER_PIXELS_BEGIN = 0U;
 constexpr auto PLAYER_PIXELS_END = PLAYER_PIXELS_BEGIN + N_PLAYER_ENTITIES * N_PIXELS_PER_PLAYER;
 constexpr auto BLUE_PIXELS_BEGIN = PLAYER_PIXELS_END;
 constexpr auto BLUE_PIXELS_END = BLUE_PIXELS_BEGIN + N_BLUE_ENTITIES * N_PIXELS_PER_BLUE;
-constexpr auto BROWN_PIXELS_BEGIN = BLUE_PIXELS_END;
-constexpr auto BROWN_PIXELS_END = BROWN_PIXELS_BEGIN + N_BROWN_ENTITIES * N_PIXELS_PER_WALL;
+constexpr auto WALL_PIXELS_BEGIN = BLUE_PIXELS_END;
+constexpr auto WALL_PIXELS_END = WALL_PIXELS_BEGIN + N_WALL_ENTITIES * N_PIXELS_PER_WALL;
 
 
 class EntityPixel
@@ -57,11 +57,11 @@ static EntityPixel get_entity_pixel(u32 entity_pixel_id)
         pixels_per_entity = N_PIXELS_PER_BLUE;
         get_id = gpuf::blue_id;
     }
-    else if(gpuf::id_in_range(entity_pixel_id, BROWN_PIXELS_BEGIN, BROWN_PIXELS_END))
+    else if(gpuf::id_in_range(entity_pixel_id, WALL_PIXELS_BEGIN, WALL_PIXELS_END))
     {
-        p_begin = BROWN_PIXELS_BEGIN;
+        p_begin = WALL_PIXELS_BEGIN;
         pixels_per_entity = N_PIXELS_PER_WALL;
-        get_id = gpuf::brown_id;        
+        get_id = gpuf::wall_id;        
     }
     else
     {
