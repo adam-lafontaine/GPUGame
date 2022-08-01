@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../device/device.hpp"
+#include "../libimage/image_types.hpp"
 
 constexpr u32 SCREEN_HEIGHT_PX = 800;
 constexpr u32 SCREEN_WIDTH_PX = SCREEN_HEIGHT_PX * 10 / 8;

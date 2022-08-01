@@ -1,35 +1,6 @@
 #pragma once
 
-#include <cstdint>
-#include <cstddef>
-#include <cmath>
-
-using u8 = uint8_t;
-using u16 = uint16_t;
-using u32 = uint32_t;
-using u64 = uint64_t;
-
-using i16 = int16_t;
-using i32 = int32_t;
-using i64 = int64_t;
-
-using r32 = float;
-using r64 = double;
-
-using b32 = uint32_t;
-
-using cstr = const char*;
-
-#define ArrayCount(arr) (sizeof(arr) / sizeof((arr)[0]))
-#define Kilobytes(value) ((value) * 1024LL)
-#define Megabytes(value) (Kilobytes(value) * 1024LL)
-#define Gigabytes(value) (Megabytes(value) * 1024LL)
-#define Terabytes(value) (Gigabytes(value) * 1024LL)
-
-#define GlobalVariable static
-
-//#define NO_CPP_17
-//#define NDEBUG
+#include "defs.hpp"
 
 
 class Vec2Di32
@@ -97,33 +68,12 @@ public:
 
 using Range2Du32 = Rect2Du32;
 
-
 using Point2Di32 = Vec2Di32;
 using Point2Dr32 = Vec2Dr32;
 using Point2Dr64 = Vec2Dr64;
 using Point2Du32 = Vec2Du32;
 
-constexpr auto RGB_CHANNELS = 3u;
-constexpr auto RGBA_CHANNELS = 4u;
 
-
-typedef union Pixel
-{
-	struct
-	{
-        u8 blue;
-		u8 green;
-		u8 red;
-		u8 alpha;		
-	};
-
-	u8 channels[RGBA_CHANNELS];
-
-	u32 value;
-
-} pixel_t;
-
-using pixel_t = Pixel;
 
 
 template <typename T>
@@ -137,10 +87,6 @@ public:
 };
 
 
-using Image = Matrix<Pixel>;
-using image_t = Image;
-
-
 template <typename T>
 class Array
 {
@@ -148,20 +94,6 @@ public:
 	u32 n_elements;
 	T* data;
 };
-
-
-
-inline pixel_t to_pixel(u8 red, u8 green, u8 blue)
-{
-	pixel_t p{};
-
-	p.alpha = 255;
-	p.red = red;
-	p.green = green;
-	p.blue = blue;
-
-	return p;
-}
 
 
 inline i32 round_r32_to_i32(r32 value)

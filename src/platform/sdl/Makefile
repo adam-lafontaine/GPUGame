@@ -297,7 +297,10 @@ device_image := $(app)/device_image
 
 
 # header files
+defs_h := $(utils)/defs.hpp
+
 types_h := $(utils)/types.hpp
+types_h += $(defs_h)
 
 stopwatch_h := $(utils)/stopwatch.hpp
 
@@ -308,8 +311,11 @@ stb_include_h := $(stb)/stb_include.hpp
 stb_include_h += $(stb_image_h)
 stb_include_h += $(stb_image_h)
 
+image_types_h := $(img)/image_types.hpp
+image_types_h += $(defs_h)
+
 libimage_h := $(img)/libimage.hpp
-libimage_h += $(types_h)
+libimage_h += $(image_types_h)
 
 button_state_h := $(input)/button_state.hpp
 button_state_h += $(types_h)
@@ -338,8 +344,11 @@ device_h += $(types_h)
 cuda_def_h := $(device)/cuda_def.cuh
 
 app_types_h := $(app)/app_types.hpp
+app_types_h += $(device_h)
+app_types_h += $(image_types_h)
 
 gpu_constants_h := $(gpu)/gpu_constants.hpp
+gpu_constants_h += $(defs_h)
 
 gpu_app_h := $(gpu)/gpu_app.hpp
 gpu_app_h += $(gpu_constants_h)

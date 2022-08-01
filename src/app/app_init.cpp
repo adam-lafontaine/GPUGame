@@ -9,7 +9,7 @@ namespace img = libimage;
 constexpr auto GRASS_TILE_PATH = "/home/adam/Repos/GPUGame/assets/tiles/basic_grass.png";
 
 
-static Pixel get_avg_color(image_t const& image)
+static Pixel get_avg_color(Image const& image)
 {
     auto sub_h = image.height;
     auto sub_w = image.width;
