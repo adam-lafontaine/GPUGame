@@ -2,9 +2,9 @@
 
 #include "../device/device.hpp"
 #include "../libimage/image_types.hpp"
+#include "app_constants.hpp"
 
-constexpr u32 SCREEN_HEIGHT_PX = 800;
-constexpr u32 SCREEN_WIDTH_PX = SCREEN_HEIGHT_PX * 10 / 8;
+
 
 
 using uInput = u32;
@@ -53,18 +53,6 @@ public:
     static constexpr u32 height = H;
 };
 
-
-constexpr u32 TILE_WIDTH_PX = 64;
-constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;
-
-constexpr u32 PLAYER_WIDTH_PX = 12;
-constexpr u32 PLAYER_HEIGHT_PX = PLAYER_WIDTH_PX;
-
-constexpr u32 BLUE_WIDTH_PX = 5;
-constexpr u32 BLUE_HEIGHT_PX = BLUE_WIDTH_PX;
-
-constexpr u32 WALL_WIDTH_PX = 16;
-constexpr u32 WALL_HEIGHT_PX = WALL_WIDTH_PX;
 
 
 using Tile = Bitmap<TILE_WIDTH_PX, TILE_HEIGHT_PX>;
@@ -147,7 +135,7 @@ public:
 
     WorldPosition next_position;
 
-    uStatus status = 0;    
+    uStatus status = 0;
 };
 
 

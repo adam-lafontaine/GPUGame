@@ -295,7 +295,6 @@ input_record := $(app)/input_record
 device_image := $(app)/device_image
 
 
-
 # header files
 defs_h := $(utils)/defs.hpp
 
@@ -343,15 +342,16 @@ device_h += $(types_h)
 
 cuda_def_h := $(device)/cuda_def.cuh
 
+app_constants_h := $(app)/app_constants.hpp
+app_constants_h += $(defs_h)
+
 app_types_h := $(app)/app_types.hpp
 app_types_h += $(device_h)
 app_types_h += $(image_types_h)
+app_types_h += $(app_constants_h)
 
-gpu_constants_h := $(gpu)/gpu_constants.hpp
-gpu_constants_h += $(defs_h)
 
 gpu_app_h := $(gpu)/gpu_app.hpp
-gpu_app_h += $(gpu_constants_h)
 gpu_app_h += $(app_types_h)
 
 gpu_include_h := $(gpu)/gpu_include.cuh
@@ -399,8 +399,8 @@ app_c        := $(app)/app.cpp
 app_o        := $(build_app)/app.o
 object_files += $(app_o)
 
-app_init_c        := $(app)/app_init.cpp
-app_init_o        := $(build_app)/app_init.o
+app_init_c   := $(app)/app_init.cpp
+app_init_o   := $(build_app)/app_init.o
 object_files += $(app_init_o)
 
 

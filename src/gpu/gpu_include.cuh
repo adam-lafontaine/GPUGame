@@ -308,14 +308,6 @@ inline bool id_in_range(u32 id, u32 begin, u32 end)
 }
 
 
-constexpr auto PLAYER_BEGIN = 0U;
-constexpr auto PLAYER_END = N_PLAYER_ENTITIES;
-constexpr auto BLUE_BEGIN = PLAYER_END;
-constexpr auto BLUE_END = BLUE_BEGIN + N_BLUE_ENTITIES;
-constexpr auto BROWN_BEGIN = BLUE_END;
-constexpr auto BROWN_END = BROWN_BEGIN + N_BROWN_ENTITIES;
-
-
 GPU_FUNCTION
 inline u32 player_id(u32 player_offset)
 {

@@ -3,6 +3,23 @@
 #include "../utils/defs.hpp"
 
 
+constexpr u32 SCREEN_HEIGHT_PX = 800;
+constexpr u32 SCREEN_WIDTH_PX = SCREEN_HEIGHT_PX * 10 / 8;
+
+
+constexpr u32 TILE_WIDTH_PX = 64;
+constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;
+
+constexpr u32 PLAYER_WIDTH_PX = 12;
+constexpr u32 PLAYER_HEIGHT_PX = PLAYER_WIDTH_PX;
+
+constexpr u32 BLUE_WIDTH_PX = 5;
+constexpr u32 BLUE_HEIGHT_PX = BLUE_WIDTH_PX;
+
+constexpr u32 WALL_WIDTH_PX = 20;
+constexpr u32 WALL_HEIGHT_PX = WALL_WIDTH_PX;
+
+
 constexpr r32 TILE_LENGTH_M = 0.5f;
 
 constexpr u32 MIN_SCREEN_WIDTH_TILE = 10;
@@ -25,3 +42,11 @@ constexpr u32 N_PLAYER_ENTITIES = 1;
 
 constexpr u32 N_ENTITIES = N_BLUE_ENTITIES + N_BROWN_ENTITIES + N_PLAYER_ENTITIES;
 constexpr u32 N_MOVABLE_ENTITIES = N_PLAYER_ENTITIES + N_BLUE_ENTITIES;
+
+
+constexpr auto PLAYER_BEGIN = 0U;
+constexpr auto PLAYER_END = N_PLAYER_ENTITIES;
+constexpr auto BLUE_BEGIN = PLAYER_END;
+constexpr auto BLUE_END = BLUE_BEGIN + N_BLUE_ENTITIES;
+constexpr auto BROWN_BEGIN = BLUE_END;
+constexpr auto BROWN_END = BROWN_BEGIN + N_BROWN_ENTITIES;
