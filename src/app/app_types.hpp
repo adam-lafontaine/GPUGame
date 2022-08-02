@@ -111,7 +111,10 @@ namespace STATUS
 {
     constexpr uStatus ACTIVE = 1;
     constexpr uStatus ONSCREEN = 2 * ACTIVE;
+    constexpr uStatus INV_X = 2 * ONSCREEN;
+    constexpr uStatus INV_Y = 2 * INV_X;
 }
+
 
 class Entity
 {
@@ -128,8 +131,8 @@ public:
     Vec2Dr32 dt;
     r32 speed;
 
-    b32 inv_x = false;
-    b32 inv_y = false;
+    //b32 inv_x = false;
+    //b32 inv_y = false;
 
     Vec2Dr32 delta_pos_m;
 

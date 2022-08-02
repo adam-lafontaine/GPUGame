@@ -16,7 +16,7 @@ using i64 = int64_t;
 using r32 = float;
 using r64 = double;
 
-using b32 = uint32_t;
+using b32 = bool;
 
 using cstr = const char*;
 

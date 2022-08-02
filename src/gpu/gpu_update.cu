@@ -86,7 +86,7 @@ void apply_current_input(Entity& entity, InputList const& inputs, u64 frame)
 GPU_FUNCTION
 static void stop_wall(Entity& ent, Entity const& wall)
 {   
-    if(!gpuf::is_active(ent) || !is_active(wall))
+    if(!gpuf::is_active(ent) || !gpuf::is_active(wall))
     {
         return;
     }
@@ -143,7 +143,7 @@ static void stop_wall(Entity& ent, Entity const& wall)
 GPU_FUNCTION
 static void bounce_wall(Entity& ent, Entity const& wall)
 {
-    if(!gpuf::is_active(ent) || !is_active(wall))
+    if(!gpuf::is_active(ent) || !gpuf::is_active(wall))
     {
         return;
     }
@@ -167,13 +167,13 @@ static void bounce_wall(Entity& ent, Entity const& wall)
     auto e_x_finish = gpuf::add_delta(e_start, { ent.delta_pos_m.x, 0.0f });
     if(gpuf::rect_intersect(e_x_finish, w))
     {
-        ent.inv_x = true;
+        gpuf::set_inv_x(ent);
     }
 
     auto e_y_finish = gpuf::add_delta(e_start, { 0.0f, ent.delta_pos_m.y });
     if(gpuf::rect_intersect(e_y_finish, w))
     {
-        ent.inv_y = true;
+        gpuf::set_inv_y(ent);
     }
     
 }
@@ -182,7 +182,7 @@ static void bounce_wall(Entity& ent, Entity const& wall)
 GPU_FUNCTION
 static void blue_blue(Entity& a, Entity const& b)
 {
-    if(!gpuf::is_active(a) || !is_active(b))
+    if(!gpuf::is_active(a) || !gpuf::is_active(b))
     {
         return;
     }
@@ -206,13 +206,13 @@ static void blue_blue(Entity& a, Entity const& b)
     auto a_x_finish = gpuf::add_delta(a_start, { a.delta_pos_m.x, 0.0f });
     if(gpuf::rect_intersect(a_x_finish, b_finish))
     {
-        a.inv_x = true;
+        gpuf::set_inv_x(a);
     }
 
     auto a_y_finish = gpuf::add_delta(a_start, { 0.0f, a.delta_pos_m.y });
     if(gpuf::rect_intersect(a_y_finish, b_finish))
     {
-        a.inv_y = true;
+        gpuf::set_inv_y(a);
     }
 }
 
@@ -259,13 +259,13 @@ static void entity_next_position(Entity& entity)
 GPU_FUNCTION
 static void update_entity_position(Entity& entity, ScreenProps const& props)
 {
-    if(entity.inv_x)
+    if(gpuf::is_inv_x(entity))
     {
         entity.delta_pos_m.x = 0.0f;
         entity.dt.x *= -1.0f;
     }
 
-    if(entity.inv_y)
+    if(gpuf::is_inv_y(entity))
     {
         entity.delta_pos_m.y = 0.0f;
         entity.dt.y *= -1.0f;
@@ -275,8 +275,7 @@ static void update_entity_position(Entity& entity, ScreenProps const& props)
 
     entity.next_position = entity.position;
     entity.delta_pos_m = { 0.0f, 0.0f };
-    entity.inv_x = false;
-    entity.inv_y = false;    
+    gpuf::unset_inv(entity);   
 }
 
 

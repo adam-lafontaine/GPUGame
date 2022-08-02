@@ -178,8 +178,8 @@ static bool load_device_assets(MemoryBuffer<Pixel>& buffer, DeviceAssets& assets
     }
 
     // wall
-    auto wall = to_pixel(150, 75, 0);
-    fill_color(wall_img, wall);
+    auto brown = to_pixel(150, 75, 0);
+    fill_color(wall_img, brown);
     if(!init_bitmap(buffer, wall_img, assets.wall_bitmap))
     {
         cleanup();

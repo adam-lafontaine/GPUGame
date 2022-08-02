@@ -398,6 +398,43 @@ inline void set_offscreen(Entity& entity)
     entity.status &= ~STATUS::ONSCREEN;
 }
 
+
+GPU_FUNCTION
+inline bool is_inv_x(Entity const& entity)
+{
+    return entity.status & STATUS::INV_X;
+}
+
+
+GPU_FUNCTION
+inline bool is_inv_y(Entity const& entity)
+{
+    return entity.status & STATUS::INV_Y;
+}
+
+
+GPU_FUNCTION
+inline void set_inv_x(Entity& entity)
+{
+    entity.status |= STATUS::INV_X;
+}
+
+
+GPU_FUNCTION
+inline void set_inv_y(Entity& entity)
+{
+    entity.status |= STATUS::INV_Y;
+}
+
+
+GPU_FUNCTION
+inline void unset_inv(Entity& entity)
+{
+    constexpr auto inv = STATUS::INV_X | STATUS::INV_Y;
+
+    entity.status &= ~inv;
+}
+
 /***********************/
 
 }
