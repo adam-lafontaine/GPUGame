@@ -278,7 +278,7 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
     // tilemap
     auto const n_tilemap_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;
 
-    if(!cuda::device_malloc(state.device_tile_buffer, n_tilemap_tiles * sizeof(Tile)))
+    if(!cuda::device_malloc(state.device_tile_buffer, SIZE::DeviceMemory_Tile))
     {
         print_error("device tiles");
         return false;
@@ -296,39 +296,38 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
 
 
     // entities
-    auto const n_entities = N_ENTITIES;
-    if(!cuda::device_malloc(state.device_entity_buffer, n_entities * sizeof(Entity)))
+    if(!cuda::device_malloc(state.device_entity_buffer, SIZE::DeviceMemory_Entity))
     {
         print_error("entities");
         return false;
     }
 
-    auto player_data = cuda::push_elements(state.device_entity_buffer, N_PLAYER_ENTITIES);
+    auto player_data = cuda::push_elements(state.device_entity_buffer, COUNT::PLAYER_ENTITIES);
     if(!player_data)
     {
         print_error("player data");
         return false;
     }
     device.player_entities.data = player_data;
-    device.player_entities.n_elements = N_PLAYER_ENTITIES;
+    device.player_entities.n_elements = COUNT::PLAYER_ENTITIES;
 
-    auto blue_data = cuda::push_elements(state.device_entity_buffer, N_BLUE_ENTITIES);
+    auto blue_data = cuda::push_elements(state.device_entity_buffer, COUNT::BLUE_ENTITIES);
     if(!blue_data)
     {
         print_error("blue data");
         return false;
     }
     device.blue_entities.data = blue_data;
-    device.blue_entities.n_elements = N_BLUE_ENTITIES;
+    device.blue_entities.n_elements = COUNT::BLUE_ENTITIES;
 
-    auto wall_data = cuda::push_elements(state.device_entity_buffer, N_WALL_ENTITIES);
+    auto wall_data = cuda::push_elements(state.device_entity_buffer, COUNT::WALL_ENTITIES);
     if(!wall_data)
     {
         print_error("wall data");
         return false;
     }
     device.wall_entities.data = wall_data;
-    device.wall_entities.n_elements = N_WALL_ENTITIES;
+    device.wall_entities.n_elements = COUNT::WALL_ENTITIES;
 
     device.entities.data = player_data;
 

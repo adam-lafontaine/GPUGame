@@ -91,7 +91,7 @@ namespace SIZE
 
     constexpr size_t DeviceAssets_Pixel = 
         sizeof(Pixel) * 
-        (N_TILE_ASSETS * N_WORLD_TILES + 
+        (N_TILE_ASSETS * COUNT::WORLD_TILES + 
         N_PLAYER_ASSETS * N_PLAYER_BITMAP_PIXELS + 
         N_BLUE_ASSETS * N_BLUE_BITMAP_PIXELS +
         N_WALL_ASSETS * N_WALL_BITMAP_PIXELS);
@@ -212,11 +212,9 @@ public:
 
 namespace SIZE
 {
-    constexpr auto N_SCREEN_PIXELS = SCREEN_WIDTH_PX * SCREEN_WIDTH_PX;
-    constexpr auto N_WORLD_TILES = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;
-
-    constexpr size_t DeviceMemory_Pixel = DeviceAssets_Pixel + N_SCREEN_PIXELS * sizeof(Pixel);
-    constexpr size_t DeviceMemory_Tile = N_WORLD_TILES * sizeof(Tile);
+    constexpr size_t DeviceMemory_Pixel = DeviceAssets_Pixel + COUNT::SCREEN_PIXELS * sizeof(Pixel);
+    constexpr size_t DeviceMemory_Tile = COUNT::WORLD_TILES * sizeof(Tile);
+    constexpr size_t DeviceMemory_Entity = COUNT::ENTITIES * sizeof(Entity);
 }
 
 

@@ -3,10 +3,13 @@
 #include <cassert>
 
 
-constexpr auto N_PLAYER_WALL_COLLISIONS = N_PLAYER_ENTITIES * N_WALL_ENTITIES;
-constexpr auto N_BLUE_WALL_COLLISIONS = N_BLUE_ENTITIES * N_WALL_ENTITIES;
-constexpr auto N_PLAYER_BLUE_COLLISIONS =  N_PLAYER_ENTITIES * N_BLUE_ENTITIES;
-constexpr auto N_BLUE_BLUE_COLLISIONS = N_BLUE_ENTITIES * N_BLUE_ENTITIES;
+namespace COUNT
+{
+    constexpr auto PLAYER_WALL_COLLISIONS = PLAYER_ENTITIES * WALL_ENTITIES;
+    constexpr auto BLUE_WALL_COLLISIONS = BLUE_ENTITIES * WALL_ENTITIES;
+    constexpr auto PLAYER_BLUE_COLLISIONS =  PLAYER_ENTITIES * BLUE_ENTITIES;
+    constexpr auto BLUE_BLUE_COLLISIONS = BLUE_ENTITIES * BLUE_ENTITIES;
+}
 
 
 namespace gpuf
@@ -316,7 +319,7 @@ static void gpu_next_movable_positions(DeviceMemory* device_p, UnifiedMemory* un
         return;
     }
 
-    assert(n_threads == N_MOVABLE_ENTITIES);
+    assert(n_threads == COUNT::MOVABLE_ENTITIES);
 
     auto& device = *device_p;
     auto& unified = *unified_p;
@@ -351,14 +354,14 @@ static void gpu_player_wall(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
-    assert(n_threads == N_PLAYER_WALL_COLLISIONS);
+    assert(n_threads == COUNT::PLAYER_WALL_COLLISIONS);
 
     auto& device = *device_p;
 
     auto offset = (u32)t;
 
-    auto player_offset = offset / N_WALL_ENTITIES;
-    auto wall_offset = offset - player_offset * N_WALL_ENTITIES;
+    auto player_offset = offset / COUNT::WALL_ENTITIES;
+    auto wall_offset = offset - player_offset * COUNT::WALL_ENTITIES;
 
     auto& player = device.player_entities.data[player_offset];
     auto& wall = device.wall_entities.data[wall_offset];
@@ -376,14 +379,14 @@ static void gpu_blue_wall(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
-    assert(n_threads == N_BLUE_WALL_COLLISIONS);
+    assert(n_threads == COUNT::BLUE_WALL_COLLISIONS);
 
     auto& device = *device_p;
 
     auto offset = (u32)t;
 
-    auto blue_offset = offset / N_WALL_ENTITIES;
-    auto wall_offset = offset - blue_offset * N_WALL_ENTITIES;
+    auto blue_offset = offset / COUNT::WALL_ENTITIES;
+    auto wall_offset = offset - blue_offset * COUNT::WALL_ENTITIES;
 
     auto& blue = device.blue_entities.data[blue_offset];
     auto& wall = device.wall_entities.data[wall_offset];
@@ -401,14 +404,14 @@ static void gpu_player_blue(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
-    assert(n_threads == N_PLAYER_BLUE_COLLISIONS);
+    assert(n_threads == COUNT::PLAYER_BLUE_COLLISIONS);
 
     auto& device = *device_p;
 
     auto offset = (u32)t;
 
-    auto player_offset = offset / N_BLUE_ENTITIES;
-    auto blue_offset = offset - player_offset * N_BLUE_ENTITIES;
+    auto player_offset = offset / COUNT::BLUE_ENTITIES;
+    auto blue_offset = offset - player_offset * COUNT::BLUE_ENTITIES;
 
     auto& blue = device.blue_entities.data[blue_offset];
     auto& player = device.player_entities.data[player_offset];
@@ -426,14 +429,14 @@ static void gpu_blue_blue(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
-    assert(n_threads == N_BLUE_BLUE_COLLISIONS);
+    assert(n_threads == COUNT::BLUE_BLUE_COLLISIONS);
 
     auto& device = *device_p;
 
     auto offset = (u32)t;
 
-    auto a_offset = offset / N_BLUE_ENTITIES;
-    auto b_offset = offset - a_offset * N_BLUE_ENTITIES;
+    auto a_offset = offset / COUNT::BLUE_ENTITIES;
+    auto b_offset = offset - a_offset * COUNT::BLUE_ENTITIES;
 
     if(a_offset == b_offset)
     {
@@ -456,7 +459,7 @@ static void gpu_update_entity_positions(ScreenProps props, u32 n_threads)
         return;
     }
 
-    assert(n_threads == N_ENTITIES);
+    assert(n_threads == COUNT::ENTITIES);
 
     auto& device = *props.device_p;
 
@@ -480,22 +483,22 @@ namespace gpu
         bool result = cuda::no_errors("gpu::update");
         assert(result);
 
-        constexpr auto entity_threads = N_ENTITIES;
+        constexpr auto entity_threads = COUNT::ENTITIES;
         constexpr auto entity_blocks = calc_thread_blocks(entity_threads);
         
-        constexpr auto movable_threads = N_MOVABLE_ENTITIES;
+        constexpr auto movable_threads = COUNT::MOVABLE_ENTITIES;
         constexpr auto movable_blocks = calc_thread_blocks(movable_threads);
 
-        constexpr auto player_wall_threads = N_PLAYER_WALL_COLLISIONS;
+        constexpr auto player_wall_threads = COUNT::PLAYER_WALL_COLLISIONS;
         constexpr auto player_wall_blocks = calc_thread_blocks(player_wall_threads);
 
-        constexpr auto blue_wall_threads = N_BLUE_WALL_COLLISIONS;
+        constexpr auto blue_wall_threads = COUNT::BLUE_WALL_COLLISIONS;
         constexpr auto blue_wall_blocks = calc_thread_blocks(blue_wall_threads);
 
-        constexpr auto player_blue_threads = N_PLAYER_BLUE_COLLISIONS;
+        constexpr auto player_blue_threads = COUNT::PLAYER_BLUE_COLLISIONS;
         constexpr auto player_blue_blocks = calc_thread_blocks(player_blue_threads);
 
-        constexpr auto blue_blue_threads = N_BLUE_BLUE_COLLISIONS;
+        constexpr auto blue_blue_threads = COUNT::BLUE_BLUE_COLLISIONS;
         constexpr auto blue_blue_blocks = calc_thread_blocks(blue_blue_threads);
 
         auto device_p = state.device_buffer.data;

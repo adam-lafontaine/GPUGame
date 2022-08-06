@@ -3,16 +3,19 @@
 #include <cassert>
 
 
-constexpr auto N_SCREEN_PIXELS = SCREEN_HEIGHT_PX * SCREEN_WIDTH_PX;
+namespace COUNT
+{
+    constexpr auto PIXELS_PER_PLAYER = PLAYER_WIDTH_PX * PLAYER_HEIGHT_PX;
+    constexpr auto PIXELS_PER_BLUE = BLUE_WIDTH_PX * BLUE_HEIGHT_PX;
+    constexpr auto PIXELS_PER_WALL = WALL_WIDTH_PX * WALL_HEIGHT_PX;
+    constexpr auto ENTITY_PIXELS = 
+        PLAYER_ENTITIES * PIXELS_PER_PLAYER +
+        BLUE_ENTITIES * PIXELS_PER_BLUE +
+        WALL_ENTITIES * PIXELS_PER_WALL;
+
+}
 
 
-constexpr auto N_PIXELS_PER_PLAYER = PLAYER_WIDTH_PX * PLAYER_HEIGHT_PX;
-constexpr auto N_PIXELS_PER_BLUE = BLUE_WIDTH_PX * BLUE_HEIGHT_PX;
-constexpr auto N_PIXELS_PER_WALL = WALL_WIDTH_PX * WALL_HEIGHT_PX;
-constexpr auto N_ENTITY_PIXELS = 
-    N_PLAYER_ENTITIES * N_PIXELS_PER_PLAYER +
-    N_BLUE_ENTITIES * N_PIXELS_PER_BLUE +
-    N_WALL_ENTITIES * N_PIXELS_PER_WALL;
 
 
 namespace gpuf
@@ -20,11 +23,11 @@ namespace gpuf
 /********************************/
 
 constexpr auto PLAYER_PIXELS_BEGIN = 0U;
-constexpr auto PLAYER_PIXELS_END = PLAYER_PIXELS_BEGIN + N_PLAYER_ENTITIES * N_PIXELS_PER_PLAYER;
+constexpr auto PLAYER_PIXELS_END = PLAYER_PIXELS_BEGIN + COUNT::PLAYER_ENTITIES * COUNT::PIXELS_PER_PLAYER;
 constexpr auto BLUE_PIXELS_BEGIN = PLAYER_PIXELS_END;
-constexpr auto BLUE_PIXELS_END = BLUE_PIXELS_BEGIN + N_BLUE_ENTITIES * N_PIXELS_PER_BLUE;
+constexpr auto BLUE_PIXELS_END = BLUE_PIXELS_BEGIN + COUNT::BLUE_ENTITIES * COUNT::PIXELS_PER_BLUE;
 constexpr auto WALL_PIXELS_BEGIN = BLUE_PIXELS_END;
-constexpr auto WALL_PIXELS_END = WALL_PIXELS_BEGIN + N_WALL_ENTITIES * N_PIXELS_PER_WALL;
+constexpr auto WALL_PIXELS_END = WALL_PIXELS_BEGIN + COUNT::WALL_ENTITIES * COUNT::PIXELS_PER_WALL;
 
 
 class EntityPixel
@@ -39,7 +42,7 @@ public:
 GPU_FUNCTION
 static EntityPixel get_entity_pixel(u32 entity_pixel_id)
 {
-    assert(entity_pixel_id < N_ENTITY_PIXELS);
+    assert(entity_pixel_id < COUNT::ENTITY_PIXELS);
 
     u32 p_begin = 0;
     u32 pixels_per_entity = 0;
@@ -48,19 +51,19 @@ static EntityPixel get_entity_pixel(u32 entity_pixel_id)
     if(gpuf::id_in_range(entity_pixel_id, PLAYER_PIXELS_BEGIN, PLAYER_PIXELS_END))
     {
         p_begin = PLAYER_PIXELS_BEGIN;
-        pixels_per_entity = N_PIXELS_PER_PLAYER;
+        pixels_per_entity = COUNT::PIXELS_PER_PLAYER;
         get_id = gpuf::player_id;
     }
     else if(gpuf::id_in_range(entity_pixel_id, BLUE_PIXELS_BEGIN, BLUE_PIXELS_END))
     {
         p_begin = BLUE_PIXELS_BEGIN;
-        pixels_per_entity = N_PIXELS_PER_BLUE;
+        pixels_per_entity = COUNT::PIXELS_PER_BLUE;
         get_id = gpuf::blue_id;
     }
     else if(gpuf::id_in_range(entity_pixel_id, WALL_PIXELS_BEGIN, WALL_PIXELS_END))
     {
         p_begin = WALL_PIXELS_BEGIN;
-        pixels_per_entity = N_PIXELS_PER_WALL;
+        pixels_per_entity = COUNT::PIXELS_PER_WALL;
         get_id = gpuf::wall_id;        
     }
     else
@@ -176,7 +179,7 @@ static void gpu_draw_entity_pixels(ScreenProps props, u32 n_threads)
         return;
     }
 
-    assert(n_threads == N_ENTITY_PIXELS);
+    assert(n_threads == COUNT::ENTITY_PIXELS);
 
     auto& device = *props.device_p;
 
@@ -244,10 +247,10 @@ namespace gpu
         bool result = cuda::no_errors("gpu::render");
         assert(result);
         
-        constexpr auto tile_pixel_threads = N_SCREEN_PIXELS;
+        constexpr auto tile_pixel_threads = COUNT::SCREEN_PIXELS;
         constexpr auto tile_pixel_blocks = calc_thread_blocks(tile_pixel_threads);
 
-        constexpr auto entity_pixel_threads = N_ENTITY_PIXELS;
+        constexpr auto entity_pixel_threads = COUNT::ENTITY_PIXELS;
         constexpr auto entity_pixel_blocks = calc_thread_blocks(entity_pixel_threads);
 
 

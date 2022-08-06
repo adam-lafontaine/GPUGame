@@ -12,7 +12,7 @@ namespace gpuf
 GPU_FUNCTION
 static void init_player(Entity& player, PlayerBitmap const& bitmap, u32 player_offset)
 {
-    assert(player_offset < N_PLAYER_ENTITIES);
+    assert(player_offset < COUNT::PLAYER_ENTITIES);
 
     player.id = player_id(player_offset);
     gpuf::set_active(player);
@@ -40,7 +40,7 @@ static void init_player(Entity& player, PlayerBitmap const& bitmap, u32 player_o
 GPU_FUNCTION
 static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
 {
-    assert(blue_offset < N_BLUE_ENTITIES);
+    assert(blue_offset < COUNT::BLUE_ENTITIES);
 
     entity.id = blue_id(blue_offset);
     gpuf::set_active(entity);
@@ -53,7 +53,7 @@ static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
     entity.width_m = 0.1f;
     entity.height_m = 0.1f;
 
-    auto w = (i32)N_BLUE_W;
+    auto w = (i32)COUNT::BLUE_W;
 
     auto y = (i32)blue_offset / w;
     auto x = (i32)blue_offset - y * w;
@@ -119,7 +119,7 @@ static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
 GPU_FUNCTION
 static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_offset)
 {
-    assert(wall_offset < N_WALL_ENTITIES);
+    assert(wall_offset < COUNT::WALL_ENTITIES);
 
     wall.id = wall_id(wall_offset);
     gpuf::set_active(wall);
@@ -203,7 +203,7 @@ static void gpu_init_players(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
-    assert(n_threads == N_PLAYER_ENTITIES);
+    assert(n_threads == COUNT::PLAYER_ENTITIES);
 
     auto& device = *device_p;
     auto& assets = device.assets;    
@@ -223,7 +223,7 @@ static void gpu_init_blue_entities(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
-    assert(n_threads == N_BLUE_ENTITIES);
+    assert(n_threads == COUNT::BLUE_ENTITIES);
 
     auto& device = *device_p;
     auto& assets = device.assets;
@@ -246,7 +246,7 @@ static void gpu_init_wall_entities(DeviceMemory* device_p, u32 n_threads)
     auto& device = *device_p;
     auto& assets = device.assets;
 
-    assert(n_threads == N_WALL_ENTITIES);
+    assert(n_threads == COUNT::WALL_ENTITIES);
 
     auto offset = (u32)t;
 
@@ -269,16 +269,16 @@ namespace gpu
             return false;
         }
 
-        constexpr auto player_threads = N_PLAYER_ENTITIES;
+        constexpr auto player_threads = COUNT::PLAYER_ENTITIES;
         constexpr auto player_blocks = calc_thread_blocks(player_threads);
 
-        constexpr auto blue_threads = N_BLUE_ENTITIES;
+        constexpr auto blue_threads = COUNT::BLUE_ENTITIES;
         constexpr auto blue_blocks = calc_thread_blocks(blue_threads);
 
-        constexpr auto wall_threads = N_WALL_ENTITIES;
+        constexpr auto wall_threads = COUNT::WALL_ENTITIES;
         constexpr auto wall_blocks = calc_thread_blocks(wall_threads);
 
-        constexpr auto tile_threads = N_WORLD_TILES;
+        constexpr auto tile_threads = COUNT::WORLD_TILES;
         constexpr auto tile_blocks = calc_thread_blocks(tile_threads);        
         
         
