@@ -61,11 +61,7 @@ using BlueBitmap = Bitmap<BLUE_WIDTH_PX, BLUE_HEIGHT_PX>;
 using WallBitmap = Bitmap<WALL_WIDTH_PX, WALL_HEIGHT_PX>;
 
 
-// bitmap + avg_color
-constexpr auto N_TILE_BITMAP_PIXELS = TILE_WIDTH_PX * TILE_HEIGHT_PX + 1;
-constexpr auto N_PLAYER_BITMAP_PIXELS = PLAYER_WIDTH_PX * PLAYER_HEIGHT_PX + 1;
-constexpr auto N_BLUE_BITMAP_PIXELS = BLUE_WIDTH_PX * BLUE_HEIGHT_PX + 1;
-constexpr auto N_WALL_BITMAP_PIXELS = WALL_WIDTH_PX * WALL_HEIGHT_PX + 1;
+
 
 
 class DeviceAssets
@@ -80,20 +76,25 @@ public:
 };
 
 
-constexpr size_t total_asset_pixel_size()
+namespace SIZE
 {
-    u32 n_tiles = 2;
-    u32 n_players = 1;
-    u32 n_blue = 1;
-    u32 n_wall = 1;    
+    // bitmap + avg_color
+    constexpr auto N_TILE_BITMAP_PIXELS = TILE_WIDTH_PX * TILE_HEIGHT_PX + 1;
+    constexpr auto N_PLAYER_BITMAP_PIXELS = PLAYER_WIDTH_PX * PLAYER_HEIGHT_PX + 1;
+    constexpr auto N_BLUE_BITMAP_PIXELS = BLUE_WIDTH_PX * BLUE_HEIGHT_PX + 1;
+    constexpr auto N_WALL_BITMAP_PIXELS = WALL_WIDTH_PX * WALL_HEIGHT_PX + 1;
 
-    u32 n_pixels = 
-        n_tiles * N_TILE_BITMAP_PIXELS +
-        n_players * N_PLAYER_BITMAP_PIXELS +
-        n_blue * N_BLUE_BITMAP_PIXELS +
-        n_wall * N_WALL_BITMAP_PIXELS;
+    constexpr u32 N_TILE_ASSETS = 2;
+    constexpr u32 N_PLAYER_ASSETS = 1;
+    constexpr u32 N_BLUE_ASSETS = 1;
+    constexpr u32 N_WALL_ASSETS = 1;
 
-    return n_pixels * sizeof(Pixel);
+    constexpr size_t DeviceAssets_Pixel = 
+        sizeof(Pixel) * 
+        (N_TILE_ASSETS * N_WORLD_TILES + 
+        N_PLAYER_ASSETS * N_PLAYER_BITMAP_PIXELS + 
+        N_BLUE_ASSETS * N_BLUE_BITMAP_PIXELS +
+        N_WALL_ASSETS * N_WALL_BITMAP_PIXELS);
 }
 
 
@@ -131,9 +132,6 @@ public:
     Vec2Dr32 dt;
     r32 speed;
 
-    //b32 inv_x = false;
-    //b32 inv_y = false;
-
     Vec2Dr32 delta_pos_m;
 
     WorldPosition next_position;
@@ -141,9 +139,40 @@ public:
     uStatus status = 0;
 };
 
+/*
+class EntitySOA
+{
+public:
+    u32 n_elements;
+    
+    r32* width_m;
+    r32* height_m;
+    
+    Image* bitmap;
+    Pixel* avg_color;
+
+    WorldPosition* position;
+    Vec2Dr32* dt;
+    r32* speed;
+
+    Vec2Dr32* delta_pos_m;
+
+    WorldPosition* next_position;
+
+    uStatus* status;
+};
 
 
-
+namespace SIZE
+{
+    constexpr size_t Entity_r32 = sizeof(r32) * 3;
+    constexpr size_t Entity_Image = sizeof(Image);
+    constexpr size_t Entity_Pixel = sizeof(Pixel);
+    constexpr size_t Entity_WorldPosition = sizeof(WorldPosition) * 2;
+    constexpr size_t Entity_Vec2Dr32 = sizeof(Vec2Dr32) * 2;
+    constexpr size_t Entity_uStatus = sizeof(uStatus);
+}
+*/
 
 using EntityArray = Array<Entity>;
 using TileMatrix = Matrix<Tile>;
@@ -176,8 +205,19 @@ public:
     EntityArray blue_entities;
     EntityArray wall_entities;
 
+    //EntitySOA entity_soa;
+
     Image screen_pixels;
 };
+
+namespace SIZE
+{
+    constexpr auto N_SCREEN_PIXELS = SCREEN_WIDTH_PX * SCREEN_WIDTH_PX;
+    constexpr auto N_WORLD_TILES = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;
+
+    constexpr size_t DeviceMemory_Pixel = DeviceAssets_Pixel + N_SCREEN_PIXELS * sizeof(Pixel);
+    constexpr size_t DeviceMemory_Tile = N_WORLD_TILES * sizeof(Tile);
+}
 
 
 class UnifiedMemory
@@ -202,6 +242,8 @@ public:
     Image screen_pixels;
 
     MemoryBuffer<DeviceMemory> device_buffer;
+    MemoryBuffer<r32> device_r32_buffer;
+    MemoryBuffer<Image> device_image_buffer;
     MemoryBuffer<Pixel> device_pixel_buffer;
     MemoryBuffer<Tile> device_tile_buffer;
     MemoryBuffer<Entity> device_entity_buffer;

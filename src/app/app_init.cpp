@@ -7,7 +7,18 @@ namespace img = libimage;
 
 
 constexpr auto GRASS_TILE_PATH = "/home/adam/Repos/GPUGame/assets/tiles/basic_grass.png";
-
+/*
+namespace SIZE
+{
+    constexpr size_t Device_r32 = Entity_r32 * N_ENTITIES;
+    constexpr size_t Device_Image = Entity_Image * N_ENTITIES;
+    constexpr size_t Device_Pixel = Entity_Pixel * N_ENTITIES;
+    constexpr size_t Device_WorldPosition = Entity_WorldPosition * N_ENTITIES;
+    constexpr size_t Device_Vec2Dr32 = Entity_Vec2Dr32 * N_ENTITIES;
+    
+    constexpr size_t Unified_uStatus = Entity_uStatus * N_ENTITIES;
+}
+*/
 
 static Pixel get_avg_color(Image const& image)
 {
@@ -230,15 +241,16 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
 {
     assert(sizeof(Pixel) == buffer.bytes_per_pixel);
 
+    auto const width = SCREEN_WIDTH_PX;
+    auto const height = SCREEN_HEIGHT_PX;
+
+    assert(width == buffer.width);
+    assert(height == buffer.height);
+
     DeviceMemory device{};
 
-    auto const width = buffer.width;
-    auto const height = buffer.height;
-
-    auto const screen_size = width * height * sizeof(Pixel);
-
     // tiles/pixels
-    if(!cuda::device_malloc(state.device_pixel_buffer, total_asset_pixel_size() + screen_size))
+    if(!cuda::device_malloc(state.device_pixel_buffer, SIZE::DeviceMemory_Pixel))
     {
         print_error("device pixel_buffer");
         return false;
@@ -319,6 +331,10 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
     device.wall_entities.n_elements = N_WALL_ENTITIES;
 
     device.entities.data = player_data;
+
+
+    // entity soa
+
 
     if(!cuda::device_malloc(state.device_buffer, 1))
     {
