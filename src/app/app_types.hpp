@@ -5,8 +5,6 @@
 #include "app_constants.hpp"
 
 
-
-
 using uInput = u32;
 
 namespace INPUT
@@ -59,8 +57,6 @@ using Tile = Bitmap<TILE_WIDTH_PX, TILE_HEIGHT_PX>;
 using PlayerBitmap = Bitmap<PLAYER_WIDTH_PX, PLAYER_HEIGHT_PX>;
 using BlueBitmap = Bitmap<BLUE_WIDTH_PX, BLUE_HEIGHT_PX>;
 using WallBitmap = Bitmap<WALL_WIDTH_PX, WALL_HEIGHT_PX>;
-
-
 
 
 
@@ -205,10 +201,9 @@ public:
     EntityArray blue_entities;
     EntityArray wall_entities;
 
-    //EntitySOA entity_soa;
-
     Image screen_pixels;
 };
+
 
 namespace SIZE
 {
@@ -239,8 +234,10 @@ public:
     Image device_pixels;
     Image screen_pixels;
 
+    //EntitySOA entity_soa;
+
     MemoryBuffer<DeviceMemory> device_buffer;
-    MemoryBuffer<r32> device_r32_buffer;
+    //MemoryBuffer<r32> device_r32_buffer;
     MemoryBuffer<Image> device_image_buffer;
     MemoryBuffer<Pixel> device_pixel_buffer;
     MemoryBuffer<Tile> device_tile_buffer;
