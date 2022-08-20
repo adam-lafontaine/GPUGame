@@ -353,6 +353,13 @@ namespace app
         cuda::free(state.unified_input_record_buffer);
         cuda::free(state.unified_buffer);
 
+
+        cuda::free(state.device_entity_ustatus_buffer);
+        cuda::free(state.device_entity_image_buffer);
+        cuda::free(state.device_entity_pixel_buffer);
+        cuda::free(state.device_entity_r32_buffer);
+        cuda::free(state.device_entity_world_position_buffer);
+        cuda::free(state.device_entity_vec_2d_r32_buffer);
     }
 
 

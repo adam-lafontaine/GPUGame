@@ -333,8 +333,49 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
 
 
     // entity soa
+    if(!cuda::device_malloc(state.device_entity_ustatus_buffer, SIZE::Entity_uStatus))
+    {
+        print_error("entity uStatus");
+        return false;
+    }
 
 
+    if(!cuda::device_malloc(state.device_entity_image_buffer, SIZE::Entity_Image))
+    {
+        print_error("entity Image");
+        return false;
+    }
+
+
+    if(!cuda::device_malloc(state.device_entity_pixel_buffer, SIZE::Entity_Pixel))
+    {
+        print_error("entity Pixel");
+        return false;
+    }
+
+
+    if(!cuda::device_malloc(state.device_entity_r32_buffer, SIZE::Entity_r32))
+    {
+        print_error("entity r32");
+        return false;
+    }
+
+
+    if(!cuda::device_malloc(state.device_entity_world_position_buffer, SIZE::Entity_WorldPosition))
+    {
+        print_error("entity WorldPosition");
+        return false;
+    }
+
+
+    if(!cuda::device_malloc(state.device_entity_vec_2d_r32_buffer, SIZE::Entity_Vec2Dr32))
+    {
+        print_error("entity Vec2Dr32");
+        return false;
+    }
+
+    
+    
     if(!cuda::device_malloc(state.device_buffer, 1))
     {
         print_error("state.device_buffer");

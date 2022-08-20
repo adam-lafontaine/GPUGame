@@ -285,12 +285,9 @@ static void update_entity_position(Entity& entity, ScreenProps const& props)
 GPU_FUNCTION
 static void update_entity_on_screen(Entity& entity, ScreenProps const& props)
 {
-    auto screen_width_m = props.screen_width_m;
-    auto screen_height_m = props.screen_height_m;
-
     auto entity_screen_pos_m = gpuf::sub_delta_m(entity.position, props.screen_pos);
     auto entity_rect_m = gpuf::get_screen_rect(entity, entity_screen_pos_m);
-    auto screen_rect_m = gpuf::make_rect(screen_width_m, screen_height_m);  
+    auto screen_rect_m = gpuf::make_rect(props.screen_width_m, props.screen_height_m);  
 
     auto is_onscreen = gpuf::rect_intersect(entity_rect_m, screen_rect_m);
     if(is_onscreen)
