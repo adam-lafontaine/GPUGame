@@ -280,6 +280,53 @@ static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_offset)
 }
 
 
+GPU_FUNCTION
+static void init_wall(WallEntitySOA walls, WallBitmap const& bitmap, u32 wall_offset)
+{
+    assert(wall_offset < COUNT::WALL_ENTITIES);
+
+    auto i = wall_offset;
+    
+    gpuf::set_active(walls.status[i]);
+
+    walls.bitmap[i].width = bitmap.width;
+    walls.bitmap[i].height = bitmap.height;
+    walls.bitmap[i].data = bitmap.bitmap_data;
+    walls.avg_color[i] = *bitmap.avg_color;
+
+    walls.width_m[i] = TILE_LENGTH_M;
+    walls.height_m[i] = TILE_LENGTH_M;
+    
+    walls.position[i].offset_m = { 0.0f, 0.0f };
+
+    i32 x = 0;
+    i32 y = 0;
+
+    if(wall_offset < WORLD_WIDTH_TILE)
+    {
+        x = (i32)wall_offset;
+        y = 0;
+    }
+    else if(wall_offset < 2 * WORLD_WIDTH_TILE)
+    {
+        y = (i32)WORLD_HEIGHT_TILE - 1;
+        x = wall_offset - (i32)WORLD_WIDTH_TILE;        
+    }
+    else if(wall_offset < 2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2)
+    {
+        x = 0;
+        y = wall_offset - (2 * WORLD_WIDTH_TILE) + 1;
+    }
+    else
+    {
+        x = (i32)WORLD_WIDTH_TILE - 1;
+        y = wall_offset - (2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2) + 1;
+    }
+
+    walls.position[i].tile = { x, y };
+}
+
+
 /***********************/
 }
 
@@ -322,6 +369,7 @@ static void gpu_init_players(DeviceMemory* device_p, u32 n_threads)
     auto offset = (u32)t;
 
     gpuf::init_player(device.player_entities.data[offset], assets.player_bitmap, (u32)t);
+    //gpuf::init_player(device.player_soa, assets.player_bitmap, (u32)t);
 }
 
 
@@ -342,6 +390,7 @@ static void gpu_init_blue_entities(DeviceMemory* device_p, u32 n_threads)
     auto offset = (u32)t;
 
     gpuf::init_blue(device.blue_entities.data[offset], assets.blue_bitmap, offset);
+    //gpuf::init_blue(device.blue_soa, assets.blue_bitmap, offset);
 }
 
 
@@ -362,6 +411,7 @@ static void gpu_init_wall_entities(DeviceMemory* device_p, u32 n_threads)
     auto offset = (u32)t;
 
     gpuf::init_wall(device.wall_entities.data[offset], assets.wall_bitmap, offset);
+    //gpuf::init_wall(device.wall_soa, assets.wall_bitmap, offset);
 }
 
 
