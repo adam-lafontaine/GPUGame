@@ -148,6 +148,86 @@ static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
 
 
 GPU_FUNCTION
+static void init_blue(BlueEntitySOA blues, BlueBitmap const& bitmap, u32 blue_offset)
+{
+    assert(blue_offset < COUNT::BLUE_ENTITIES);
+
+    auto i = blue_offset;
+
+    gpuf::set_active(blues.status[i]);
+
+    blues.bitmap[i].width = bitmap.width;
+    blues.bitmap[i].height = bitmap.height;
+    blues.bitmap[i].data = bitmap.bitmap_data;
+    blues.avg_color[i] = *bitmap.avg_color;
+
+    blues.width_m[i] = 0.1f;
+    blues.height_m[i] = 0.1f;
+
+    auto w = (i32)COUNT::BLUE_W;
+
+    auto y = (i32)blue_offset / w;
+    auto x = (i32)blue_offset - y * w;
+
+    blues.position[i].tile = { x + 6, y + 2 };
+    blues.position[i].offset_m = { 0.2f, 0.2f };
+
+    blues.next_position[i] = blues.position[i];
+
+    blues.speed[i] = 3.0f;    
+
+    blues.delta_pos_m[i] = { 0.0f, 0.0f };
+
+    Vec2Dr32 dt = { 0.0f, 0.0f };
+
+    switch(blue_offset % 8)
+    {
+        case 0:
+        dt = { 1.0f, 0.0f };
+
+        break;
+
+        case 1:
+        dt = { 0.707107f, 0.707107f };
+
+        break;
+
+        case 2:
+        dt = { 0.0f, 1.0f };
+
+        break;
+
+        case 3:
+        dt = { -0.707107f, 0.707107f };
+
+        break;
+
+        case 4:
+        dt = { -1.0f, 0.0f };
+
+        break;
+
+        case 5:
+        dt = { -0.707107f, -0.707107f };
+
+        break;
+
+        case 6:
+        dt = { 0.0f, -1.0f };
+
+        break;
+
+        case 7:
+        dt = { 0.707107f, -0.707107f };
+
+        break;
+    }
+
+    blues.dt[i] = gpuf::vec_mul(dt, 1.0f / 60.0f); // assume 60 FPS
+}
+
+
+GPU_FUNCTION
 static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_offset)
 {
     assert(wall_offset < COUNT::WALL_ENTITIES);
