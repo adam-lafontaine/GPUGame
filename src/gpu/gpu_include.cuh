@@ -351,6 +351,95 @@ inline bool is_wall(u32 entity_id)
 
 
 GPU_FUNCTION
+inline bool is_active(uStatus status)
+{
+    return status & STATUS::ACTIVE;
+}
+
+
+GPU_FUNCTION
+inline void set_active(uStatus& status)
+{
+    status |= STATUS::ACTIVE;
+}
+
+
+GPU_FUNCTION
+inline void set_inactive(uStatus& status)
+{
+    status &= ~STATUS::ACTIVE;
+}
+
+
+GPU_FUNCTION
+inline bool is_onscreen(uStatus status)
+{
+    return status & STATUS::ONSCREEN;
+}
+
+
+GPU_FUNCTION
+inline void set_onscreen(uStatus& status)
+{
+    status |= STATUS::ONSCREEN;
+}
+
+
+GPU_FUNCTION
+inline void set_offscreen(uStatus& status)
+{
+    status &= ~STATUS::ONSCREEN;
+}
+
+
+GPU_FUNCTION
+inline bool is_drawable(uStatus status)
+{
+    return is_active(status) && is_onscreen(status);
+}
+
+
+GPU_FUNCTION
+inline bool is_inv_x(uStatus status)
+{
+    return status & STATUS::INV_X;
+}
+
+
+GPU_FUNCTION
+inline bool is_inv_y(uStatus status)
+{
+    return status & STATUS::INV_Y;
+}
+
+
+GPU_FUNCTION
+inline void set_inv_x(uStatus& status)
+{
+    status |= STATUS::INV_X;
+}
+
+
+GPU_FUNCTION
+inline void set_inv_y(uStatus& status)
+{
+    status |= STATUS::INV_Y;
+}
+
+
+GPU_FUNCTION
+inline void unset_inv(uStatus& status)
+{
+    constexpr auto inv = STATUS::INV_X | STATUS::INV_Y;
+
+    status &= ~inv;
+}
+
+
+
+
+
+GPU_FUNCTION
 inline bool is_active(Entity const& entity)
 {
     return entity.status & STATUS::ACTIVE;

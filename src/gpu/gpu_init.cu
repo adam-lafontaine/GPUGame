@@ -38,6 +38,37 @@ static void init_player(Entity& player, PlayerBitmap const& bitmap, u32 player_o
 
 
 GPU_FUNCTION
+static void init_player(PlayerEntitySOA const& players, PlayerBitmap const& bitmap, u32 player_offset)
+{
+    assert(player_offset < COUNT::PLAYER_ENTITIES);
+
+    auto i = player_offset;
+
+    gpuf::set_active(players.status[i]);
+
+    players.bitmap[i].width = bitmap.width;
+    players.bitmap[i].height = bitmap.height;
+    players.bitmap[i].data = bitmap.bitmap_data;
+    
+    players.avg_color[i] = *bitmap.avg_color;
+
+    players.width_m[i] = 0.3f;
+    players.height_m[i] = 0.3f;
+
+    players.position[i].tile = { 4, 4 };
+    players.position[i].offset_m = { 0.0f, 0.0f };
+
+    players.next_position[i] = players.position[i];
+
+    players.speed[i] = 1.5f;
+    players.dt[i] = { 0.0f, 0.0f };
+
+    players.delta_pos_m[i] = { 0.0f, 0.0f };
+
+}
+
+
+GPU_FUNCTION
 static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
 {
     assert(blue_offset < COUNT::BLUE_ENTITIES);
