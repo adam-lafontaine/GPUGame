@@ -351,6 +351,44 @@ static bool allocate_entity_pixel(AppState& state, DeviceMemory& device)
 }
 
 
+static bool allocate_entity_rect_2d_r32(AppState& state, DeviceMemory& device)
+{
+    auto& buffer = state.device_entity_rect_2d_r32_buffer;
+
+    if(!cuda::device_malloc(buffer, SIZE::Entity_Rect2Dr32))
+    {
+        print_error("entity Rect2Dr32");
+        return false;
+    }
+
+    auto rect_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
+    if(!rect_data)
+    {
+        print_error("player dim data");
+        return false;
+    }
+    device.player_soa.dim_m = rect_data;
+
+    rect_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
+    if(!rect_data)
+    {
+        print_error("blue dim data");
+        return false;
+    }
+    device.blue_soa.dim_m = rect_data;
+
+    rect_data = cuda::push_elements(buffer, COUNT::WALL_ENTITIES);
+    if(!rect_data)
+    {
+        print_error("wall dim data");
+        return false;
+    }
+    device.wall_soa.dim_m = rect_data;
+
+    return true;
+}
+
+
 static bool allocate_entity_r32(AppState& state, DeviceMemory& device)
 {
     auto& buffer = state.device_entity_r32_buffer;
@@ -364,22 +402,6 @@ static bool allocate_entity_r32(AppState& state, DeviceMemory& device)
     auto r32_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
     if(!r32_data)
     {
-        print_error("player width data");
-        return false;
-    }
-    device.player_soa.width_m = r32_data;
-
-    r32_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
-    if(!r32_data)
-    {
-        print_error("player height data");
-        return false;
-    }
-    device.player_soa.height_m = r32_data;
-
-    r32_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
-    if(!r32_data)
-    {
         print_error("player speed data");
         return false;
     }
@@ -388,42 +410,10 @@ static bool allocate_entity_r32(AppState& state, DeviceMemory& device)
     r32_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
     if(!r32_data)
     {
-        print_error("blue width data");
-        return false;
-    }
-    device.blue_soa.width_m = r32_data;
-
-    r32_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
-    if(!r32_data)
-    {
-        print_error("blue height data");
-        return false;
-    }
-    device.blue_soa.height_m = r32_data;
-
-    r32_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
-    if(!r32_data)
-    {
         print_error("blue speed data");
         return false;
     }
     device.blue_soa.speed = r32_data;
-
-    r32_data = cuda::push_elements(buffer, COUNT::WALL_ENTITIES);
-    if(!r32_data)
-    {
-        print_error("wall width data");
-        return false;
-    }
-    device.wall_soa.width_m = r32_data;
-
-    r32_data = cuda::push_elements(buffer, COUNT::WALL_ENTITIES);
-    if(!r32_data)
-    {
-        print_error("wall height data");
-        return false;
-    }
-    device.wall_soa.height_m = r32_data;
 
     return true;
 }
@@ -586,7 +576,7 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
     device.tilemap.width = WORLD_WIDTH_TILE;
     device.tilemap.height = WORLD_HEIGHT_TILE;
 
-
+/*
     // entities
     if(!cuda::device_malloc(state.device_entity_buffer, SIZE::DeviceMemory_Entity))
     {
@@ -622,7 +612,7 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
     device.wall_entities.n_elements = COUNT::WALL_ENTITIES;
 
     device.entities.data = player_data;
-
+*/
 
     // entity soa
     if(!allocate_entity_status(state, device))
@@ -636,6 +626,11 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
     }
 
     if(!allocate_entity_pixel(state, device))
+    {
+        return false;
+    }
+
+    if(!allocate_entity_rect_2d_r32(state, device))
     {
         return false;
     }

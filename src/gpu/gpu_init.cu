@@ -8,7 +8,7 @@ namespace gpuf
 /********************************/
 
 
-
+/*
 GPU_FUNCTION
 static void init_player(Entity& player, PlayerBitmap const& bitmap, u32 player_offset)
 {
@@ -35,7 +35,7 @@ static void init_player(Entity& player, PlayerBitmap const& bitmap, u32 player_o
 
     player.delta_pos_m = { 0.0f, 0.0f };
 }
-
+*/
 
 GPU_FUNCTION
 static void init_player(PlayerEntitySOA const& players, PlayerBitmap const& bitmap, u32 player_offset)
@@ -52,8 +52,7 @@ static void init_player(PlayerEntitySOA const& players, PlayerBitmap const& bitm
     
     players.avg_color[i] = *bitmap.avg_color;
 
-    players.width_m[i] = 0.3f;
-    players.height_m[i] = 0.3f;
+    players.dim_m[i] = { 0.3f, 0.3f };
 
     players.position[i].tile = { 4, 4 };
     players.position[i].offset_m = { 0.0f, 0.0f };
@@ -67,7 +66,7 @@ static void init_player(PlayerEntitySOA const& players, PlayerBitmap const& bitm
 
 }
 
-
+/*
 GPU_FUNCTION
 static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
 {
@@ -145,7 +144,7 @@ static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
 
     entity.dt = gpuf::vec_mul(entity.dt, 1.0f / 60.0f); // assume 60 FPS
 }
-
+*/
 
 GPU_FUNCTION
 static void init_blue(BlueEntitySOA blues, BlueBitmap const& bitmap, u32 blue_offset)
@@ -161,8 +160,7 @@ static void init_blue(BlueEntitySOA blues, BlueBitmap const& bitmap, u32 blue_of
     blues.bitmap[i].data = bitmap.bitmap_data;
     blues.avg_color[i] = *bitmap.avg_color;
 
-    blues.width_m[i] = 0.1f;
-    blues.height_m[i] = 0.1f;
+    blues.dim_m[i] = { 0.1f, 0.1f };
 
     auto w = (i32)COUNT::BLUE_W;
 
@@ -226,7 +224,7 @@ static void init_blue(BlueEntitySOA blues, BlueBitmap const& bitmap, u32 blue_of
     blues.dt[i] = gpuf::vec_mul(dt, 1.0f / 60.0f); // assume 60 FPS
 }
 
-
+/*
 GPU_FUNCTION
 static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_offset)
 {
@@ -278,7 +276,7 @@ static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_offset)
 
     wall.delta_pos_m = { 0.0f, 0.0f };
 }
-
+*/
 
 GPU_FUNCTION
 static void init_wall(WallEntitySOA walls, WallBitmap const& bitmap, u32 wall_offset)
@@ -294,8 +292,7 @@ static void init_wall(WallEntitySOA walls, WallBitmap const& bitmap, u32 wall_of
     walls.bitmap[i].data = bitmap.bitmap_data;
     walls.avg_color[i] = *bitmap.avg_color;
 
-    walls.width_m[i] = TILE_LENGTH_M;
-    walls.height_m[i] = TILE_LENGTH_M;
+    walls.dim_m[i] = { TILE_LENGTH_M, TILE_LENGTH_M };
     
     walls.position[i].offset_m = { 0.0f, 0.0f };
 
@@ -368,8 +365,8 @@ static void gpu_init_players(DeviceMemory* device_p, u32 n_threads)
 
     auto offset = (u32)t;
 
-    gpuf::init_player(device.player_entities.data[offset], assets.player_bitmap, (u32)t);
-    //gpuf::init_player(device.player_soa, assets.player_bitmap, (u32)t);
+    //gpuf::init_player(device.player_entities.data[offset], assets.player_bitmap, (u32)t);
+    gpuf::init_player(device.player_soa, assets.player_bitmap, (u32)t);
 }
 
 
@@ -389,8 +386,8 @@ static void gpu_init_blue_entities(DeviceMemory* device_p, u32 n_threads)
 
     auto offset = (u32)t;
 
-    gpuf::init_blue(device.blue_entities.data[offset], assets.blue_bitmap, offset);
-    //gpuf::init_blue(device.blue_soa, assets.blue_bitmap, offset);
+    //gpuf::init_blue(device.blue_entities.data[offset], assets.blue_bitmap, offset);
+    gpuf::init_blue(device.blue_soa, assets.blue_bitmap, offset);
 }
 
 
@@ -410,8 +407,8 @@ static void gpu_init_wall_entities(DeviceMemory* device_p, u32 n_threads)
 
     auto offset = (u32)t;
 
-    gpuf::init_wall(device.wall_entities.data[offset], assets.wall_bitmap, offset);
-    //gpuf::init_wall(device.wall_soa, assets.wall_bitmap, offset);
+    //gpuf::init_wall(device.wall_entities.data[offset], assets.wall_bitmap, offset);
+    gpuf::init_wall(device.wall_soa, assets.wall_bitmap, offset);
 }
 
 
