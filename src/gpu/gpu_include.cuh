@@ -26,6 +26,30 @@ inline ScreenProps make_screen_props(AppState const& state)
 }
 
 
+class PlayerEntity
+{
+public:
+    PlayerEntitySOA soa;
+    u32 id;
+};
+
+
+class BlueEntity
+{
+public:
+    BlueEntitySOA soa;
+    u32 id;
+};
+
+
+class WallEntity
+{
+public:
+    WallEntitySOA soa;
+    u32 id;
+};
+
+
 constexpr int THREADS_PER_BLOCK = 1024;
 
 constexpr int calc_thread_blocks(u32 n_threads)

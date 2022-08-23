@@ -38,31 +38,32 @@ static void init_player(Entity& player, PlayerBitmap const& bitmap, u32 player_o
 */
 
 GPU_FUNCTION
-static void init_player(PlayerEntitySOA const& players, PlayerBitmap const& bitmap, u32 player_offset)
+static void init_player(PlayerEntity const& player, PlayerBitmap const& bitmap)
 {
-    assert(player_offset < COUNT::PLAYER_ENTITIES);
+    assert(player.id < COUNT::PLAYER_ENTITIES);
 
-    auto i = player_offset;
+    auto i = player.id;
 
-    gpuf::set_active(players.status[i]);
 
-    players.bitmap[i].width = bitmap.width;
-    players.bitmap[i].height = bitmap.height;
-    players.bitmap[i].data = bitmap.bitmap_data;
+    gpuf::set_active(player.soa.status[i]);
+
+    player.soa.bitmap[i].width = bitmap.width;
+    player.soa.bitmap[i].height = bitmap.height;
+    player.soa.bitmap[i].data = bitmap.bitmap_data;
     
-    players.avg_color[i] = *bitmap.avg_color;
+    player.soa.avg_color[i] = *bitmap.avg_color;
 
-    players.dim_m[i] = { 0.3f, 0.3f };
+    player.soa.dim_m[i] = { 0.3f, 0.3f };
 
-    players.position[i].tile = { 4, 4 };
-    players.position[i].offset_m = { 0.0f, 0.0f };
+    player.soa.position[i].tile = { 4, 4 };
+    player.soa.position[i].offset_m = { 0.0f, 0.0f };
 
-    players.next_position[i] = players.position[i];
+    player.soa.next_position[i] = player.soa.position[i];
 
-    players.speed[i] = 1.5f;
-    players.dt[i] = { 0.0f, 0.0f };
+    player.soa.speed[i] = 1.5f;
+    player.soa.dt[i] = { 0.0f, 0.0f };
 
-    players.delta_pos_m[i] = { 0.0f, 0.0f };
+    player.soa.delta_pos_m[i] = { 0.0f, 0.0f };
 
 }
 
@@ -147,38 +148,38 @@ static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
 */
 
 GPU_FUNCTION
-static void init_blue(BlueEntitySOA blues, BlueBitmap const& bitmap, u32 blue_offset)
+static void init_blue(BlueEntity blue, BlueBitmap const& bitmap)
 {
-    assert(blue_offset < COUNT::BLUE_ENTITIES);
+    assert(blue.id < COUNT::BLUE_ENTITIES);
 
-    auto i = blue_offset;
+    auto i = blue.id;
 
-    gpuf::set_active(blues.status[i]);
+    gpuf::set_active(blue.soa.status[i]);
 
-    blues.bitmap[i].width = bitmap.width;
-    blues.bitmap[i].height = bitmap.height;
-    blues.bitmap[i].data = bitmap.bitmap_data;
-    blues.avg_color[i] = *bitmap.avg_color;
+    blue.soa.bitmap[i].width = bitmap.width;
+    blue.soa.bitmap[i].height = bitmap.height;
+    blue.soa.bitmap[i].data = bitmap.bitmap_data;
+    blue.soa.avg_color[i] = *bitmap.avg_color;
 
-    blues.dim_m[i] = { 0.1f, 0.1f };
+    blue.soa.dim_m[i] = { 0.1f, 0.1f };
 
     auto w = (i32)COUNT::BLUE_W;
 
-    auto y = (i32)blue_offset / w;
-    auto x = (i32)blue_offset - y * w;
+    auto y = (i32)i / w;
+    auto x = (i32)i - y * w;
 
-    blues.position[i].tile = { x + 6, y + 2 };
-    blues.position[i].offset_m = { 0.2f, 0.2f };
+    blue.soa.position[i].tile = { x + 6, y + 2 };
+    blue.soa.position[i].offset_m = { 0.2f, 0.2f };
 
-    blues.next_position[i] = blues.position[i];
+    blue.soa.next_position[i] = blue.soa.position[i];
 
-    blues.speed[i] = 3.0f;    
+    blue.soa.speed[i] = 3.0f;    
 
-    blues.delta_pos_m[i] = { 0.0f, 0.0f };
+    blue.soa.delta_pos_m[i] = { 0.0f, 0.0f };
 
     Vec2Dr32 dt = { 0.0f, 0.0f };
 
-    switch(blue_offset % 8)
+    switch(i % 8)
     {
         case 0:
         dt = { 1.0f, 0.0f };
@@ -221,7 +222,7 @@ static void init_blue(BlueEntitySOA blues, BlueBitmap const& bitmap, u32 blue_of
         break;
     }
 
-    blues.dt[i] = gpuf::vec_mul(dt, 1.0f / 60.0f); // assume 60 FPS
+    blue.soa.dt[i] = gpuf::vec_mul(dt, 1.0f / 60.0f); // assume 60 FPS
 }
 
 /*
@@ -279,48 +280,48 @@ static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_offset)
 */
 
 GPU_FUNCTION
-static void init_wall(WallEntitySOA walls, WallBitmap const& bitmap, u32 wall_offset)
+static void init_wall(WallEntity wall, WallBitmap const& bitmap)
 {
-    assert(wall_offset < COUNT::WALL_ENTITIES);
+    assert(wall.id < COUNT::WALL_ENTITIES);
 
-    auto i = wall_offset;
+    auto i = wall.id;
     
-    gpuf::set_active(walls.status[i]);
+    gpuf::set_active(wall.soa.status[i]);
 
-    walls.bitmap[i].width = bitmap.width;
-    walls.bitmap[i].height = bitmap.height;
-    walls.bitmap[i].data = bitmap.bitmap_data;
-    walls.avg_color[i] = *bitmap.avg_color;
+    wall.soa.bitmap[i].width = bitmap.width;
+    wall.soa.bitmap[i].height = bitmap.height;
+    wall.soa.bitmap[i].data = bitmap.bitmap_data;
+    wall.soa.avg_color[i] = *bitmap.avg_color;
 
-    walls.dim_m[i] = { TILE_LENGTH_M, TILE_LENGTH_M };
+    wall.soa.dim_m[i] = { TILE_LENGTH_M, TILE_LENGTH_M };
     
-    walls.position[i].offset_m = { 0.0f, 0.0f };
+    wall.soa.position[i].offset_m = { 0.0f, 0.0f };
 
     i32 x = 0;
     i32 y = 0;
 
-    if(wall_offset < WORLD_WIDTH_TILE)
+    if(i < WORLD_WIDTH_TILE)
     {
-        x = (i32)wall_offset;
+        x = (i32)i;
         y = 0;
     }
-    else if(wall_offset < 2 * WORLD_WIDTH_TILE)
+    else if(i < 2 * WORLD_WIDTH_TILE)
     {
         y = (i32)WORLD_HEIGHT_TILE - 1;
-        x = wall_offset - (i32)WORLD_WIDTH_TILE;        
+        x = i - (i32)WORLD_WIDTH_TILE;        
     }
-    else if(wall_offset < 2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2)
+    else if(i < 2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2)
     {
         x = 0;
-        y = wall_offset - (2 * WORLD_WIDTH_TILE) + 1;
+        y = i - (2 * WORLD_WIDTH_TILE) + 1;
     }
     else
     {
         x = (i32)WORLD_WIDTH_TILE - 1;
-        y = wall_offset - (2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2) + 1;
+        y = i - (2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2) + 1;
     }
 
-    walls.position[i].tile = { x, y };
+    wall.soa.position[i].tile = { x, y };
 }
 
 
@@ -366,6 +367,7 @@ static void gpu_init_players(DeviceMemory* device_p, u32 n_threads)
     auto offset = (u32)t;
 
     //gpuf::init_player(device.player_entities.data[offset], assets.player_bitmap, (u32)t);
+    PlayerProps player{};
     gpuf::init_player(device.player_soa, assets.player_bitmap, (u32)t);
 }
 

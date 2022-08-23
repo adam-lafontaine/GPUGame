@@ -17,7 +17,7 @@ namespace gpuf
 /*************************/
 
 
-
+/*
 GPU_FUNCTION
 static bool entity_will_intersect(Entity const& lhs, Entity const& rhs)
 {
@@ -28,8 +28,9 @@ static bool entity_will_intersect(Entity const& lhs, Entity const& rhs)
 
     return gpuf::rect_intersect(lhs_rect, rhs_rect);
 }
+*/
 
-
+/*
 GPU_FUNCTION
 static void move_player(Entity& entity, InputRecord const& input)
 {    
@@ -61,8 +62,41 @@ static void move_player(Entity& entity, InputRecord const& input)
         entity.dt.y *= 0.707107f;
     }
 }
+*/
 
+GPU_FUNCTION
+static void update_player_dt(Vec2Dr32& player_dt, InputRecord const& input)
+{    
+    player_dt = { 0.0f, 0.0f };
 
+    if(input.input & INPUT::PLAYER_UP)
+    {
+        player_dt.y -= input.est_dt_frame;
+    }
+
+    if(input.input & INPUT::PLAYER_DOWN)
+    {
+        player_dt.y += input.est_dt_frame;
+    }
+
+    if(input.input & INPUT::PLAYER_LEFT)
+    {
+        player_dt.x -= input.est_dt_frame;
+    }
+
+    if(input.input & INPUT::PLAYER_RIGHT)
+    {
+        player_dt.x += input.est_dt_frame;
+    }
+
+    if(player_dt.x != 0.0f && player_dt.y != 0.0f)
+    {
+        player_dt.x *= 0.707107f;
+        player_dt.y *= 0.707107f;
+    }
+}
+
+/*
 GPU_FUNCTION 
 void apply_current_input(Entity& entity, InputList const& inputs, u64 frame)
 {
@@ -83,6 +117,27 @@ void apply_current_input(Entity& entity, InputList const& inputs, u64 frame)
     }
 
     move_player(entity, last);
+}
+*/
+
+GPU_FUNCTION 
+void apply_current_input(PlayerEntitySOA players, u32 player_offset, InputList const& inputs, u64 frame)
+{
+    if(inputs.size == 0)
+    {
+        return;
+    }
+
+    auto& last = inputs.data[inputs.size - 1];
+
+    auto is_last = last.frame_begin <= frame && frame < last.frame_end;
+
+    if(!is_last)
+    {
+        return;
+    }
+
+    update_player_dt(players.dt[player_offset], last);
 }
 
 
