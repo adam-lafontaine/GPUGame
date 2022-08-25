@@ -38,32 +38,32 @@ static void init_player(Entity& player, PlayerBitmap const& bitmap, u32 player_o
 */
 
 GPU_FUNCTION
-static void init_player(PlayerEntity const& player, PlayerBitmap const& bitmap)
+static void init_player(PlayerProps const& player, PlayerBitmap const& bitmap)
 {
     assert(player.id < COUNT::PLAYER_ENTITIES);
 
     auto i = player.id;
 
 
-    gpuf::set_active(player.soa.status[i]);
+    gpuf::set_active(player.props.status[i]);
 
-    player.soa.bitmap[i].width = bitmap.width;
-    player.soa.bitmap[i].height = bitmap.height;
-    player.soa.bitmap[i].data = bitmap.bitmap_data;
+    player.props.bitmap[i].width = bitmap.width;
+    player.props.bitmap[i].height = bitmap.height;
+    player.props.bitmap[i].data = bitmap.bitmap_data;
     
-    player.soa.avg_color[i] = *bitmap.avg_color;
+    player.props.avg_color[i] = *bitmap.avg_color;
 
-    player.soa.dim_m[i] = { 0.3f, 0.3f };
+    player.props.dim_m[i] = { 0.3f, 0.3f };
 
-    player.soa.position[i].tile = { 4, 4 };
-    player.soa.position[i].offset_m = { 0.0f, 0.0f };
+    player.props.position[i].tile = { 4, 4 };
+    player.props.position[i].offset_m = { 0.0f, 0.0f };
 
-    player.soa.next_position[i] = player.soa.position[i];
+    player.props.next_position[i] = player.props.position[i];
 
-    player.soa.speed[i] = 1.5f;
-    player.soa.dt[i] = { 0.0f, 0.0f };
+    player.props.speed[i] = 1.5f;
+    player.props.dt[i] = { 0.0f, 0.0f };
 
-    player.soa.delta_pos_m[i] = { 0.0f, 0.0f };
+    player.props.delta_pos_m[i] = { 0.0f, 0.0f };
 
 }
 
@@ -148,34 +148,34 @@ static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
 */
 
 GPU_FUNCTION
-static void init_blue(BlueEntity blue, BlueBitmap const& bitmap)
+static void init_blue(BlueProps const& blue, BlueBitmap const& bitmap)
 {
     assert(blue.id < COUNT::BLUE_ENTITIES);
 
     auto i = blue.id;
 
-    gpuf::set_active(blue.soa.status[i]);
+    gpuf::set_active(blue.props.status[i]);
 
-    blue.soa.bitmap[i].width = bitmap.width;
-    blue.soa.bitmap[i].height = bitmap.height;
-    blue.soa.bitmap[i].data = bitmap.bitmap_data;
-    blue.soa.avg_color[i] = *bitmap.avg_color;
+    blue.props.bitmap[i].width = bitmap.width;
+    blue.props.bitmap[i].height = bitmap.height;
+    blue.props.bitmap[i].data = bitmap.bitmap_data;
+    blue.props.avg_color[i] = *bitmap.avg_color;
 
-    blue.soa.dim_m[i] = { 0.1f, 0.1f };
+    blue.props.dim_m[i] = { 0.1f, 0.1f };
 
     auto w = (i32)COUNT::BLUE_W;
 
     auto y = (i32)i / w;
     auto x = (i32)i - y * w;
 
-    blue.soa.position[i].tile = { x + 6, y + 2 };
-    blue.soa.position[i].offset_m = { 0.2f, 0.2f };
+    blue.props.position[i].tile = { x + 6, y + 2 };
+    blue.props.position[i].offset_m = { 0.2f, 0.2f };
 
-    blue.soa.next_position[i] = blue.soa.position[i];
+    blue.props.next_position[i] = blue.props.position[i];
 
-    blue.soa.speed[i] = 3.0f;    
+    blue.props.speed[i] = 3.0f;    
 
-    blue.soa.delta_pos_m[i] = { 0.0f, 0.0f };
+    blue.props.delta_pos_m[i] = { 0.0f, 0.0f };
 
     Vec2Dr32 dt = { 0.0f, 0.0f };
 
@@ -222,7 +222,7 @@ static void init_blue(BlueEntity blue, BlueBitmap const& bitmap)
         break;
     }
 
-    blue.soa.dt[i] = gpuf::vec_mul(dt, 1.0f / 60.0f); // assume 60 FPS
+    blue.props.dt[i] = gpuf::vec_mul(dt, 1.0f / 60.0f); // assume 60 FPS
 }
 
 /*
@@ -280,22 +280,22 @@ static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_offset)
 */
 
 GPU_FUNCTION
-static void init_wall(WallEntity wall, WallBitmap const& bitmap)
+static void init_wall(WallProps wall, WallBitmap const& bitmap)
 {
     assert(wall.id < COUNT::WALL_ENTITIES);
 
     auto i = wall.id;
     
-    gpuf::set_active(wall.soa.status[i]);
+    gpuf::set_active(wall.props.status[i]);
 
-    wall.soa.bitmap[i].width = bitmap.width;
-    wall.soa.bitmap[i].height = bitmap.height;
-    wall.soa.bitmap[i].data = bitmap.bitmap_data;
-    wall.soa.avg_color[i] = *bitmap.avg_color;
+    wall.props.bitmap[i].width = bitmap.width;
+    wall.props.bitmap[i].height = bitmap.height;
+    wall.props.bitmap[i].data = bitmap.bitmap_data;
+    wall.props.avg_color[i] = *bitmap.avg_color;
 
-    wall.soa.dim_m[i] = { TILE_LENGTH_M, TILE_LENGTH_M };
+    wall.props.dim_m[i] = { TILE_LENGTH_M, TILE_LENGTH_M };
     
-    wall.soa.position[i].offset_m = { 0.0f, 0.0f };
+    wall.props.position[i].offset_m = { 0.0f, 0.0f };
 
     i32 x = 0;
     i32 y = 0;
@@ -321,7 +321,7 @@ static void init_wall(WallEntity wall, WallBitmap const& bitmap)
         y = i - (2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2) + 1;
     }
 
-    wall.soa.position[i].tile = { x, y };
+    wall.props.position[i].tile = { x, y };
 }
 
 
@@ -364,11 +364,13 @@ static void gpu_init_players(DeviceMemory* device_p, u32 n_threads)
     auto& device = *device_p;
     auto& assets = device.assets;    
 
-    auto offset = (u32)t;
+    //auto offset = (u32)t;
 
     //gpuf::init_player(device.player_entities.data[offset], assets.player_bitmap, (u32)t);
     PlayerProps player{};
-    gpuf::init_player(device.player_soa, assets.player_bitmap, (u32)t);
+    player.id = (u32)t;
+    player.props = device.player_soa;
+    gpuf::init_player(player, assets.player_bitmap);
 }
 
 
@@ -386,10 +388,14 @@ static void gpu_init_blue_entities(DeviceMemory* device_p, u32 n_threads)
     auto& device = *device_p;
     auto& assets = device.assets;
 
-    auto offset = (u32)t;
+    //auto offset = (u32)t;
 
     //gpuf::init_blue(device.blue_entities.data[offset], assets.blue_bitmap, offset);
-    gpuf::init_blue(device.blue_soa, assets.blue_bitmap, offset);
+
+    BlueProps blue{};
+    blue.id = (u32)t;
+    blue.props = device.blue_soa;
+    gpuf::init_blue(blue, assets.blue_bitmap);
 }
 
 
@@ -407,10 +413,13 @@ static void gpu_init_wall_entities(DeviceMemory* device_p, u32 n_threads)
 
     assert(n_threads == COUNT::WALL_ENTITIES);
 
-    auto offset = (u32)t;
+    //auto offset = (u32)t;
 
     //gpuf::init_wall(device.wall_entities.data[offset], assets.wall_bitmap, offset);
-    gpuf::init_wall(device.wall_soa, assets.wall_bitmap, offset);
+    WallProps wall{};
+    wall.id = (u32)t;
+    wall.props = device.wall_soa;
+    gpuf::init_wall(wall, assets.wall_bitmap);
 }
 
 

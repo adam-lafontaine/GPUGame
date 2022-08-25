@@ -121,7 +121,7 @@ void apply_current_input(Entity& entity, InputList const& inputs, u64 frame)
 */
 
 GPU_FUNCTION 
-void apply_current_input(PlayerEntitySOA players, u32 player_offset, InputList const& inputs, u64 frame)
+void apply_current_input(PlayerProps& player, InputList const& inputs, u64 frame)
 {
     if(inputs.size == 0)
     {
@@ -137,10 +137,10 @@ void apply_current_input(PlayerEntitySOA players, u32 player_offset, InputList c
         return;
     }
 
-    update_player_dt(players.dt[player_offset], last);
+    update_player_dt(player.props.dt[player.id], last);
 }
 
-
+/*
 GPU_FUNCTION
 static void stop_wall(Entity& ent, Entity const& wall)
 {   
@@ -196,8 +196,61 @@ static void stop_wall(Entity& ent, Entity const& wall)
         }
     }
 }
+*/
 
 
+
+GPU_FUNCTION
+static void stop_wall(PlayerProps& ent, WallProps const& other)
+{   
+    if(!gpuf::is_active(ent.props.status[ent.id]) || !gpuf::is_active(other.props.status[other.id]))
+    {
+        return;
+    }
+
+    auto& d_ent = ent.props.delta_pos_m[ent.id];
+    if(!d_ent.x && !d_ent.y)
+    {
+        return;
+    }
+
+    auto ent_pos = ent.props.next_position[ent.id];
+    auto ent_dim = ent.props.dim_m[ent.id];
+    auto other_pos = other.props.position[other.id];
+    auto other_dim = other.props.dim_m[other.id];
+
+    auto delta = gpuf::sub_delta_m(ent_pos, other_pos);
+
+    auto rect_ent = gpuf::make_rect(delta, ent_dim.x, ent_dim.y);
+    auto rect_other = gpuf::make_rect(other_dim.x, other_dim.y);
+
+    if(!gpuf::rect_intersect(rect_ent, rect_other))
+    {
+        return;
+    }
+
+    auto mm = 0.001f;
+
+    if (d_ent.x > 0.0f && rect_ent.x_end >= rect_other.x_begin)
+    {
+        d_ent.x = rect_other.x_begin - 0.5f * mm;
+    }
+    else if (d_ent.x < 0.0f && rect_ent.x_begin <= rect_other.x_end)
+    {
+        d_ent.x = rect_other.x_end + 0.5f * mm;
+    }
+
+    if(d_ent.y > 0.0f && rect_ent.y_end >= rect_other.y_begin)
+    {
+        d_ent.y = rect_other.y_begin - 0.5f * mm;
+    }
+    else if (d_ent.y < 0.0f && rect_ent.y_begin <= rect_other.y_end)
+    {
+        d_ent.y = rect_other.y_end + 0.5f * mm;
+    }
+}
+
+/*
 GPU_FUNCTION
 static void bounce_wall(Entity& ent, Entity const& wall)
 {
@@ -235,8 +288,64 @@ static void bounce_wall(Entity& ent, Entity const& wall)
     }
     
 }
+*/
 
+GPU_FUNCTION
+static void bounce_wall(BlueProps& ent, WallProps const& other)
+{
+    if(!gpuf::is_active(ent.props.status[ent.id]) || !gpuf::is_active(other.props.status[other.id]))
+    {
+        return;
+    }
 
+    auto& d_ent = ent.props.delta_pos_m[ent.id];
+    if(!d_ent.x && !d_ent.y)
+    {
+        return;
+    }
+
+    auto ent_pos = ent.props.next_position[ent.id];
+    auto ent_dim = ent.props.dim_m[ent.id];
+    auto other_pos = other.props.position[other.id];
+    auto other_dim = other.props.dim_m[other.id];
+
+    auto delta = gpuf::sub_delta_m(ent_pos, other_pos);
+
+    auto rect_ent = gpuf::make_rect(delta, ent_dim.x, ent_dim.y);
+    auto rect_other = gpuf::make_rect(other_dim.x, other_dim.y);
+
+    if(!gpuf::rect_intersect(rect_ent, rect_other))
+    {
+        return;
+    }
+
+    auto mm = 0.001f;
+    auto& dt = ent.props.dt[ent.id];
+
+    if (d_ent.x > 0.0f && rect_ent.x_end >= rect_other.x_begin)
+    {
+        d_ent.x = rect_other.x_begin - 0.5f * mm;
+        dt.x *= -1.0f;
+    }
+    else if (d_ent.x < 0.0f && rect_ent.x_begin <= rect_other.x_end)
+    {
+        d_ent.x = rect_other.x_end + 0.5f * mm;
+        dt.x *= -1.0f;
+    }
+
+    if (d_ent.y > 0.0f && rect_ent.y_end >= rect_other.y_begin)
+    {
+        d_ent.y = rect_other.y_begin - 0.5f * mm;
+        dt.y *= -1.0f;
+    }
+    else if (d_ent.y < 0.0f && rect_ent.y_begin <= rect_other.y_end)
+    {
+        d_ent.y = rect_other.y_end + 0.5f * mm;
+        dt.y *= -1.0f;
+    }
+}
+
+/*
 GPU_FUNCTION
 static void blue_blue(Entity& a, Entity const& b)
 {
@@ -273,8 +382,65 @@ static void blue_blue(Entity& a, Entity const& b)
         gpuf::set_inv_y(a);
     }
 }
+*/
 
 
+GPU_FUNCTION
+static void blue_blue(BlueProps& ent, BlueProps const& other)
+{
+    if(!gpuf::is_active(ent.props.status[ent.id]) || !gpuf::is_active(other.props.status[other.id]))
+    {
+        return;
+    }
+
+    auto& d_ent = ent.props.delta_pos_m[ent.id];
+    if(!d_ent.x && !d_ent.y)
+    {
+        return;
+    }
+
+    auto ent_pos = ent.props.next_position[ent.id];
+    auto ent_dim = ent.props.dim_m[ent.id];
+    auto other_pos = other.props.position[other.id];
+    auto other_dim = other.props.dim_m[other.id];
+
+    auto delta = gpuf::sub_delta_m(ent_pos, other_pos);
+
+    auto rect_ent = gpuf::make_rect(delta, ent_dim.x, ent_dim.y);
+    auto rect_other = gpuf::make_rect(other_dim.x, other_dim.y);
+
+    if(!gpuf::rect_intersect(rect_ent, rect_other))
+    {
+        return;
+    }
+
+    auto mm = 0.001f;
+    auto& dt = ent.props.dt[ent.id];
+
+    if (d_ent.x > 0.0f && rect_ent.x_end >= rect_other.x_begin)
+    {
+        d_ent.x = rect_other.x_begin - 0.5f * mm;
+        dt.x *= -1.0f;
+    }
+    else if (d_ent.x < 0.0f && rect_ent.x_begin <= rect_other.x_end)
+    {
+        d_ent.x = rect_other.x_end + 0.5f * mm;
+        dt.x *= -1.0f;
+    }
+
+    if (d_ent.y > 0.0f && rect_ent.y_end >= rect_other.y_begin)
+    {
+        d_ent.y = rect_other.y_begin - 0.5f * mm;
+        dt.y *= -1.0f;
+    }
+    else if (d_ent.y < 0.0f && rect_ent.y_begin <= rect_other.y_end)
+    {
+        d_ent.y = rect_other.y_end + 0.5f * mm;
+        dt.y *= -1.0f;
+    }
+}
+
+/*
 GPU_FUNCTION
 static void player_blue(Entity const& player, Entity& blue)
 {   
@@ -282,25 +448,43 @@ static void player_blue(Entity const& player, Entity& blue)
     {
         return;
     }
-    /*
-
-    if(!gpu::equal(player.dt, { 0.0f, 0.0f }))
-    {
-        blue.dt = player.dt;
-        blue.speed = player.speed;
-        blue.delta_pos_m = player.delta_pos_m;
-    }
-    else
-    {
-        blue_blue(blue, player);
-    }
-    */
 
     //blue_blue(blue, player);
     gpuf::set_inactive(blue);
 }
+*/
 
+GPU_FUNCTION
+static void blue_player(BlueProps& ent, PlayerProps const& other)
+{
+    if(!gpuf::is_active(ent.props.status[ent.id]) || !gpuf::is_active(other.props.status[other.id]))
+    {
+        return;
+    }
 
+    auto& d_ent = ent.props.delta_pos_m[ent.id];
+    if(!d_ent.x && !d_ent.y)
+    {
+        return;
+    }
+
+    auto ent_pos = ent.props.next_position[ent.id];
+    auto ent_dim = ent.props.dim_m[ent.id];
+    auto other_pos = other.props.position[other.id];
+    auto other_dim = other.props.dim_m[other.id];
+
+    auto delta = gpuf::sub_delta_m(ent_pos, other_pos);
+
+    auto rect_ent = gpuf::make_rect(delta, ent_dim.x, ent_dim.y);
+    auto rect_other = gpuf::make_rect(other_dim.x, other_dim.y);
+
+    if(!gpuf::rect_intersect(rect_ent, rect_other))
+    {
+        return;
+    }
+}
+
+/*
 GPU_FUNCTION
 static void entity_next_position(Entity& entity)
 {
@@ -312,8 +496,50 @@ static void entity_next_position(Entity& entity)
     entity.delta_pos_m = gpuf::vec_mul(entity.dt, entity.speed);
     entity.next_position = gpuf::add_delta(entity.position, entity.delta_pos_m);
 }
+*/
+
+GPU_FUNCTION
+static void next_postion(PlayerProps& ent)
+{
+    if(!gpuf::is_active(ent.props.status[ent.id]))
+    {
+        return;
+    }
+
+    auto& delta_pos = ent.props.delta_pos_m[ent.id];
+    auto dt = ent.props.dt[ent.id];
+    auto speed = ent.props.speed[ent.id];
+
+    delta_pos = gpuf::vec_mul(dt, speed);
+
+    auto& next_pos = ent.props.next_position[ent.id];
+    auto pos = ent.props.position[ent.id];
+
+    next_pos = gpuf::add_delta(pos, delta_pos);
+}
 
 
+GPU_FUNCTION
+static void next_postion(BlueProps& ent)
+{
+    if(!gpuf::is_active(ent.props.status[ent.id]))
+    {
+        return;
+    }
+
+    auto& delta_pos = ent.props.delta_pos_m[ent.id];
+    auto dt = ent.props.dt[ent.id];
+    auto speed = ent.props.speed[ent.id];
+
+    delta_pos = gpuf::vec_mul(dt, speed);
+
+    auto& next_pos = ent.props.next_position[ent.id];
+    auto pos = ent.props.position[ent.id];
+
+    next_pos = gpuf::add_delta(pos, delta_pos);
+}
+
+/*
 GPU_FUNCTION
 static void update_entity_position(Entity& entity, ScreenProps const& props)
 {
@@ -335,6 +561,44 @@ static void update_entity_position(Entity& entity, ScreenProps const& props)
     entity.delta_pos_m = { 0.0f, 0.0f };
     gpuf::unset_inv(entity);   
 }
+*/
+
+GPU_FUNCTION
+static void update_postion(PlayerProps& ent)
+{
+    if(!gpuf::is_active(ent.props.status[ent.id]))
+    {
+        return;
+    }
+
+    auto& pos = ent.props.position[ent.id];
+    auto& next_pos = ent.props.next_position[ent.id];
+    auto& delta_pos = ent.props.delta_pos_m[ent.id];
+    auto& status = ent.props.status[ent.id];
+
+    pos = gpuf::add_delta(pos, delta_pos);
+    next_pos = pos;
+    delta_pos = { 0.0f, 0.0f };
+}
+
+
+GPU_FUNCTION
+static void update_postion(BlueProps& ent)
+{
+    if(!gpuf::is_active(ent.props.status[ent.id]))
+    {
+        return;
+    }
+
+    auto& pos = ent.props.position[ent.id];
+    auto& next_pos = ent.props.next_position[ent.id];
+    auto& delta_pos = ent.props.delta_pos_m[ent.id];
+    auto& status = ent.props.status[ent.id];
+
+    pos = gpuf::add_delta(pos, delta_pos);
+    next_pos = pos;
+    delta_pos = { 0.0f, 0.0f };
+}
 
 
 GPU_FUNCTION
@@ -342,7 +606,7 @@ static void update_entity_on_screen(Entity& entity, ScreenProps const& props)
 {
     auto entity_screen_pos_m = gpuf::sub_delta_m(entity.position, props.screen_pos);
     auto entity_rect_m = gpuf::get_screen_rect(entity, entity_screen_pos_m);
-    auto screen_rect_m = gpuf::make_rect(props.screen_width_m, props.screen_height_m);  
+    auto screen_rect_m = gpuf::make_rect(props.screen_width_m, props.screen_height_m);
 
     auto is_onscreen = gpuf::rect_intersect(entity_rect_m, screen_rect_m);
     if(is_onscreen)
@@ -352,6 +616,54 @@ static void update_entity_on_screen(Entity& entity, ScreenProps const& props)
     else
     {
         gpuf::set_offscreen(entity);
+    }
+}
+
+
+GPU_FUNCTION
+static void update_on_screen(PlayerProps& ent, ScreenProps const& props)
+{
+    auto pos = ent.props.position[ent.id];
+    auto entity_screen_pos_m = gpuf::sub_delta_m(pos, props.screen_pos);
+
+    auto dim = ent.props.dim_m[ent.id];
+    auto ent_rect = gpuf::make_rect(entity_screen_pos_m, dim.x, dim.y);
+
+    auto screen_rect = gpuf::make_rect(props.screen_width_m, props.screen_height_m);
+
+    auto is_onscreen = gpuf::rect_intersect(ent_rect, screen_rect);
+    auto& status = ent.props.status[ent.id];
+    if(is_onscreen)
+    {
+        gpuf::set_onscreen(status);
+    }
+    else
+    {
+        gpuf::set_offscreen(status);
+    }
+}
+
+
+GPU_FUNCTION
+static void update_on_screen(BlueProps& ent, ScreenProps const& props)
+{
+    auto pos = ent.props.position[ent.id];
+    auto entity_screen_pos_m = gpuf::sub_delta_m(pos, props.screen_pos);
+
+    auto dim = ent.props.dim_m[ent.id];
+    auto ent_rect = gpuf::make_rect(entity_screen_pos_m, dim.x, dim.y);
+
+    auto screen_rect = gpuf::make_rect(props.screen_width_m, props.screen_height_m);
+
+    auto is_onscreen = gpuf::rect_intersect(ent_rect, screen_rect);
+    auto& status = ent.props.status[ent.id];
+    if(is_onscreen)
+    {
+        gpuf::set_onscreen(status);
+    }
+    else
+    {
+        gpuf::set_offscreen(status);
     }
 }
 
@@ -415,8 +727,16 @@ static void gpu_player_wall(DeviceMemory* device_p, u32 n_threads)
     auto player_offset = offset / COUNT::WALL_ENTITIES;
     auto wall_offset = offset - player_offset * COUNT::WALL_ENTITIES;
 
-    auto& player = device.player_entities.data[player_offset];
-    auto& wall = device.wall_entities.data[wall_offset];
+    PlayerProps player{};
+    player.id = player_offset;
+    player.props = device.player_soa;
+
+    WallProps wall{};
+    wall.id = wall_offset;
+    wall.props = device.wall_soa;
+
+    //auto& player = device.player_entities.data[player_offset];
+    //auto& wall = device.wall_entities.data[wall_offset];
 
     gpuf::stop_wall(player, wall);
 }
@@ -440,8 +760,16 @@ static void gpu_blue_wall(DeviceMemory* device_p, u32 n_threads)
     auto blue_offset = offset / COUNT::WALL_ENTITIES;
     auto wall_offset = offset - blue_offset * COUNT::WALL_ENTITIES;
 
-    auto& blue = device.blue_entities.data[blue_offset];
-    auto& wall = device.wall_entities.data[wall_offset];
+    //auto& blue = device.blue_entities.data[blue_offset];
+    //auto& wall = device.wall_entities.data[wall_offset];
+
+    BlueProps blue{};
+    blue.id = blue_offset;
+    blue.props = device.blue_soa;
+
+    WallProps wall{};
+    wall.id = wall_offset;
+    wall.props = device.wall_soa;
 
     gpuf::bounce_wall(blue, wall);
 }
@@ -465,10 +793,18 @@ static void gpu_player_blue(DeviceMemory* device_p, u32 n_threads)
     auto player_offset = offset / COUNT::BLUE_ENTITIES;
     auto blue_offset = offset - player_offset * COUNT::BLUE_ENTITIES;
 
-    auto& blue = device.blue_entities.data[blue_offset];
-    auto& player = device.player_entities.data[player_offset];
+    //auto& blue = device.blue_entities.data[blue_offset];
+    //auto& player = device.player_entities.data[player_offset];
 
-    gpuf::player_blue(player, blue);
+    BlueProps blue{};
+    blue.id = blue_offset;
+    blue.props = device.blue_soa;
+
+    PlayerProps player{};
+    player.id = player_offset;
+    player.props = device.player_soa;
+
+    gpuf::blue_player(blue, player);
 }
 
 
@@ -495,10 +831,20 @@ static void gpu_blue_blue(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
-    auto& a = device.blue_entities.data[a_offset];
-    auto& b = device.blue_entities.data[b_offset];
+    //auto& a = device.blue_entities.data[a_offset];
+    //auto& b = device.blue_entities.data[b_offset];
 
-    gpuf::blue_blue(a, b);
+    //gpuf::blue_blue(a, b);
+
+    BlueProps blue{};
+    blue.id = a_offset;
+    blue.props = device.blue_soa;
+
+    BlueProps other{};
+    blue.id = b_offset;
+    blue.props = device.blue_soa;
+
+    gpuf::blue_blue(blue, other);
 }
 
 

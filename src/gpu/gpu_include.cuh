@@ -26,26 +26,26 @@ inline ScreenProps make_screen_props(AppState const& state)
 }
 
 
-class PlayerEntity
+class PlayerProps
 {
 public:
-    PlayerEntitySOA soa;
+    PlayerEntitySOA props;
     u32 id;
 };
 
 
-class BlueEntity
+class BlueProps
 {
 public:
-    BlueEntitySOA soa;
+    BlueEntitySOA props;
     u32 id;
 };
 
 
-class WallEntity
+class WallProps
 {
 public:
-    WallEntitySOA soa;
+    WallEntitySOA props;
     u32 id;
 };
 
@@ -185,12 +185,12 @@ inline bool equal(Vec2Dr32 const& lhs, Vec2Dr32 const& rhs)
 
 
 GPU_FUNCTION
-inline Vec2Dr32 sub_delta_m(WorldPosition const& lhs, WorldPosition const& rhs)
+inline Vec2Dr32 sub_delta_m(WorldPosition const& pos, WorldPosition const& origin)
 {
     Vec2Dr32 delta{};
 
-    delta.x = TILE_LENGTH_M * (lhs.tile.x - rhs.tile.x) + lhs.offset_m.x - rhs.offset_m.x;
-    delta.y = TILE_LENGTH_M * (lhs.tile.y - rhs.tile.y) + lhs.offset_m.y - rhs.offset_m.y;
+    delta.x = TILE_LENGTH_M * (pos.tile.x - origin.tile.x) + pos.offset_m.x - origin.offset_m.x;
+    delta.y = TILE_LENGTH_M * (pos.tile.y - origin.tile.y) + pos.offset_m.y - origin.offset_m.y;
 
     return delta;
 }
@@ -422,7 +422,7 @@ inline bool is_drawable(uStatus status)
     return is_active(status) && is_onscreen(status);
 }
 
-
+/*
 GPU_FUNCTION
 inline bool is_inv_x(uStatus status)
 {
@@ -458,7 +458,7 @@ inline void unset_inv(uStatus& status)
 
     status &= ~inv;
 }
-
+*/
 
 
 

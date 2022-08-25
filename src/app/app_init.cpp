@@ -351,44 +351,6 @@ static bool allocate_entity_pixel(AppState& state, DeviceMemory& device)
 }
 
 
-static bool allocate_entity_rect_2d_r32(AppState& state, DeviceMemory& device)
-{
-    auto& buffer = state.device_entity_rect_2d_r32_buffer;
-
-    if(!cuda::device_malloc(buffer, SIZE::Entity_Rect2Dr32))
-    {
-        print_error("entity Rect2Dr32");
-        return false;
-    }
-
-    auto rect_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
-    if(!rect_data)
-    {
-        print_error("player dim data");
-        return false;
-    }
-    device.player_soa.dim_m = rect_data;
-
-    rect_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
-    if(!rect_data)
-    {
-        print_error("blue dim data");
-        return false;
-    }
-    device.blue_soa.dim_m = rect_data;
-
-    rect_data = cuda::push_elements(buffer, COUNT::WALL_ENTITIES);
-    if(!rect_data)
-    {
-        print_error("wall dim data");
-        return false;
-    }
-    device.wall_soa.dim_m = rect_data;
-
-    return true;
-}
-
-
 static bool allocate_entity_r32(AppState& state, DeviceMemory& device)
 {
     auto& buffer = state.device_entity_r32_buffer;
@@ -486,6 +448,14 @@ static bool allocate_entity_vec_2d_r32(AppState& state, DeviceMemory& device)
     auto vec_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
     if(!vec_data)
     {
+        print_error("player dim_m data");
+        return false;
+    }
+    device.player_soa.dim_m = vec_data;
+
+    vec_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
+    if(!vec_data)
+    {
         print_error("player dt data");
         return false;
     }
@@ -502,6 +472,14 @@ static bool allocate_entity_vec_2d_r32(AppState& state, DeviceMemory& device)
     vec_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
     if(!vec_data)
     {
+        print_error("blue dim_m data");
+        return false;
+    }
+    device.blue_soa.dim_m = vec_data;
+
+    vec_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
+    if(!vec_data)
+    {
         print_error("blue dt data");
         return false;
     }
@@ -514,6 +492,14 @@ static bool allocate_entity_vec_2d_r32(AppState& state, DeviceMemory& device)
         return false;
     }
     device.blue_soa.delta_pos_m = vec_data;
+
+    vec_data = cuda::push_elements(buffer, COUNT::WALL_ENTITIES);
+    if(!vec_data)
+    {
+        print_error("wall dim_m data");
+        return false;
+    }
+    device.wall_soa.dim_m = vec_data;
 
     return true;
 }
@@ -626,11 +612,6 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
     }
 
     if(!allocate_entity_pixel(state, device))
-    {
-        return false;
-    }
-
-    if(!allocate_entity_rect_2d_r32(state, device))
     {
         return false;
     }
