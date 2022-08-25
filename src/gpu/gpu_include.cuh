@@ -331,7 +331,7 @@ inline bool id_in_range(u32 id, u32 begin, u32 end)
     return begin <= id && id < end;
 }
 
-
+/*
 GPU_FUNCTION
 inline u32 player_id(u32 player_offset)
 {
@@ -351,7 +351,7 @@ inline u32 wall_id(u32 wall_offset)
 {
     return WALL_BEGIN + wall_offset;
 }
-
+*/
 
 GPU_FUNCTION
 inline bool is_player(u32 entity_id)
@@ -371,6 +371,33 @@ GPU_FUNCTION
 inline bool is_wall(u32 entity_id)
 {
     return gpuf::id_in_range(entity_id, WALL_BEGIN, WALL_END);
+}
+
+
+GPU_FUNCTION
+inline u32 to_player_id(u32 entity_id)
+{
+    assert(gpuf::is_player(entity_id));
+
+    return entity_id - PLAYER_BEGIN;
+}
+
+
+GPU_FUNCTION
+inline u32 to_blue_id(u32 entity_id)
+{
+    assert(gpuf::is_blue(entity_id));
+
+    return entity_id - BLUE_BEGIN;
+}
+
+
+GPU_FUNCTION
+inline u32 to_wall_id(u32 entity_id)
+{
+    assert(gpuf::is_wall(entity_id));
+
+    return entity_id - WALL_BEGIN;
 }
 
 

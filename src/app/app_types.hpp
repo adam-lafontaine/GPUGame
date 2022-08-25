@@ -293,7 +293,7 @@ public:
     InputList previous_inputs;
     InputList current_inputs;
 
-    u32 user_player_entity_id = 0;
+    u32 user_player_id = 0;
 };
 
 

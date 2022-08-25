@@ -564,7 +564,7 @@ static void update_entity_position(Entity& entity, ScreenProps const& props)
 */
 
 GPU_FUNCTION
-static void update_postion(PlayerProps& ent)
+static void update_position(PlayerProps& ent)
 {
     if(!gpuf::is_active(ent.props.status[ent.id]))
     {
@@ -583,7 +583,7 @@ static void update_postion(PlayerProps& ent)
 
 
 GPU_FUNCTION
-static void update_postion(BlueProps& ent)
+static void update_position(BlueProps& ent)
 {
     if(!gpuf::is_active(ent.props.status[ent.id]))
     {
@@ -600,7 +600,7 @@ static void update_postion(BlueProps& ent)
     delta_pos = { 0.0f, 0.0f };
 }
 
-
+/*
 GPU_FUNCTION
 static void update_entity_on_screen(Entity& entity, ScreenProps const& props)
 {
@@ -618,11 +618,16 @@ static void update_entity_on_screen(Entity& entity, ScreenProps const& props)
         gpuf::set_offscreen(entity);
     }
 }
-
+*/
 
 GPU_FUNCTION
 static void update_on_screen(PlayerProps& ent, ScreenProps const& props)
 {
+    if(!gpuf::is_active(ent.props.status[ent.id]))
+    {
+        return;
+    }
+
     auto pos = ent.props.position[ent.id];
     auto entity_screen_pos_m = gpuf::sub_delta_m(pos, props.screen_pos);
 
@@ -647,6 +652,43 @@ static void update_on_screen(PlayerProps& ent, ScreenProps const& props)
 GPU_FUNCTION
 static void update_on_screen(BlueProps& ent, ScreenProps const& props)
 {
+    if(!gpuf::is_active(ent.props.status[ent.id]))
+    {
+        return;
+    }
+
+    auto pos = ent.props.position[ent.id];
+    auto entity_screen_pos_m = gpuf::sub_delta_m(pos, props.screen_pos);
+
+    auto dim = ent.props.dim_m[ent.id];
+    auto ent_rect = gpuf::make_rect(entity_screen_pos_m, dim.x, dim.y);
+
+    auto screen_rect = gpuf::make_rect(props.screen_width_m, props.screen_height_m);
+
+    auto is_onscreen = gpuf::rect_intersect(ent_rect, screen_rect);
+    auto& status = ent.props.status[ent.id];
+    if(is_onscreen)
+    {
+        gpuf::set_onscreen(status);
+    }
+    else
+    {
+        gpuf::set_offscreen(status);
+    }
+}
+
+
+
+
+
+GPU_FUNCTION
+static void update_on_screen(WallProps& ent, ScreenProps const& props)
+{
+    if(!gpuf::is_active(ent.props.status[ent.id]))
+    {
+        return;
+    }
+
     auto pos = ent.props.position[ent.id];
     auto entity_screen_pos_m = gpuf::sub_delta_m(pos, props.screen_pos);
 
@@ -688,24 +730,39 @@ static void gpu_next_movable_positions(DeviceMemory* device_p, UnifiedMemory* un
     auto& device = *device_p;
     auto& unified = *unified_p;
 
-    auto offset = (u32)t;
-    auto& entity = device.entities.data[offset];
+    auto entity_id = (u32)t;
+    //auto& entity = device.entities.data[offset];
 
     
 
-    if(gpuf::is_player(entity.id))
+    if(gpuf::is_player(entity_id))
     {
-        if(entity.id == unified.user_player_entity_id)
+        PlayerProps player{};
+        player.id = gpuf::to_player_id(entity_id);
+        player.props = device.player_soa;
+
+        if(player.id == unified.user_player_id)
         {
-            gpuf::apply_current_input(entity, unified.current_inputs, unified.frame_count);
+            //gpuf::apply_current_input(entity, unified.current_inputs, unified.frame_count);
+            gpuf::apply_current_input(player, unified.current_inputs, unified.frame_count);
         }
         else
         {
             // previous input
-        }        
+        }   
+
+        gpuf::next_postion(player);     
+    }
+    else if (gpuf::is_blue(entity_id))
+    {
+        BlueProps blue{};
+        blue.id = gpuf::to_blue_id(entity_id);
+        blue.props = device.blue_soa;
+
+        gpuf::next_postion(blue);
     }
     
-    gpuf::entity_next_position(entity);
+    //gpuf::entity_next_position(entity);
 }
 
 
@@ -861,8 +918,36 @@ static void gpu_update_entity_positions(ScreenProps props, u32 n_threads)
 
     auto& device = *props.device_p;
 
-    auto offset = (u32)t;
+    auto entity_id = (u32)t;
 
+    if(gpuf::is_player(entity_id))
+    {
+        PlayerProps player{};
+        player.id = gpuf::to_player_id(entity_id);
+        player.props = device.player_soa;
+
+        gpuf::update_position(player);
+        gpuf::update_on_screen(player, props);
+    }
+    else if (gpuf::is_blue(entity_id))
+    {
+        BlueProps blue{};
+        blue.id = gpuf::to_blue_id(entity_id);
+        blue.props = device.blue_soa;
+
+        gpuf::update_position(blue);
+        gpuf::update_on_screen(blue, props);
+    }
+    else if (gpuf::is_wall(entity_id))
+    {
+        WallProps wall{};
+        wall.id = gpuf::to_wall_id(entity_id);
+        wall.props = device.wall_soa;
+
+        gpuf::update_on_screen(wall, props);
+    }
+
+    /*
     auto& entity = device.entities.data[offset];
     if(!gpuf::is_active(entity))
     {
@@ -871,6 +956,7 @@ static void gpu_update_entity_positions(ScreenProps props, u32 n_threads)
 
     gpuf::update_entity_position(entity, props);
     gpuf::update_entity_on_screen(entity, props);
+    */
 }
 
 

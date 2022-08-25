@@ -652,7 +652,7 @@ bool init_unified_memory(AppState& state)
     UnifiedMemory unified{};
 
     unified.frame_count = 0;
-    unified.user_player_entity_id = 0;   
+    unified.user_player_id = 0;   
 
     auto const n_input_records = 2 * INPUT::MAX_RECORDS;
     if(!cuda::unified_malloc(state.unified_input_record_buffer, n_input_records))
