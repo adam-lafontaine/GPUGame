@@ -20,8 +20,6 @@ namespace gpuf
 GPU_FUNCTION
 static void update_player_dt(Vec2Dr32& player_dt, InputRecord const& input)
 {    
-    player_dt = { 0.0f, 0.0f };
-
     if(input.input & INPUT::PLAYER_UP)
     {
         player_dt.y -= input.est_dt_frame;
@@ -455,6 +453,8 @@ static void gpu_next_movable_positions(DeviceMemory* device_p, UnifiedMemory* un
         player.id = gpuf::to_player_id(entity_id);
         player.props = device.player_soa;
 
+        player.props.dt[player.id] = { 0.0f, 0.0f };
+
         if(player.id == unified.user_player_id)
         {
             gpuf::apply_current_input(player, unified.current_inputs, unified.frame_count);
@@ -677,7 +677,7 @@ namespace gpu
         cuda_launch_kernel(gpu_next_movable_positions, movable_blocks, THREADS_PER_BLOCK, device_p, unified_p, movable_threads);
         result = cuda::launch_success("gpu_next_movable_positions");
         assert(result);
-        
+        /*
         cuda_launch_kernel(gpu_player_wall, player_wall_blocks, THREADS_PER_BLOCK, device_p, player_wall_threads);
         result = cuda::launch_success("gpu_player_wall");
         assert(result);
@@ -693,7 +693,7 @@ namespace gpu
         cuda_launch_kernel(gpu_blue_blue, blue_blue_blocks, THREADS_PER_BLOCK, device_p, blue_blue_threads);
         result = cuda::launch_success("gpu_blue_blue");
         assert(result);
-
+*/
         auto props = make_screen_props(state);
 
         cuda_launch_kernel(gpu_update_entity_positions, entity_blocks, THREADS_PER_BLOCK, props, entity_threads);

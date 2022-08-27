@@ -551,44 +551,6 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
     device.tilemap.width = WORLD_WIDTH_TILE;
     device.tilemap.height = WORLD_HEIGHT_TILE;
 
-/*
-    // entities
-    if(!cuda::device_malloc(state.device_entity_buffer, SIZE::DeviceMemory_Entity))
-    {
-        print_error("entities");
-        return false;
-    }
-
-    auto player_data = cuda::push_elements(state.device_entity_buffer, COUNT::PLAYER_ENTITIES);
-    if(!player_data)
-    {
-        print_error("player data");
-        return false;
-    }
-    device.player_entities.data = player_data;
-    device.player_entities.n_elements = COUNT::PLAYER_ENTITIES;
-
-    auto blue_data = cuda::push_elements(state.device_entity_buffer, COUNT::BLUE_ENTITIES);
-    if(!blue_data)
-    {
-        print_error("blue data");
-        return false;
-    }
-    device.blue_entities.data = blue_data;
-    device.blue_entities.n_elements = COUNT::BLUE_ENTITIES;
-
-    auto wall_data = cuda::push_elements(state.device_entity_buffer, COUNT::WALL_ENTITIES);
-    if(!wall_data)
-    {
-        print_error("wall data");
-        return false;
-    }
-    device.wall_entities.data = wall_data;
-    device.wall_entities.n_elements = COUNT::WALL_ENTITIES;
-
-    device.entities.data = player_data;
-*/
-
     // entity soa
     if(!allocate_entity_status(state, device))
     {

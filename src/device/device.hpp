@@ -115,6 +115,32 @@ namespace cuda
     template<typename T>
     T* push_elements(MemoryBuffer<T>& buffer, size_t n_elements)
     {
+        assert(buffer.data);
+        assert(buffer.capacity);
+        assert(buffer.size < buffer.capacity);
+
+        auto is_valid = 
+            buffer.data &&
+            buffer.capacity &&
+            buffer.size < buffer.capacity;
+        assert(is_valid);
+
+        auto available = (buffer.capacity - buffer.size) >= n_elements;
+        assert(available);
+
+        if(!is_valid || !available)
+        {
+            return nullptr;
+        }
+
+        auto data = buffer.data + buffer.size;
+
+        buffer.size += n_elements;
+
+        return data;
+
+        /*
+
         auto b = to_byte_buffer(buffer);
 
         auto data = push_bytes(b, sizeof(T) * n_elements);
@@ -127,6 +153,7 @@ namespace cuda
         buffer.size += n_elements;
 
         return (T*)data;
+        */
     }
 
 

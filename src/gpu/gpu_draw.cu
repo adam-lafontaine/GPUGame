@@ -275,7 +275,7 @@ namespace gpu
         cuda_launch_kernel(gpu_draw_player_pixels, player_pixel_blocks, THREADS_PER_BLOCK, props, player_pixel_threads);
         result = cuda::launch_success("gpu_draw_player_pixels");
         assert(result);
-
+/*
         cuda_launch_kernel(gpu_draw_blue_pixels, blue_pixel_blocks, THREADS_PER_BLOCK, props, blue_pixel_threads);
         result = cuda::launch_success("gpu_draw_blue_pixels");
         assert(result);
@@ -283,5 +283,6 @@ namespace gpu
         cuda_launch_kernel(gpu_draw_wall_pixels, wall_pixel_blocks, THREADS_PER_BLOCK, props, wall_pixel_threads);
         result = cuda::launch_success("gpu_draw_wall_pixels");
         assert(result);
+        */
     }
 }

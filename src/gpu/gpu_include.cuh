@@ -50,7 +50,7 @@ public:
 };
 
 
-constexpr int THREADS_PER_BLOCK = 1024;
+constexpr int THREADS_PER_BLOCK = 512;
 
 constexpr int calc_thread_blocks(u32 n_threads)
 {
