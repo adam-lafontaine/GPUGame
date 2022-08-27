@@ -7,165 +7,158 @@ namespace gpuf
 {
 /********************************/
 
-
-
 GPU_FUNCTION
-static void init_player(Entity& player, PlayerBitmap const& bitmap, u32 player_offset)
+static void init_player(PlayerProps const& player, PlayerBitmap const& bitmap)
 {
-    assert(player_offset < N_PLAYER_ENTITIES);
+    assert(player.id < COUNT::PLAYER_ENTITIES);
 
-    player.id = player_id(player_offset);
-    gpuf::set_active(player);
+    auto i = player.id;
 
-    player.bitmap.width = bitmap.width;
-    player.bitmap.height = bitmap.height;
-    player.bitmap.data = bitmap.bitmap_data;
-    player.avg_color = *bitmap.avg_color;
 
-    player.width_m = 0.3f;
-    player.height_m = 0.3f;
+    gpuf::set_active(player.props.status[i]);
 
-    player.position.tile = { 4, 4 };
-    player.position.offset_m = { 0.0f, 0.0f };
+    player.props.bitmap[i].width = bitmap.width;
+    player.props.bitmap[i].height = bitmap.height;
+    player.props.bitmap[i].bitmap_data = bitmap.bitmap_data;    
+    player.props.bitmap[i].avg_color = *bitmap.avg_color;
 
-    player.next_position = player.position;
+    player.props.dim_m[i] = { 0.3f, 0.3f };
 
-    player.speed = 1.5f;
-    player.dt = { 0.0f, 0.0f };
+    player.props.position[i].tile = { 4, 4 };
+    player.props.position[i].offset_m = { 0.0f, 0.0f };
 
-    player.delta_pos_m = { 0.0f, 0.0f };
+    player.props.next_position[i] = player.props.position[i];
+
+    player.props.speed[i] = 1.5f;
+    player.props.dt[i] = { 0.0f, 0.0f };
+
+    player.props.delta_pos_m[i] = { 0.0f, 0.0f };
+
 }
 
 
 GPU_FUNCTION
-static void init_blue(Entity& entity, BlueBitmap const& bitmap, u32 blue_offset)
+static void init_blue(BlueProps const& blue, BlueBitmap const& bitmap)
 {
-    assert(blue_offset < N_BLUE_ENTITIES);
+    assert(blue.id < COUNT::BLUE_ENTITIES);
 
-    entity.id = blue_id(blue_offset);
-    gpuf::set_active(entity);
+    auto i = blue.id;
 
-    entity.bitmap.width = bitmap.width;
-    entity.bitmap.height = bitmap.height;
-    entity.bitmap.data = bitmap.bitmap_data;
-    entity.avg_color = *bitmap.avg_color;
+    gpuf::set_active(blue.props.status[i]);
 
-    entity.width_m = 0.1f;
-    entity.height_m = 0.1f;
+    blue.props.bitmap[i].width = bitmap.width;
+    blue.props.bitmap[i].height = bitmap.height;
+    blue.props.bitmap[i].bitmap_data = bitmap.bitmap_data;
+    blue.props.bitmap[i].avg_color = *bitmap.avg_color;
 
-    auto w = (i32)N_BLUE_W;
+    blue.props.dim_m[i] = { 0.1f, 0.1f };
 
-    auto y = (i32)blue_offset / w;
-    auto x = (i32)blue_offset - y * w;
+    auto w = (i32)COUNT::BLUE_W;
 
-    entity.position.tile = { x + 6, y + 2 };
-    entity.position.offset_m = { 0.2f, 0.2f };
+    auto y = (i32)i / w;
+    auto x = (i32)i - y * w;
 
-    entity.next_position = entity.position;
+    blue.props.position[i].tile = { x + 6, y + 2 };
+    blue.props.position[i].offset_m = { 0.2f, 0.2f };
 
-    entity.speed = 3.0f;    
+    blue.props.next_position[i] = blue.props.position[i];
 
-    entity.delta_pos_m = { 0.0f, 0.0f };
+    blue.props.speed[i] = 3.0f;    
 
-    entity.dt = { 0.0f, 0.0f };
+    blue.props.delta_pos_m[i] = { 0.0f, 0.0f };
 
-    switch(blue_offset % 8)
+    Vec2Dr32 dt = { 0.0f, 0.0f };
+    
+    switch(i % 8)
     {
         case 0:
-        entity.dt = { 1.0f, 0.0f };
+        dt = { 1.0f, 0.0f };
 
         break;
 
         case 1:
-        entity.dt = { 0.707107f, 0.707107f };
+        dt = { 0.707107f, 0.707107f };
 
         break;
 
         case 2:
-        entity.dt = { 0.0f, 1.0f };
+        dt = { 0.0f, 1.0f };
 
         break;
 
         case 3:
-        entity.dt = { -0.707107f, 0.707107f };
+        dt = { -0.707107f, 0.707107f };
 
         break;
 
         case 4:
-        entity.dt = { -1.0f, 0.0f };
+        dt = { -1.0f, 0.0f };
 
         break;
 
         case 5:
-        entity.dt = { -0.707107f, -0.707107f };
+        dt = { -0.707107f, -0.707107f };
 
         break;
 
         case 6:
-        entity.dt = { 0.0f, -1.0f };
+        dt = { 0.0f, -1.0f };
 
         break;
 
         case 7:
-        entity.dt = { 0.707107f, -0.707107f };
+        dt = { 0.707107f, -0.707107f };
 
         break;
     }
 
-    entity.dt = gpuf::vec_mul(entity.dt, 1.0f / 60.0f); // assume 60 FPS
+    blue.props.dt[i] = gpuf::vec_mul(dt, 1.0f / 60.0f); // assume 60 FPS
 }
 
 
 GPU_FUNCTION
-static void init_wall(Entity& wall, WallBitmap const& bitmap, u32 wall_offset)
+static void init_wall(WallProps const& wall, WallBitmap const& bitmap)
 {
-    assert(wall_offset < N_BROWN_ENTITIES);
+    assert(wall.id < COUNT::WALL_ENTITIES);
 
-    wall.id = brown_id(wall_offset);
-    gpuf::set_active(wall);
-
-    wall.bitmap.width = bitmap.width;
-    wall.bitmap.height = bitmap.height;
-    wall.bitmap.data = bitmap.bitmap_data;
-    wall.avg_color = *bitmap.avg_color;
-
-    wall.width_m = TILE_LENGTH_M;
-    wall.height_m = TILE_LENGTH_M;
+    auto i = wall.id;
     
-    wall.position.offset_m = { 0.0f, 0.0f };
+    gpuf::set_active(wall.props.status[i]);
 
-    wall.speed = 0.0f;
-    wall.dt = { 0.0f, 0.0f };
+    wall.props.bitmap[i].width = bitmap.width;
+    wall.props.bitmap[i].height = bitmap.height;
+    wall.props.bitmap[i].bitmap_data = bitmap.bitmap_data;    
+    wall.props.bitmap[i].avg_color = *bitmap.avg_color;
+
+    wall.props.dim_m[i] = { TILE_LENGTH_M, TILE_LENGTH_M };
+    
+    wall.props.position[i].offset_m = { 0.0f, 0.0f };
 
     i32 x = 0;
     i32 y = 0;
 
-    if(wall_offset < WORLD_WIDTH_TILE)
+    if(i < WORLD_WIDTH_TILE)
     {
-        x = (i32)wall_offset;
+        x = (i32)i;
         y = 0;
     }
-    else if(wall_offset < 2 * WORLD_WIDTH_TILE)
+    else if(i < 2 * WORLD_WIDTH_TILE)
     {
         y = (i32)WORLD_HEIGHT_TILE - 1;
-        x = wall_offset - (i32)WORLD_WIDTH_TILE;        
+        x = i - (i32)WORLD_WIDTH_TILE;        
     }
-    else if(wall_offset < 2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2)
+    else if(i < 2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2)
     {
         x = 0;
-        y = wall_offset - (2 * WORLD_WIDTH_TILE) + 1;
+        y = i - (2 * WORLD_WIDTH_TILE) + 1;
     }
     else
     {
         x = (i32)WORLD_WIDTH_TILE - 1;
-        y = wall_offset - (2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2) + 1;
+        y = i - (2 * WORLD_WIDTH_TILE + WORLD_HEIGHT_TILE - 2) + 1;
     }
 
-    wall.position.tile = { x, y };
-
-    wall.next_position = wall.position;
-
-    wall.delta_pos_m = { 0.0f, 0.0f };
+    wall.props.position[i].tile = { x, y };
 }
 
 
@@ -203,14 +196,15 @@ static void gpu_init_players(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
-    assert(n_threads == N_PLAYER_ENTITIES);
+    assert(n_threads == COUNT::PLAYER_ENTITIES);
 
     auto& device = *device_p;
-    auto& assets = device.assets;    
-
-    auto offset = (u32)t;
-
-    gpuf::init_player(device.player_entities.data[offset], assets.player_bitmap, (u32)t);
+    auto& assets = device.assets;   
+    
+    PlayerProps player{};
+    player.id = (u32)t;
+    player.props = device.player_soa;
+    gpuf::init_player(player, assets.player_bitmap);
 }
 
 
@@ -223,14 +217,15 @@ static void gpu_init_blue_entities(DeviceMemory* device_p, u32 n_threads)
         return;
     }
 
-    assert(n_threads == N_BLUE_ENTITIES);
+    assert(n_threads == COUNT::BLUE_ENTITIES);
 
     auto& device = *device_p;
     auto& assets = device.assets;
 
-    auto offset = (u32)t;
-
-    gpuf::init_blue(device.blue_entities.data[offset], assets.blue_bitmap, offset);
+    BlueProps blue{};
+    blue.id = (u32)t;
+    blue.props = device.blue_soa;
+    gpuf::init_blue(blue, assets.blue_bitmap);
 }
 
 
@@ -246,11 +241,12 @@ static void gpu_init_wall_entities(DeviceMemory* device_p, u32 n_threads)
     auto& device = *device_p;
     auto& assets = device.assets;
 
-    assert(n_threads == N_BROWN_ENTITIES);
-
-    auto offset = (u32)t;
-
-    gpuf::init_wall(device.wall_entities.data[offset], assets.wall_bitmap, offset);
+    assert(n_threads == COUNT::WALL_ENTITIES);
+    
+    WallProps wall{};
+    wall.id = (u32)t;
+    wall.props = device.wall_soa;
+    gpuf::init_wall(wall, assets.wall_bitmap);
 }
 
 
@@ -269,16 +265,16 @@ namespace gpu
             return false;
         }
 
-        constexpr auto player_threads = N_PLAYER_ENTITIES;
+        constexpr auto player_threads = COUNT::PLAYER_ENTITIES;
         constexpr auto player_blocks = calc_thread_blocks(player_threads);
 
-        constexpr auto blue_threads = N_BLUE_ENTITIES;
+        constexpr auto blue_threads = COUNT::BLUE_ENTITIES;
         constexpr auto blue_blocks = calc_thread_blocks(blue_threads);
 
-        constexpr auto wall_threads = N_BROWN_ENTITIES;
+        constexpr auto wall_threads = COUNT::WALL_ENTITIES;
         constexpr auto wall_blocks = calc_thread_blocks(wall_threads);
 
-        constexpr auto tile_threads = N_WORLD_TILES;
+        constexpr auto tile_threads = COUNT::WORLD_TILES;
         constexpr auto tile_blocks = calc_thread_blocks(tile_threads);        
         
         

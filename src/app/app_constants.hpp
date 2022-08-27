@@ -1,0 +1,57 @@
+#pragma once
+
+#include "../utils/defs.hpp"
+
+
+constexpr u32 SCREEN_HEIGHT_PX = 800;
+constexpr u32 SCREEN_WIDTH_PX = SCREEN_HEIGHT_PX * 10 / 8;
+
+constexpr u32 TILE_WIDTH_PX = 64;
+constexpr u32 TILE_HEIGHT_PX = TILE_WIDTH_PX;
+
+constexpr u32 PLAYER_WIDTH_PX = 12;
+constexpr u32 PLAYER_HEIGHT_PX = PLAYER_WIDTH_PX;
+
+constexpr u32 BLUE_WIDTH_PX = 5;
+constexpr u32 BLUE_HEIGHT_PX = BLUE_WIDTH_PX;
+
+constexpr u32 WALL_WIDTH_PX = 20;
+constexpr u32 WALL_HEIGHT_PX = WALL_WIDTH_PX;
+
+constexpr r32 TILE_LENGTH_M = 0.5f;
+
+constexpr u32 MIN_SCREEN_WIDTH_TILE = 10;
+constexpr u32 MAX_SCREEN_WIDTH_TILE = 100;
+
+constexpr u32 WORLD_WIDTH_TILE = 50;
+constexpr u32 WORLD_HEIGHT_TILE = 25;
+
+constexpr r32 MIN_SCREEN_WIDTH_M = MIN_SCREEN_WIDTH_TILE * TILE_LENGTH_M;
+constexpr r32 MAX_SCREEN_WIDTH_M = MAX_SCREEN_WIDTH_TILE * TILE_LENGTH_M;
+
+
+namespace COUNT
+{
+    constexpr auto SCREEN_PIXELS = SCREEN_HEIGHT_PX * SCREEN_WIDTH_PX;
+
+    constexpr u32 WORLD_TILES = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;
+
+    constexpr u32 WALL_ENTITIES = 2 * WORLD_WIDTH_TILE + 2 * WORLD_HEIGHT_TILE - 4;
+
+    constexpr u32 BLUE_W = WORLD_WIDTH_TILE - 8;
+    constexpr u32 BLUE_H = WORLD_HEIGHT_TILE - 4;
+    constexpr u32 BLUE_ENTITIES = BLUE_W * BLUE_H;
+
+    constexpr u32 PLAYER_ENTITIES = 1;
+
+    constexpr u32 ENTITIES = BLUE_ENTITIES + WALL_ENTITIES + PLAYER_ENTITIES;
+    constexpr u32 MOVABLE_ENTITIES = PLAYER_ENTITIES + BLUE_ENTITIES;
+}
+
+
+constexpr auto PLAYER_BEGIN = 0U;
+constexpr auto PLAYER_END = COUNT::PLAYER_ENTITIES;
+constexpr auto BLUE_BEGIN = PLAYER_END;
+constexpr auto BLUE_END = BLUE_BEGIN + COUNT::BLUE_ENTITIES;
+constexpr auto WALL_BEGIN = BLUE_END;
+constexpr auto WALL_END = WALL_BEGIN + COUNT::WALL_ENTITIES;

@@ -37,7 +37,7 @@ static bool is_jpg(const char* filename)
 
 namespace libimage
 {
-	void read_image_from_file(const char* img_path_src, image_t& image_dst)
+	void read_image_from_file(const char* img_path_src, Image& image_dst)
 	{
 		int width = 0;
 		int height = 0;
@@ -56,7 +56,7 @@ namespace libimage
 	}
 
 
-	void resize_image(image_t const& image_src, image_t& image_dst)
+	void resize_image(Image const& image_src, Image& image_dst)
 	{
 		assert(image_src.width);
 		assert(image_src.height);
@@ -90,7 +90,7 @@ namespace libimage
 	}
 
 
-	void make_image(image_t& image_dst, u32 width, u32 height)
+	void make_image(Image& image_dst, u32 width, u32 height)
 	{
 		assert(width);
 		assert(height);

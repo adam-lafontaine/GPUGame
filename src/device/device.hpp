@@ -127,6 +127,7 @@ namespace cuda
         buffer.size += n_elements;
 
         return (T*)data;
+        
     }
 
 

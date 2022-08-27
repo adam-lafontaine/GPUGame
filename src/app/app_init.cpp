@@ -9,7 +9,7 @@ namespace img = libimage;
 constexpr auto GRASS_TILE_PATH = "/home/adam/Repos/GPUGame/assets/tiles/basic_grass.png";
 
 
-static Pixel get_avg_color(image_t const& image)
+static Pixel get_avg_color(Image const& image)
 {
     auto sub_h = image.height;
     auto sub_w = image.width;
@@ -226,19 +226,249 @@ static bool init_input_list(InputList& list, MemoryBuffer<InputRecord>& buffer)
 }
 
 
+static bool allocate_entity_status(AppState& state, DeviceMemory& device)
+{
+    auto& buffer = state.device_entity_ustatus_buffer;
+
+    if(!cuda::device_malloc(buffer, SIZE::Entity_uStatus))
+    {
+        print_error("entity uStatus");
+        return false;
+    }
+
+    auto status_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
+    if(!status_data)
+    {
+        print_error("player status data");
+        return false;
+    }
+    device.player_soa.status = status_data;
+
+    status_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
+    if(!status_data)
+    {
+        print_error("blue status data");
+        return false;
+    }
+    device.blue_soa.status = status_data;
+
+    status_data = cuda::push_elements(buffer, COUNT::WALL_ENTITIES);
+    if(!status_data)
+    {
+        print_error("wall status data");
+        return false;
+    }
+    device.wall_soa.status = status_data;
+
+    return true;
+}
+
+
+static bool allocate_entity_entity_bitmap(AppState& state, DeviceMemory& device)
+{
+    auto& buffer = state.device_entity_entity_bitmap_buffer;
+    
+    if (!cuda::device_malloc(buffer, SIZE::Entity_EntityBitmap))
+    {
+        print_error("entity EntityBitmap");
+        return false;
+    }
+
+    auto data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
+    if(!data)
+    {
+        print_error("player bitmap data");
+        return false;
+    }
+    device.player_soa.bitmap = data;
+
+    data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
+    if(!data)
+    {
+        print_error("blue bitmap data");
+        return false;
+    }
+    device.blue_soa.bitmap = data;
+
+    data = cuda::push_elements(buffer, COUNT::WALL_ENTITIES);
+    if(!data)
+    {
+        print_error("wall bitmap data");
+        return false;
+    }
+    device.wall_soa.bitmap = data;
+
+    return true;
+}
+
+static bool allocate_entity_r32(AppState& state, DeviceMemory& device)
+{
+    auto& buffer = state.device_entity_r32_buffer;
+
+    if(!cuda::device_malloc(buffer, SIZE::Entity_r32))
+    {
+        print_error("entity r32");
+        return false;
+    }
+
+    auto r32_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
+    if(!r32_data)
+    {
+        print_error("player speed data");
+        return false;
+    }
+    device.player_soa.speed = r32_data;
+
+    r32_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
+    if(!r32_data)
+    {
+        print_error("blue speed data");
+        return false;
+    }
+    device.blue_soa.speed = r32_data;
+
+    return true;
+}
+
+
+static bool allocate_entity_world_position(AppState& state, DeviceMemory& device)
+{
+    auto& buffer = state.device_entity_world_position_buffer;
+
+    if(!cuda::device_malloc(buffer, SIZE::Entity_WorldPosition))
+    {
+        print_error("entity WorldPosition");
+        return false;
+    }
+
+    auto pos_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
+    if(!pos_data)
+    {
+        print_error("player position data");
+        return false;
+    }
+    device.player_soa.position = pos_data;
+
+    pos_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
+    if(!pos_data)
+    {
+        print_error("player next position data");
+        return false;
+    }
+    device.player_soa.next_position = pos_data;
+
+    pos_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
+    if(!pos_data)
+    {
+        print_error("blue position data");
+        return false;
+    }
+    device.blue_soa.position = pos_data;
+
+    pos_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
+    if(!pos_data)
+    {
+        print_error("blue next position data");
+        return false;
+    }
+    device.blue_soa.next_position = pos_data;
+
+    pos_data = cuda::push_elements(buffer, COUNT::WALL_ENTITIES);
+    if(!pos_data)
+    {
+        print_error("wall position data");
+        return false;
+    }
+    device.wall_soa.position = pos_data;
+
+    return true;
+}
+
+
+static bool allocate_entity_vec_2d_r32(AppState& state, DeviceMemory& device)
+{
+    auto& buffer = state.device_entity_vec_2d_r32_buffer;
+
+    if(!cuda::device_malloc(buffer, SIZE::Entity_Vec2Dr32))
+    {
+        print_error("entity Vec2Dr32");
+        return false;
+    }
+
+    auto vec_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
+    if(!vec_data)
+    {
+        print_error("player dim_m data");
+        return false;
+    }
+    device.player_soa.dim_m = vec_data;
+
+    vec_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
+    if(!vec_data)
+    {
+        print_error("player dt data");
+        return false;
+    }
+    device.player_soa.dt = vec_data;
+
+    vec_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
+    if(!vec_data)
+    {
+        print_error("player delta_pos_m data");
+        return false;
+    }
+    device.player_soa.delta_pos_m = vec_data;
+
+    vec_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
+    if(!vec_data)
+    {
+        print_error("blue dim_m data");
+        return false;
+    }
+    device.blue_soa.dim_m = vec_data;
+
+    vec_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
+    if(!vec_data)
+    {
+        print_error("blue dt data");
+        return false;
+    }
+    device.blue_soa.dt = vec_data;
+
+    vec_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
+    if(!vec_data)
+    {
+        print_error("blue delta_pos_m data");
+        return false;
+    }
+    device.blue_soa.delta_pos_m = vec_data;
+
+    vec_data = cuda::push_elements(buffer, COUNT::WALL_ENTITIES);
+    if(!vec_data)
+    {
+        print_error("wall dim_m data");
+        return false;
+    }
+    device.wall_soa.dim_m = vec_data;
+
+    return true;
+}
+
+
 bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
 {
     assert(sizeof(Pixel) == buffer.bytes_per_pixel);
 
+    auto const width = SCREEN_WIDTH_PX;
+    auto const height = SCREEN_HEIGHT_PX;
+
+    assert(width == buffer.width);
+    assert(height == buffer.height);
+
     DeviceMemory device{};
 
-    auto const width = buffer.width;
-    auto const height = buffer.height;
-
-    auto const screen_size = width * height * sizeof(Pixel);
-
     // tiles/pixels
-    if(!cuda::device_malloc(state.device_pixel_buffer, total_asset_pixel_size() + screen_size))
+    if(!cuda::device_malloc(state.device_pixel_buffer, SIZE::DeviceMemory_Pixel))
     {
         print_error("device pixel_buffer");
         return false;
@@ -266,7 +496,7 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
     // tilemap
     auto const n_tilemap_tiles = WORLD_WIDTH_TILE * WORLD_HEIGHT_TILE;
 
-    if(!cuda::device_malloc(state.device_tile_buffer, n_tilemap_tiles * sizeof(Tile)))
+    if(!cuda::device_malloc(state.device_tile_buffer, SIZE::DeviceMemory_Tile))
     {
         print_error("device tiles");
         return false;
@@ -282,44 +512,32 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
     device.tilemap.width = WORLD_WIDTH_TILE;
     device.tilemap.height = WORLD_HEIGHT_TILE;
 
-
-    // entities
-    auto const n_entities = N_ENTITIES;
-    if(!cuda::device_malloc(state.device_entity_buffer, n_entities * sizeof(Entity)))
+    // entity soa
+    if(!allocate_entity_status(state, device))
     {
-        print_error("entities");
+        return false;
+    }
+    
+    if(!allocate_entity_entity_bitmap(state, device))
+    {
         return false;
     }
 
-    auto player_data = cuda::push_elements(state.device_entity_buffer, N_PLAYER_ENTITIES);
-    if(!player_data)
+    if(!allocate_entity_r32(state, device))
     {
-        print_error("player data");
         return false;
-    }
-    device.player_entities.data = player_data;
-    device.player_entities.n_elements = N_PLAYER_ENTITIES;
+    }    
 
-    auto blue_data = cuda::push_elements(state.device_entity_buffer, N_BLUE_ENTITIES);
-    if(!blue_data)
+    if(!allocate_entity_world_position(state, device))
     {
-        print_error("blue data");
         return false;
-    }
-    device.blue_entities.data = blue_data;
-    device.blue_entities.n_elements = N_BLUE_ENTITIES;
-
-    auto wall_data = cuda::push_elements(state.device_entity_buffer, N_BROWN_ENTITIES);
-    if(!wall_data)
+    }    
+   
+    if(!allocate_entity_vec_2d_r32(state, device))
     {
-        print_error("wall data");
         return false;
-    }
-    device.wall_entities.data = wall_data;
-    device.wall_entities.n_elements = N_BROWN_ENTITIES;
-
-    device.entities.data = player_data;
-
+    }    
+    
     if(!cuda::device_malloc(state.device_buffer, 1))
     {
         print_error("state.device_buffer");
@@ -341,7 +559,7 @@ bool init_unified_memory(AppState& state)
     UnifiedMemory unified{};
 
     unified.frame_count = 0;
-    unified.user_player_entity_id = 0;   
+    unified.user_player_id = 0;   
 
     auto const n_input_records = 2 * INPUT::MAX_RECORDS;
     if(!cuda::unified_malloc(state.unified_input_record_buffer, n_input_records))

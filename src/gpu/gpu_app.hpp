@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../app/app_types.hpp"
-#include "gpu_constants.hpp"
 
 
 namespace gpu

@@ -26,7 +26,31 @@ inline ScreenProps make_screen_props(AppState const& state)
 }
 
 
-constexpr int THREADS_PER_BLOCK = 1024;
+class PlayerProps
+{
+public:
+    PlayerEntitySOA props;
+    u32 id;
+};
+
+
+class BlueProps
+{
+public:
+    BlueEntitySOA props;
+    u32 id;
+};
+
+
+class WallProps
+{
+public:
+    WallEntitySOA props;
+    u32 id;
+};
+
+
+constexpr int THREADS_PER_BLOCK = 512;
 
 constexpr int calc_thread_blocks(u32 n_threads)
 {
@@ -118,15 +142,16 @@ inline WorldPosition add_delta(WorldPosition const& pos, Vec2Dr32 const& delta)
     return added; 
 }
 
+
 GPU_FUNCTION
 inline Vec2Dr32 add(Vec2Dr32 const& lhs, Vec2Dr32 const& rhs)
 {
-    Vec2Dr32 delta{};
+    Vec2Dr32 vec{};
 
-    delta.x = lhs.x + rhs.x;
-    delta.y = lhs.y + rhs.y;
+    vec.x = lhs.x + rhs.x;
+    vec.y = lhs.y + rhs.y;
 
-    return delta;
+    return vec;
 }
 
 
@@ -161,12 +186,39 @@ inline bool equal(Vec2Dr32 const& lhs, Vec2Dr32 const& rhs)
 
 
 GPU_FUNCTION
-inline Vec2Dr32 sub_delta_m(WorldPosition const& lhs, WorldPosition const& rhs)
+inline Vec2Dr32 sub_delta_m(WorldPosition const& pos, WorldPosition const& origin)
 {
     Vec2Dr32 delta{};
 
-    delta.x = TILE_LENGTH_M * (lhs.tile.x - rhs.tile.x) + lhs.offset_m.x - rhs.offset_m.x;
-    delta.y = TILE_LENGTH_M * (lhs.tile.y - rhs.tile.y) + lhs.offset_m.y - rhs.offset_m.y;
+    delta.x = TILE_LENGTH_M * (pos.tile.x - origin.tile.x) + pos.offset_m.x - origin.offset_m.x;
+    delta.y = TILE_LENGTH_M * (pos.tile.y - origin.tile.y) + pos.offset_m.y - origin.offset_m.y;
+
+    return delta;
+}
+
+
+GPU_FUNCTION
+inline Point2Dr32 subtract_abs(WorldPosition const& pos, WorldPosition const& origin)
+{
+    Point2Dr32 delta{};
+
+    delta.x = TILE_LENGTH_M * (pos.tile.x - origin.tile.x) + pos.offset_m.x - origin.offset_m.x;
+    delta.y = TILE_LENGTH_M * (pos.tile.y - origin.tile.y) + pos.offset_m.y - origin.offset_m.y;
+
+    return delta;
+}
+
+
+GPU_FUNCTION
+inline WorldPosition subtract(WorldPosition const& pos, WorldPosition const& origin)
+{
+    WorldPosition delta{};
+
+    delta.tile.x = pos.tile.x - origin.tile.x;
+    delta.tile.y = pos.tile.y - origin.tile.y;
+
+    delta.offset_m.x = pos.offset_m.x - origin.offset_m.x;
+    delta.offset_m.y = pos.offset_m.y - origin.offset_m.y;
 
     return delta;
 }
@@ -212,21 +264,6 @@ inline Rect2Dr32 add_delta(Rect2Dr32 const& rect, Vec2Dr32 const& delta)
     r.x_end += delta.x;
     r.y_begin += delta.y;
     r.y_end += delta.y;
-
-    return r;
-}
-
-
-GPU_FUNCTION
-inline Rect2Dr32 get_screen_rect(Entity const& entity, Point2Dr32 const& screen_pos)
-{
-    Rect2Dr32 r{};
-
-    // pos at top left
-    r.x_begin = screen_pos.x;
-    r.x_end = r.x_begin + entity.width_m;
-    r.y_begin = screen_pos.y;
-    r.y_end = r.y_begin + entity.height_m;
 
     return r;
 }
@@ -308,32 +345,24 @@ inline bool id_in_range(u32 id, u32 begin, u32 end)
 }
 
 
-constexpr auto PLAYER_BEGIN = 0U;
-constexpr auto PLAYER_END = N_PLAYER_ENTITIES;
-constexpr auto BLUE_BEGIN = PLAYER_END;
-constexpr auto BLUE_END = BLUE_BEGIN + N_BLUE_ENTITIES;
-constexpr auto BROWN_BEGIN = BLUE_END;
-constexpr auto BROWN_END = BROWN_BEGIN + N_BROWN_ENTITIES;
-
-
 GPU_FUNCTION
-inline u32 player_id(u32 player_offset)
+inline u32 to_entity_id_from_player(u32 player_offset)
 {
     return PLAYER_BEGIN + player_offset;
 }
 
 
 GPU_FUNCTION
-inline u32 blue_id(u32 blue_offset)
+inline u32 to_entity_id_from_blue(u32 blue_offset)
 {
     return BLUE_BEGIN + blue_offset;
 }
 
 
 GPU_FUNCTION
-inline u32 brown_id(u32 brown_offset)
+inline u32 to_entity_id_from_wall(u32 wall_offset)
 {
-    return BROWN_BEGIN + brown_offset;
+    return WALL_BEGIN + wall_offset;
 }
 
 
@@ -354,56 +383,167 @@ inline bool is_blue(u32 entity_id)
 GPU_FUNCTION
 inline bool is_wall(u32 entity_id)
 {
-    return gpuf::id_in_range(entity_id, BROWN_BEGIN, BROWN_END);
+    return gpuf::id_in_range(entity_id, WALL_BEGIN, WALL_END);
 }
 
 
 GPU_FUNCTION
-inline bool is_active(Entity const& entity)
+inline u32 to_player_id(u32 entity_id)
 {
-    return entity.status & STATUS::ACTIVE;
+    assert(gpuf::is_player(entity_id));
+
+    return entity_id - PLAYER_BEGIN;
 }
 
 
 GPU_FUNCTION
-inline bool is_onscreen(Entity const& entity)
+inline u32 to_blue_id(u32 entity_id)
 {
-    return entity.status & STATUS::ONSCREEN;
+    assert(gpuf::is_blue(entity_id));
+
+    return entity_id - BLUE_BEGIN;
 }
 
 
 GPU_FUNCTION
-inline bool is_drawable(Entity const& entity)
+inline u32 to_wall_id(u32 entity_id)
 {
-    return gpuf::is_active(entity) && gpuf::is_onscreen(entity);
+    assert(gpuf::is_wall(entity_id));
+
+    return entity_id - WALL_BEGIN;
 }
 
 
 GPU_FUNCTION
-inline void set_active(Entity& entity)
+inline bool is_active(uStatus status)
 {
-    entity.status |= STATUS::ACTIVE;
+    return status & STATUS::ACTIVE;
 }
 
 
 GPU_FUNCTION
-inline void set_inactive(Entity& entity)
+inline void set_active(uStatus& status)
 {
-    entity.status &= ~STATUS::ACTIVE;
+    status |= STATUS::ACTIVE;
 }
 
 
 GPU_FUNCTION
-inline void set_onscreen(Entity& entity)
+inline void set_inactive(uStatus& status)
 {
-    entity.status |= STATUS::ONSCREEN;
+    status &= ~STATUS::ACTIVE;
 }
 
 
 GPU_FUNCTION
-inline void set_offscreen(Entity& entity)
+inline bool is_onscreen(uStatus status)
 {
-    entity.status &= ~STATUS::ONSCREEN;
+    return status & STATUS::ONSCREEN;
+}
+
+
+GPU_FUNCTION
+inline void set_onscreen(uStatus& status)
+{
+    status |= STATUS::ONSCREEN;
+}
+
+
+GPU_FUNCTION
+inline void set_offscreen(uStatus& status)
+{
+    status &= ~STATUS::ONSCREEN;
+}
+
+
+GPU_FUNCTION
+inline bool is_inv_x(uStatus status)
+{
+    return status & STATUS::INV_X;
+}
+
+
+GPU_FUNCTION
+inline void set_inv_x(uStatus& status)
+{
+    status |= STATUS::INV_X;
+}
+
+
+GPU_FUNCTION
+inline void reset_inv_x(uStatus& status)
+{
+    status &= ~STATUS::INV_X;
+}
+
+
+GPU_FUNCTION
+inline bool is_inv_y(uStatus status)
+{
+    return status & STATUS::INV_Y;
+}
+
+
+GPU_FUNCTION
+inline void set_inv_y(uStatus& status)
+{
+    status |= STATUS::INV_Y;
+}
+
+
+GPU_FUNCTION
+inline void reset_inv_y(uStatus& status)
+{
+    status &= ~STATUS::INV_Y;
+}
+
+
+GPU_FUNCTION
+inline bool is_stop_x(uStatus status)
+{
+    return status & STATUS::STOP_X;
+}
+
+
+GPU_FUNCTION
+inline void set_stop_x(uStatus& status)
+{
+    status |= STATUS::STOP_X;
+}
+
+
+GPU_FUNCTION
+inline void reset_stop_x(uStatus& status)
+{
+    status &= ~STATUS::STOP_X;
+}
+
+
+GPU_FUNCTION
+inline bool is_stop_y(uStatus status)
+{
+    return status & STATUS::STOP_Y;
+}
+
+
+GPU_FUNCTION
+inline void set_stop_y(uStatus& status)
+{
+    status |= STATUS::STOP_Y;
+}
+
+
+GPU_FUNCTION
+inline void reset_stop_y(uStatus& status)
+{
+    status &= ~STATUS::STOP_Y;
+}
+
+
+GPU_FUNCTION
+inline bool is_drawable(uStatus status)
+{
+    return is_active(status) && is_onscreen(status);
 }
 
 /***********************/
