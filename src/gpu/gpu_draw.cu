@@ -77,7 +77,7 @@ static Pixel get_tile_pixel(Tile const& tile, WorldPosition const& pixel_world_p
 
 
 GPU_FUNCTION
-static void draw_bitmap_pixel(Image const& bitmap, u32 pixel_id, Vec2Dr32 const& dim_m, Point2Dr32 const& screen_pos_m, ScreenProps const& screen_props)
+static void draw_bitmap_pixel(EntityBitmap const& bitmap, u32 pixel_offset, Vec2Dr32 const& dim_m, Point2Dr32 const& screen_pos_m, ScreenProps const& screen_props)
 {
     auto bitmap_width_px = bitmap.width;
     auto bitmap_height_px = bitmap.height;
@@ -85,8 +85,8 @@ static void draw_bitmap_pixel(Image const& bitmap, u32 pixel_id, Vec2Dr32 const&
     auto bitmap_pixel_height_m = dim_m.y / bitmap_height_px;
     auto bitmap_pixel_width_m = dim_m.x / bitmap_width_px;
 
-    auto bitmap_pixel_offset_y = pixel_id / bitmap_width_px;
-    auto bitmap_pixel_offset_x = pixel_id - bitmap_pixel_offset_y * bitmap_width_px;
+    auto bitmap_pixel_offset_y = pixel_offset / bitmap_width_px;
+    auto bitmap_pixel_offset_x = pixel_offset - bitmap_pixel_offset_y * bitmap_width_px;
 
     Vec2Dr32 bitmap_pixel_offset_m{};
     bitmap_pixel_offset_m.x = bitmap_pixel_offset_x * bitmap_pixel_width_m;
@@ -104,7 +104,7 @@ static void draw_bitmap_pixel(Image const& bitmap, u32 pixel_id, Vec2Dr32 const&
     }
 
     auto screen_dst = screen_props.device_p->screen_pixels;
-    auto color = bitmap.data[pixel_id]; //screen_dst.width / screen_props.screen_width_m > 75 ? bitmap.data[pixel_id] : ent_props.avg_color[id];
+    auto color = screen_dst.width / screen_props.screen_width_m > 75 ? bitmap.bitmap_data[pixel_offset] : bitmap.avg_color;
 
     gpuf::clamp_rect(draw_rect_m, screen_rect_m);
     auto rect_px = gpuf::to_pixel_rect(draw_rect_m, screen_props.screen_width_m, screen_dst.width);
@@ -179,7 +179,7 @@ static void gpu_draw_player_pixels(ScreenProps props, u32 n_threads)
     constexpr auto n_bitmap_pixels = COUNT::PIXELS_PER_PLAYER;
 
     auto ent_id = (u32)t / n_bitmap_pixels;
-    auto pixel_id = (u32)t - ent_id * n_bitmap_pixels;
+    auto pixel_offset = (u32)t - ent_id * n_bitmap_pixels;
 
     if (!gpuf::is_drawable(ent_props.status[ent_id]))
     {
@@ -188,7 +188,7 @@ static void gpu_draw_player_pixels(ScreenProps props, u32 n_threads)
 
     auto entity_screen_pos_m = gpuf::subtract_abs(ent_props.position[ent_id], props.screen_pos);
 
-    gpuf::draw_bitmap_pixel(ent_props.bitmap[ent_id], pixel_id, ent_props.dim_m[ent_id], entity_screen_pos_m, props);
+    gpuf::draw_bitmap_pixel(ent_props.bitmap[ent_id], pixel_offset, ent_props.dim_m[ent_id], entity_screen_pos_m, props);
 }
 
 
@@ -209,7 +209,7 @@ static void gpu_draw_blue_pixels(ScreenProps props, u32 n_threads)
     constexpr auto n_bitmap_pixels = COUNT::PIXELS_PER_BLUE;
 
     auto ent_id = (u32)t / n_bitmap_pixels;
-    auto pixel_id = (u32)t - ent_id * n_bitmap_pixels;
+    auto pixel_offset = (u32)t - ent_id * n_bitmap_pixels;
 
     if (!gpuf::is_drawable(ent_props.status[ent_id]))
     {
@@ -218,7 +218,7 @@ static void gpu_draw_blue_pixels(ScreenProps props, u32 n_threads)
 
     auto entity_screen_pos_m = gpuf::subtract_abs(ent_props.position[ent_id], props.screen_pos);
 
-    gpuf::draw_bitmap_pixel(ent_props.bitmap[ent_id], pixel_id, ent_props.dim_m[ent_id], entity_screen_pos_m, props);
+    gpuf::draw_bitmap_pixel(ent_props.bitmap[ent_id], pixel_offset, ent_props.dim_m[ent_id], entity_screen_pos_m, props);
 }
 
 
@@ -239,7 +239,7 @@ static void gpu_draw_wall_pixels(ScreenProps props, u32 n_threads)
     constexpr auto n_bitmap_pixels = COUNT::PIXELS_PER_WALL;
 
     auto ent_id = (u32)t / n_bitmap_pixels;
-    auto pixel_id = (u32)t - ent_id * n_bitmap_pixels;
+    auto pixel_offset = (u32)t - ent_id * n_bitmap_pixels;
 
     if (!gpuf::is_drawable(ent_props.status[ent_id]))
     {
@@ -248,7 +248,7 @@ static void gpu_draw_wall_pixels(ScreenProps props, u32 n_threads)
 
     auto entity_screen_pos_m = gpuf::subtract_abs(ent_props.position[ent_id], props.screen_pos);
 
-    gpuf::draw_bitmap_pixel(ent_props.bitmap[ent_id], pixel_id, ent_props.dim_m[ent_id], entity_screen_pos_m, props);
+    gpuf::draw_bitmap_pixel(ent_props.bitmap[ent_id], pixel_offset, ent_props.dim_m[ent_id], entity_screen_pos_m, props);
 }
 
 

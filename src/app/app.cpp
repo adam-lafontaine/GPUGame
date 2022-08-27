@@ -351,8 +351,7 @@ namespace app
         cuda::free(state.unified_buffer);
 
         cuda::free(state.device_entity_ustatus_buffer);
-        cuda::free(state.device_entity_image_buffer);
-        cuda::free(state.device_entity_pixel_buffer);
+        cuda::free(state.device_entity_entity_bitmap_buffer);
         cuda::free(state.device_entity_rect_2d_r32_buffer);
         cuda::free(state.device_entity_r32_buffer);
         cuda::free(state.device_entity_world_position_buffer);

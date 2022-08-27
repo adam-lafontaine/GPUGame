@@ -19,9 +19,8 @@ static void init_player(PlayerProps const& player, PlayerBitmap const& bitmap)
 
     player.props.bitmap[i].width = bitmap.width;
     player.props.bitmap[i].height = bitmap.height;
-    player.props.bitmap[i].data = bitmap.bitmap_data;
-    
-    player.props.avg_color[i] = *bitmap.avg_color;
+    player.props.bitmap[i].bitmap_data = bitmap.bitmap_data;    
+    player.props.bitmap[i].avg_color = *bitmap.avg_color;
 
     player.props.dim_m[i] = { 0.3f, 0.3f };
 
@@ -49,8 +48,8 @@ static void init_blue(BlueProps const& blue, BlueBitmap const& bitmap)
 
     blue.props.bitmap[i].width = bitmap.width;
     blue.props.bitmap[i].height = bitmap.height;
-    blue.props.bitmap[i].data = bitmap.bitmap_data;
-    blue.props.avg_color[i] = *bitmap.avg_color;
+    blue.props.bitmap[i].bitmap_data = bitmap.bitmap_data;
+    blue.props.bitmap[i].avg_color = *bitmap.avg_color;
 
     blue.props.dim_m[i] = { 0.1f, 0.1f };
 
@@ -128,8 +127,8 @@ static void init_wall(WallProps const& wall, WallBitmap const& bitmap)
 
     wall.props.bitmap[i].width = bitmap.width;
     wall.props.bitmap[i].height = bitmap.height;
-    wall.props.bitmap[i].data = bitmap.bitmap_data;
-    wall.props.avg_color[i] = *bitmap.avg_color;
+    wall.props.bitmap[i].bitmap_data = bitmap.bitmap_data;    
+    wall.props.bitmap[i].avg_color = *bitmap.avg_color;
 
     wall.props.dim_m[i] = { TILE_LENGTH_M, TILE_LENGTH_M };
     

@@ -59,6 +59,17 @@ using BlueBitmap = Bitmap<BLUE_WIDTH_PX, BLUE_HEIGHT_PX>;
 using WallBitmap = Bitmap<WALL_WIDTH_PX, WALL_HEIGHT_PX>;
 
 
+class EntityBitmap
+{
+public:
+    Pixel* bitmap_data;
+    Pixel avg_color;
+
+    u32 width;
+    u32 height;
+};
+
+
 
 class DeviceAssets
 {
@@ -122,8 +133,7 @@ public:
 
     uStatus* status;
 
-    Image* bitmap;
-    Pixel* avg_color;
+    EntityBitmap* bitmap;
 
     Vec2Dr32* dim_m;
 
@@ -140,8 +150,9 @@ public:
 namespace SIZE
 {
     constexpr size_t PlayerEntitySOA_uStatus = COUNT::PLAYER_ENTITIES * sizeof(uStatus);
-    constexpr size_t PlayerEntitySOA_Image = COUNT::PLAYER_ENTITIES * sizeof(Image);
-    constexpr size_t PlayerEntitySOA_Pixel = COUNT::PLAYER_ENTITIES * sizeof(Pixel);
+    //constexpr size_t PlayerEntitySOA_Image = COUNT::PLAYER_ENTITIES * sizeof(Image);
+    //constexpr size_t PlayerEntitySOA_Pixel = COUNT::PLAYER_ENTITIES * sizeof(Pixel);
+    constexpr size_t PlayerEntitySOA_EntityBitmap = COUNT::PLAYER_ENTITIES * sizeof(EntityBitmap);
     constexpr size_t PlayerEntitySOA_Vec2Dr32 = COUNT::PLAYER_ENTITIES * sizeof(Vec2Dr32) * 3;
     constexpr size_t PlayerEntitySOA_WorldPosition = COUNT::PLAYER_ENTITIES * sizeof(WorldPosition) * 2;
     constexpr size_t PlayerEntitySOA_r32 = COUNT::PLAYER_ENTITIES * sizeof(r32);
@@ -154,8 +165,7 @@ public:
 
     uStatus* status;
 
-    Image* bitmap;
-    Pixel* avg_color;
+    EntityBitmap* bitmap;
 
     Vec2Dr32* dim_m;
 
@@ -173,8 +183,9 @@ public:
 namespace SIZE
 {
     constexpr size_t BlueEntitySOA_uStatus = COUNT::BLUE_ENTITIES * sizeof(uStatus);
-    constexpr size_t BlueEntitySOA_Image = COUNT::BLUE_ENTITIES * sizeof(Image);
-    constexpr size_t BlueEntitySOA_Pixel = COUNT::BLUE_ENTITIES * sizeof(Pixel);
+    //constexpr size_t BlueEntitySOA_Image = COUNT::BLUE_ENTITIES * sizeof(Image);
+    //constexpr size_t BlueEntitySOA_Pixel = COUNT::BLUE_ENTITIES * sizeof(Pixel);
+    constexpr size_t BlueEntitySOA_EntityBitmap = COUNT::BLUE_ENTITIES * sizeof(EntityBitmap);
     constexpr size_t BlueEntitySOA_Vec2Dr32 = COUNT::BLUE_ENTITIES * sizeof(Vec2Dr32) * 3;
     constexpr size_t BlueEntitySOA_WorldPosition = COUNT::BLUE_ENTITIES * sizeof(WorldPosition) * 2;
     constexpr size_t BlueEntitySOA_r32 = COUNT::BLUE_ENTITIES * sizeof(r32);
@@ -187,8 +198,7 @@ public:
 
     uStatus* status;
 
-    Image* bitmap;
-    Pixel* avg_color;
+    EntityBitmap* bitmap;
 
     Vec2Dr32* dim_m;
 
@@ -201,6 +211,7 @@ namespace SIZE
     constexpr size_t WallEntitySOA_uStatus = COUNT::WALL_ENTITIES * sizeof(uStatus);
     constexpr size_t WallEntitySOA_Image = COUNT::WALL_ENTITIES * sizeof(Image);
     constexpr size_t WallEntitySOA_Pixel = COUNT::WALL_ENTITIES * sizeof(Pixel);
+    constexpr size_t WallEntitySOA_EntityBitmap = COUNT::PLAYER_ENTITIES * sizeof(EntityBitmap);
     constexpr size_t WallEntitySOA_Vec2Dr32 = COUNT::WALL_ENTITIES * sizeof(Vec2Dr32);
     constexpr size_t WallEntitySOA_WorldPosition = COUNT::WALL_ENTITIES * sizeof(WorldPosition);
 }
@@ -209,8 +220,9 @@ namespace SIZE
 namespace SIZE
 {
     constexpr size_t Entity_uStatus = PlayerEntitySOA_uStatus + BlueEntitySOA_uStatus + WallEntitySOA_uStatus;
-    constexpr size_t Entity_Image = PlayerEntitySOA_Image + BlueEntitySOA_Image + WallEntitySOA_Image;
-    constexpr size_t Entity_Pixel = PlayerEntitySOA_Pixel + BlueEntitySOA_Pixel + WallEntitySOA_Pixel;
+    //constexpr size_t Entity_Image = PlayerEntitySOA_Image + BlueEntitySOA_Image + WallEntitySOA_Image;
+    //constexpr size_t Entity_Pixel = PlayerEntitySOA_Pixel + BlueEntitySOA_Pixel + WallEntitySOA_Pixel;
+    constexpr size_t Entity_EntityBitmap = PlayerEntitySOA_EntityBitmap + BlueEntitySOA_EntityBitmap + WallEntitySOA_EntityBitmap;
     constexpr size_t Entity_WorldPosition = PlayerEntitySOA_WorldPosition + BlueEntitySOA_WorldPosition + WallEntitySOA_WorldPosition;
     constexpr size_t Entity_Vec2Dr32 = PlayerEntitySOA_Vec2Dr32 + BlueEntitySOA_Vec2Dr32 + WallEntitySOA_Vec2Dr32;
     constexpr size_t Entity_r32 = PlayerEntitySOA_r32 + BlueEntitySOA_r32;
@@ -284,8 +296,9 @@ public:
 
     // soa data
     MemoryBuffer<uStatus> device_entity_ustatus_buffer;
-    MemoryBuffer<Image> device_entity_image_buffer;
-    MemoryBuffer<Pixel> device_entity_pixel_buffer;
+    //MemoryBuffer<Image> device_entity_image_buffer;
+    //MemoryBuffer<Pixel> device_entity_pixel_buffer;
+    MemoryBuffer<EntityBitmap> device_entity_entity_bitmap_buffer;
     MemoryBuffer<Rect2Dr32> device_entity_rect_2d_r32_buffer;
     MemoryBuffer<r32> device_entity_r32_buffer;
     MemoryBuffer<WorldPosition> device_entity_world_position_buffer;

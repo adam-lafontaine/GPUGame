@@ -230,7 +230,7 @@ static bool allocate_entity_status(AppState& state, DeviceMemory& device)
 {
     auto& buffer = state.device_entity_ustatus_buffer;
 
-    if(!cuda::device_malloc(state.device_entity_ustatus_buffer, SIZE::Entity_uStatus))
+    if(!cuda::device_malloc(buffer, SIZE::Entity_uStatus))
     {
         print_error("entity uStatus");
         return false;
@@ -264,6 +264,44 @@ static bool allocate_entity_status(AppState& state, DeviceMemory& device)
 }
 
 
+static bool allocate_entity_entity_bitmap(AppState& state, DeviceMemory& device)
+{
+    auto& buffer = state.device_entity_entity_bitmap_buffer;
+    
+    if (!cuda::device_malloc(buffer, SIZE::Entity_EntityBitmap))
+    {
+        print_error("entity EntityBitmap");
+        return false;
+    }
+
+    auto data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
+    if(!data)
+    {
+        print_error("player bitmap data");
+        return false;
+    }
+    device.player_soa.bitmap = data;
+
+    data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
+    if(!data)
+    {
+        print_error("blue bitmap data");
+        return false;
+    }
+    device.blue_soa.bitmap = data;
+
+    data = cuda::push_elements(buffer, COUNT::WALL_ENTITIES);
+    if(!data)
+    {
+        print_error("wall bitmap data");
+        return false;
+    }
+    device.wall_soa.bitmap = data;
+
+    return true;
+}
+
+/*
 static bool allocate_entity_image(AppState& state, DeviceMemory& device)
 {
     auto& buffer = state.device_entity_image_buffer;
@@ -338,7 +376,7 @@ static bool allocate_entity_pixel(AppState& state, DeviceMemory& device)
 
     return true;
 }
-
+*/
 
 static bool allocate_entity_r32(AppState& state, DeviceMemory& device)
 {
@@ -557,12 +595,7 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
         return false;
     }
     
-    if(!allocate_entity_image(state, device))
-    {
-        return false;
-    }
-
-    if(!allocate_entity_pixel(state, device))
+    if(!allocate_entity_entity_bitmap(state, device))
     {
         return false;
     }
