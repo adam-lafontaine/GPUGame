@@ -574,7 +574,6 @@ static void update_position(PlayerProps& ent)
     auto& pos = ent.props.position[ent.id];
     auto& next_pos = ent.props.next_position[ent.id];
     auto& delta_pos = ent.props.delta_pos_m[ent.id];
-    auto& status = ent.props.status[ent.id];
 
     pos = gpuf::add_delta(pos, delta_pos);
     next_pos = pos;
@@ -593,7 +592,6 @@ static void update_position(BlueProps& ent)
     auto& pos = ent.props.position[ent.id];
     auto& next_pos = ent.props.next_position[ent.id];
     auto& delta_pos = ent.props.delta_pos_m[ent.id];
-    auto& status = ent.props.status[ent.id];
 
     pos = gpuf::add_delta(pos, delta_pos);
     next_pos = pos;

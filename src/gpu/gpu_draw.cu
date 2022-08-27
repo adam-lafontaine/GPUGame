@@ -8,26 +8,30 @@ namespace COUNT
     constexpr auto PIXELS_PER_PLAYER = PLAYER_WIDTH_PX * PLAYER_HEIGHT_PX;
     constexpr auto PIXELS_PER_BLUE = BLUE_WIDTH_PX * BLUE_HEIGHT_PX;
     constexpr auto PIXELS_PER_WALL = WALL_WIDTH_PX * WALL_HEIGHT_PX;
+
+    constexpr auto PLAYER_PIXELS = PLAYER_ENTITIES * PIXELS_PER_PLAYER;
+    constexpr auto BLUE_PIXELS = BLUE_ENTITIES * PIXELS_PER_BLUE;
+    constexpr auto WALL_PIXELS = WALL_ENTITIES * PIXELS_PER_WALL;
+/*
     constexpr auto ENTITY_PIXELS = 
-        PLAYER_ENTITIES * PIXELS_PER_PLAYER +
-        BLUE_ENTITIES * PIXELS_PER_BLUE +
-        WALL_ENTITIES * PIXELS_PER_WALL;
-
+        PLAYER_PIXELS +
+        BLUE_PIXELS +
+        WALL_PIXELS;
+*/
 }
-
-
 
 
 namespace gpuf
 {
 /********************************/
-
+/*
 constexpr auto PLAYER_PIXELS_BEGIN = 0U;
 constexpr auto PLAYER_PIXELS_END = PLAYER_PIXELS_BEGIN + COUNT::PLAYER_ENTITIES * COUNT::PIXELS_PER_PLAYER;
 constexpr auto BLUE_PIXELS_BEGIN = PLAYER_PIXELS_END;
 constexpr auto BLUE_PIXELS_END = BLUE_PIXELS_BEGIN + COUNT::BLUE_ENTITIES * COUNT::PIXELS_PER_BLUE;
 constexpr auto WALL_PIXELS_BEGIN = BLUE_PIXELS_END;
 constexpr auto WALL_PIXELS_END = WALL_PIXELS_BEGIN + COUNT::WALL_ENTITIES * COUNT::PIXELS_PER_WALL;
+*/
 
 
 class EntityPixel
@@ -38,7 +42,7 @@ public:
     u32 bitmap_offset;
 };
 
-
+/*
 GPU_FUNCTION
 static EntityPixel get_entity_pixel(u32 entity_pixel_id)
 {
@@ -46,25 +50,25 @@ static EntityPixel get_entity_pixel(u32 entity_pixel_id)
 
     u32 p_begin = 0;
     u32 pixels_per_entity = 0;
-    auto get_id = gpuf::player_id;
+    auto get_id = gpuf::to_entity_id_from_player;
 
     if(gpuf::id_in_range(entity_pixel_id, PLAYER_PIXELS_BEGIN, PLAYER_PIXELS_END))
     {
         p_begin = PLAYER_PIXELS_BEGIN;
         pixels_per_entity = COUNT::PIXELS_PER_PLAYER;
-        get_id = gpuf::player_id;
+        get_id = gpuf::to_entity_id_from_player;
     }
     else if(gpuf::id_in_range(entity_pixel_id, BLUE_PIXELS_BEGIN, BLUE_PIXELS_END))
     {
         p_begin = BLUE_PIXELS_BEGIN;
         pixels_per_entity = COUNT::PIXELS_PER_BLUE;
-        get_id = gpuf::blue_id;
+        get_id = gpuf::to_entity_id_from_blue;
     }
     else if(gpuf::id_in_range(entity_pixel_id, WALL_PIXELS_BEGIN, WALL_PIXELS_END))
     {
         p_begin = WALL_PIXELS_BEGIN;
         pixels_per_entity = COUNT::PIXELS_PER_WALL;
-        get_id = gpuf::wall_id;        
+        get_id = gpuf::to_entity_id_from_wall;        
     }
     else
     {
@@ -81,7 +85,7 @@ static EntityPixel get_entity_pixel(u32 entity_pixel_id)
 
     return { entity_pixel_id, entity_id, bitmap_offset };
 }
-
+*/
 
 GPU_FUNCTION
 static WorldPosition get_pixel_world_position(u32 pixel_id, ScreenProps const& props)
@@ -126,6 +130,48 @@ static Pixel get_tile_pixel(Tile const& tile, WorldPosition const& pixel_world_p
 }
 
 
+GPU_FUNCTION
+static void draw_bitmap_pixel(Image const& bitmap, u32 pixel_id, Vec2Dr32 const& dim_m, Point2Dr32 const& screen_pos_m, ScreenProps const& screen_props)
+{
+    auto bitmap_width_px = bitmap.width;
+    auto bitmap_height_px = bitmap.height;
+
+    auto bitmap_pixel_height_m = dim_m.y / bitmap_height_px;
+    auto bitmap_pixel_width_m = dim_m.x / bitmap_width_px;
+
+    auto bitmap_pixel_offset_y = pixel_id / bitmap_width_px;
+    auto bitmap_pixel_offset_x = pixel_id - bitmap_pixel_offset_y * bitmap_width_px;
+
+    Vec2Dr32 bitmap_pixel_offset_m{};
+    bitmap_pixel_offset_m.x = bitmap_pixel_offset_x * bitmap_pixel_width_m;
+    bitmap_pixel_offset_m.y = bitmap_pixel_offset_y * bitmap_pixel_height_m;
+
+    auto bitmap_pixel_screen_pos_m = gpuf::add(screen_pos_m, bitmap_pixel_offset_m);
+
+    auto draw_rect_m = gpuf::make_rect(bitmap_pixel_screen_pos_m, bitmap_pixel_width_m, bitmap_pixel_height_m);
+    auto screen_rect_m = gpuf::make_rect(screen_props.screen_width_m, screen_props.screen_height_m);
+
+    auto is_offscreen = !gpuf::rect_intersect(draw_rect_m, screen_rect_m);
+    if(is_offscreen)
+    {
+        return;
+    }
+
+    auto screen_dst = screen_props.device_p->screen_pixels;
+    auto color = bitmap.data[pixel_id]; //screen_dst.width / screen_props.screen_width_m > 75 ? bitmap.data[pixel_id] : ent_props.avg_color[id];
+
+    gpuf::clamp_rect(draw_rect_m, screen_rect_m);
+    auto rect_px = gpuf::to_pixel_rect(draw_rect_m, screen_props.screen_width_m, screen_dst.width);
+
+    for(i32 y = rect_px.y_begin; y < rect_px.y_end; ++y)
+    {
+        auto dst_row = screen_dst.data + y * screen_dst.width;
+        for(i32 x = rect_px.x_begin; x < rect_px.x_end; ++x)
+        {
+            dst_row[x] = color;
+        }
+    }
+}
 
 /*******************************/
 }
@@ -171,6 +217,91 @@ static void gpu_draw_tiles(ScreenProps props, u32 n_threads)
 
 
 GPU_KERNAL
+static void gpu_draw_player_pixels(ScreenProps props, u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
+    }
+
+    assert(n_threads == COUNT::PLAYER_PIXELS);
+
+    auto& device = *props.device_p;
+    auto ent_props = device.player_soa;
+
+    auto pixel_id = (u32)t;
+    auto id = pixel_id / COUNT::PIXELS_PER_PLAYER;
+
+    if (!gpuf::is_drawable(ent_props.status[id]))
+    {
+        return;
+    }
+
+    auto entity_screen_pos_m = gpuf::subtract_abs(ent_props.position[id], props.screen_pos);
+
+    gpuf::draw_bitmap_pixel(ent_props.bitmap[id], pixel_id, ent_props.dim_m[id], entity_screen_pos_m, props);
+}
+
+
+GPU_KERNAL
+static void gpu_draw_blue_pixels(ScreenProps props, u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
+    }
+
+    assert(n_threads == COUNT::BLUE_PIXELS);
+
+    auto& device = *props.device_p;
+    auto ent_props = device.blue_soa;
+
+    auto pixel_id = (u32)t;
+    auto id = pixel_id / COUNT::PIXELS_PER_BLUE;
+
+    if (!gpuf::is_drawable(ent_props.status[id]))
+    {
+        return;
+    }
+
+    auto entity_screen_pos_m = gpuf::subtract_abs(ent_props.position[id], props.screen_pos);
+
+    gpuf::draw_bitmap_pixel(ent_props.bitmap[id], pixel_id, ent_props.dim_m[id], entity_screen_pos_m, props);
+}
+
+
+GPU_KERNAL
+static void gpu_draw_wall_pixels(ScreenProps props, u32 n_threads)
+{
+    int t = blockDim.x * blockIdx.x + threadIdx.x;
+    if (t >= n_threads)
+    {
+        return;
+    }
+
+    assert(n_threads == COUNT::WALL_PIXELS);
+
+    auto& device = *props.device_p;
+    auto ent_props = device.wall_soa;
+
+    auto pixel_id = (u32)t;
+    auto id = pixel_id / COUNT::PIXELS_PER_WALL;
+
+    if (!gpuf::is_drawable(ent_props.status[id]))
+    {
+        return;
+    }
+
+    auto entity_screen_pos_m = gpuf::subtract_abs(ent_props.position[id], props.screen_pos);
+
+    gpuf::draw_bitmap_pixel(ent_props.bitmap[id], pixel_id, ent_props.dim_m[id], entity_screen_pos_m, props);
+}
+
+
+/*
+GPU_KERNAL
 static void gpu_draw_entity_pixels(ScreenProps props, u32 n_threads)
 {
     int t = blockDim.x * blockIdx.x + threadIdx.x;
@@ -186,6 +317,9 @@ static void gpu_draw_entity_pixels(ScreenProps props, u32 n_threads)
     auto entity_pixel_id = (u32)t;
 
     auto entity_info = gpuf::get_entity_pixel(entity_pixel_id);
+
+
+
     auto& entity = device.entities.data[entity_info.entity_id];
 
     if(!gpuf::is_drawable(entity))
@@ -193,30 +327,28 @@ static void gpu_draw_entity_pixels(ScreenProps props, u32 n_threads)
         return;
     }
 
-    auto width_px = entity.bitmap.width;
-    auto height_px = entity.bitmap.height;
+    auto bitmap_width_px = entity.bitmap.width;
+    auto bitmap_height_px = entity.bitmap.height;    
+
+    auto bitmap_pixel_height_m = entity.height_m / bitmap_height_px;
+    auto bitmap_pixel_width_m = entity.width_m / bitmap_width_px;
 
     auto pixel_id = entity_info.bitmap_offset;
 
-    auto& screen_dst = props.device_p->screen_pixels;
-
-    auto entity_screen_pos_m = gpuf::sub_delta_m(entity.position, props.screen_pos);
+    auto pixel_y = pixel_id / bitmap_width_px;
+    auto pixel_x = pixel_id - pixel_y * bitmap_width_px;
+    
+    auto entity_screen_pos_m = gpuf::subtract_abs(entity.position, props.screen_pos);
 
     auto draw_rect_m = gpuf::get_screen_rect(entity, entity_screen_pos_m);
 
-    auto pixel_height = entity.height_m / height_px;
-    auto pixel_width = entity.width_m / width_px;
+    draw_rect_m.y_begin += pixel_y * bitmap_pixel_height_m;
+    draw_rect_m.y_end = draw_rect_m.y_begin + bitmap_pixel_height_m;
 
-    auto pixel_y = pixel_id / width_px;
-    auto pixel_x = pixel_id - pixel_y * width_px;    
+    draw_rect_m.x_begin += pixel_x * bitmap_pixel_width_m;
+    draw_rect_m.x_end = draw_rect_m.x_begin + bitmap_pixel_width_m;
 
-    draw_rect_m.y_begin += pixel_y * pixel_height;
-    draw_rect_m.y_end = draw_rect_m.y_begin + pixel_height;
-
-    draw_rect_m.x_begin += pixel_x * pixel_width;
-    draw_rect_m.x_end = draw_rect_m.x_begin + pixel_width;
-
-    auto screen_rect_m = gpuf::make_rect(props.screen_width_m, props.screen_height_m);    
+    auto screen_rect_m = gpuf::make_rect(props.screen_width_m, props.screen_height_m);
 
     auto is_offscreen = !gpuf::rect_intersect(draw_rect_m, screen_rect_m);
     if(is_offscreen)
@@ -224,6 +356,7 @@ static void gpu_draw_entity_pixels(ScreenProps props, u32 n_threads)
         return;
     }
 
+    auto& screen_dst = props.device_p->screen_pixels;
     auto color = screen_dst.width / props.screen_width_m > 75 ? entity.bitmap.data[pixel_id] : entity.avg_color;
 
     gpuf::clamp_rect(draw_rect_m, screen_rect_m);
@@ -238,7 +371,7 @@ static void gpu_draw_entity_pixels(ScreenProps props, u32 n_threads)
         }
     }
 }
-
+*/
 
 namespace gpu
 {
@@ -250,18 +383,41 @@ namespace gpu
         constexpr auto tile_pixel_threads = COUNT::SCREEN_PIXELS;
         constexpr auto tile_pixel_blocks = calc_thread_blocks(tile_pixel_threads);
 
-        constexpr auto entity_pixel_threads = COUNT::ENTITY_PIXELS;
-        constexpr auto entity_pixel_blocks = calc_thread_blocks(entity_pixel_threads);
+        //constexpr auto entity_pixel_threads = COUNT::ENTITY_PIXELS;
+        //constexpr auto entity_pixel_blocks = calc_thread_blocks(entity_pixel_threads);
+
+        constexpr auto player_pixel_threads = COUNT::PLAYER_PIXELS;
+        constexpr auto player_pixel_blocks = calc_thread_blocks(player_pixel_threads);
+
+        constexpr auto blue_pixel_threads = COUNT::BLUE_PIXELS;
+        constexpr auto blue_pixel_blocks = calc_thread_blocks(blue_pixel_threads);
+
+        constexpr auto wall_pixel_threads = COUNT::WALL_PIXELS;
+        constexpr auto wall_pixel_blocks = calc_thread_blocks(wall_pixel_threads);
 
 
         auto props = make_screen_props(state);
         
         cuda_launch_kernel(gpu_draw_tiles, tile_pixel_blocks, THREADS_PER_BLOCK, props, tile_pixel_threads);
         result = cuda::launch_success("gpu_draw_tiles");
-        assert(result); 
+        assert(result);
 
+        cuda_launch_kernel(gpu_draw_player_pixels, player_pixel_blocks, THREADS_PER_BLOCK, props, player_pixel_threads);
+        result = cuda::launch_success("gpu_draw_player_pixels");
+        assert(result);
+
+        cuda_launch_kernel(gpu_draw_blue_pixels, blue_pixel_blocks, THREADS_PER_BLOCK, props, blue_pixel_threads);
+        result = cuda::launch_success("gpu_draw_blue_pixels");
+        assert(result);
+
+        cuda_launch_kernel(gpu_draw_wall_pixels, wall_pixel_blocks, THREADS_PER_BLOCK, props, wall_pixel_threads);
+        result = cuda::launch_success("gpu_draw_wall_pixels");
+        assert(result);
+
+        /*
         cuda_launch_kernel(gpu_draw_entity_pixels, entity_pixel_blocks, THREADS_PER_BLOCK, props, entity_pixel_threads);
         result = cuda::launch_success("gpu_draw_entity_pixels");
         assert(result);
+        */
     }
 }

@@ -142,17 +142,30 @@ inline WorldPosition add_delta(WorldPosition const& pos, Vec2Dr32 const& delta)
     return added; 
 }
 
+
 GPU_FUNCTION
 inline Vec2Dr32 add(Vec2Dr32 const& lhs, Vec2Dr32 const& rhs)
 {
-    Vec2Dr32 delta{};
+    Vec2Dr32 vec{};
 
-    delta.x = lhs.x + rhs.x;
-    delta.y = lhs.y + rhs.y;
+    vec.x = lhs.x + rhs.x;
+    vec.y = lhs.y + rhs.y;
 
-    return delta;
+    return vec;
 }
 
+/*
+GPU_FUNCTION
+inline Point2Dr32 add(Point2Dr32 const& pt, Vec2Dr32 const& delta)
+{
+    Point2Dr32 end{};
+
+    end.x = pt.x + delta.x;
+    end.y = pt.y + delta.y;
+
+    return end;
+}
+*/
 
 GPU_FUNCTION
 inline Vec2Di32 subtract(Vec2Di32 const& lhs, Vec2Di32 const& rhs)
@@ -191,6 +204,33 @@ inline Vec2Dr32 sub_delta_m(WorldPosition const& pos, WorldPosition const& origi
 
     delta.x = TILE_LENGTH_M * (pos.tile.x - origin.tile.x) + pos.offset_m.x - origin.offset_m.x;
     delta.y = TILE_LENGTH_M * (pos.tile.y - origin.tile.y) + pos.offset_m.y - origin.offset_m.y;
+
+    return delta;
+}
+
+
+GPU_FUNCTION
+inline Point2Dr32 subtract_abs(WorldPosition const& pos, WorldPosition const& origin)
+{
+    Point2Dr32 delta{};
+
+    delta.x = TILE_LENGTH_M * (pos.tile.x - origin.tile.x) + pos.offset_m.x - origin.offset_m.x;
+    delta.y = TILE_LENGTH_M * (pos.tile.y - origin.tile.y) + pos.offset_m.y - origin.offset_m.y;
+
+    return delta;
+}
+
+
+GPU_FUNCTION
+inline WorldPosition subtract(WorldPosition const& pos, WorldPosition const& origin)
+{
+    WorldPosition delta{};
+
+    delta.tile.x = pos.tile.x - origin.tile.x;
+    delta.tile.y = pos.tile.y - origin.tile.y;
+
+    delta.offset_m.x = pos.offset_m.x - origin.offset_m.x;
+    delta.offset_m.y = pos.offset_m.y - origin.offset_m.y;
 
     return delta;
 }
@@ -331,27 +371,27 @@ inline bool id_in_range(u32 id, u32 begin, u32 end)
     return begin <= id && id < end;
 }
 
-/*
+
 GPU_FUNCTION
-inline u32 player_id(u32 player_offset)
+inline u32 to_entity_id_from_player(u32 player_offset)
 {
     return PLAYER_BEGIN + player_offset;
 }
 
 
 GPU_FUNCTION
-inline u32 blue_id(u32 blue_offset)
+inline u32 to_entity_id_from_blue(u32 blue_offset)
 {
     return BLUE_BEGIN + blue_offset;
 }
 
 
 GPU_FUNCTION
-inline u32 wall_id(u32 wall_offset)
+inline u32 to_entity_id_from_wall(u32 wall_offset)
 {
     return WALL_BEGIN + wall_offset;
 }
-*/
+
 
 GPU_FUNCTION
 inline bool is_player(u32 entity_id)
