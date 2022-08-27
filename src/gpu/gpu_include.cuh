@@ -457,6 +457,90 @@ inline void set_offscreen(uStatus& status)
 
 
 GPU_FUNCTION
+inline bool is_inv_x(uStatus status)
+{
+    return status & STATUS::INV_X;
+}
+
+
+GPU_FUNCTION
+inline void set_inv_x(uStatus& status)
+{
+    status |= STATUS::INV_X;
+}
+
+
+GPU_FUNCTION
+inline void reset_inv_x(uStatus& status)
+{
+    status &= ~STATUS::INV_X;
+}
+
+
+GPU_FUNCTION
+inline bool is_inv_y(uStatus status)
+{
+    return status & STATUS::INV_Y;
+}
+
+
+GPU_FUNCTION
+inline void set_inv_y(uStatus& status)
+{
+    status |= STATUS::INV_Y;
+}
+
+
+GPU_FUNCTION
+inline void reset_inv_y(uStatus& status)
+{
+    status &= ~STATUS::INV_Y;
+}
+
+
+GPU_FUNCTION
+inline bool is_stop_x(uStatus status)
+{
+    return status & STATUS::STOP_X;
+}
+
+
+GPU_FUNCTION
+inline void set_stop_x(uStatus& status)
+{
+    status |= STATUS::STOP_X;
+}
+
+
+GPU_FUNCTION
+inline void reset_stop_x(uStatus& status)
+{
+    status &= ~STATUS::STOP_X;
+}
+
+
+GPU_FUNCTION
+inline bool is_stop_y(uStatus status)
+{
+    return status & STATUS::STOP_Y;
+}
+
+
+GPU_FUNCTION
+inline void set_stop_y(uStatus& status)
+{
+    status |= STATUS::STOP_Y;
+}
+
+
+GPU_FUNCTION
+inline void reset_stop_y(uStatus& status)
+{
+    status &= ~STATUS::STOP_Y;
+}
+
+
+GPU_FUNCTION
 inline bool is_drawable(uStatus status)
 {
     return is_active(status) && is_onscreen(status);

@@ -98,24 +98,22 @@ static void stop_wall(PlayerProps& ent, WallProps const& other)
         return;
     }
 
-    auto mm = 0.001f;
-
     if (d_pos_m.x > 0.0f && rect_ent.x_end >= rect_other.x_begin)
     {
-        d_pos_m.x -= (rect_ent.x_end - rect_other.x_begin - mm);
+        gpuf::set_stop_x(ent.props.status[ent.id]);
     }
     else if (d_pos_m.x < 0.0f && rect_ent.x_begin <= rect_other.x_end)
     {
-        d_pos_m.x += (rect_other.x_end - rect_ent.x_begin + mm);
+        gpuf::set_stop_x(ent.props.status[ent.id]);
     }
 
     if (d_pos_m.y > 0.0f && rect_ent.y_end >= rect_other.y_begin)
     {
-        d_pos_m.y -= (rect_ent.y_end - rect_other.y_begin - mm);
+        gpuf::set_stop_y(ent.props.status[ent.id]);
     }
     else if (d_pos_m.y < 0.0f && rect_ent.y_begin <= rect_other.y_end)
     {
-        d_pos_m.y += (rect_other.y_end - rect_ent.y_begin + mm);
+        gpuf::set_stop_y(ent.props.status[ent.id]);
     }
 }
 
@@ -149,29 +147,22 @@ static void bounce_wall(BlueProps& ent, WallProps const& other)
         return;
     }
 
-    auto mm = 0.001f;
-    auto& dt = ent.props.dt[ent.id];
-
     if (d_pos_m.x > 0.0f && rect_ent.x_end >= rect_other.x_begin)
     {
-        d_pos_m.x -= (rect_ent.x_end - rect_other.x_begin - mm);
-        dt.x *= -1.0f;
+        gpuf::set_inv_x(ent.props.status[ent.id]);
     }
     else if (d_pos_m.x < 0.0f && rect_ent.x_begin <= rect_other.x_end)
     {
-        d_pos_m.x += (rect_other.x_end - rect_ent.x_begin + mm);
-        dt.x *= -1.0f;
+        gpuf::set_inv_x(ent.props.status[ent.id]);
     }
 
     if (d_pos_m.y > 0.0f && rect_ent.y_end >= rect_other.y_begin)
     {
-        d_pos_m.y -= (rect_ent.y_end - rect_other.y_begin - mm);
-        dt.y *= -1.0f;
+        gpuf::set_inv_y(ent.props.status[ent.id]);
     }
     else if (d_pos_m.y < 0.0f && rect_ent.y_begin <= rect_other.y_end)
     {
-        d_pos_m.y += (rect_other.y_end - rect_ent.y_begin + mm);
-        dt.y *= -1.0f;
+        gpuf::set_inv_y(ent.props.status[ent.id]);
     }
 }
 
@@ -205,29 +196,22 @@ static void blue_blue(BlueProps& ent, BlueProps const& other)
         return;
     }
 
-    auto mm = 0.001f;
-    auto& dt = ent.props.dt[ent.id];
-
     if (d_pos_m.x > 0.0f && rect_ent.x_end >= rect_other.x_begin)
     {
-        d_pos_m.x -= (rect_ent.x_end - rect_other.x_begin - mm);
-        dt.x *= -1.0f;
+        gpuf::set_inv_x(ent.props.status[ent.id]);
     }
     else if (d_pos_m.x < 0.0f && rect_ent.x_begin <= rect_other.x_end)
     {
-        d_pos_m.x += (rect_other.x_end - rect_ent.x_begin + mm);
-        dt.x *= -1.0f;
+        gpuf::set_inv_x(ent.props.status[ent.id]);
     }
 
     if (d_pos_m.y > 0.0f && rect_ent.y_end >= rect_other.y_begin)
     {
-        d_pos_m.y -= (rect_ent.y_end - rect_other.y_begin - mm);
-        dt.y *= -1.0f;
+        gpuf::set_inv_y(ent.props.status[ent.id]);
     }
     else if (d_pos_m.y < 0.0f && rect_ent.y_begin <= rect_other.y_end)
     {
-        d_pos_m.y += (rect_other.y_end - rect_ent.y_begin + mm);
-        dt.y *= -1.0f;
+        gpuf::set_inv_y(ent.props.status[ent.id]);
     }
 
     
@@ -306,17 +290,35 @@ static void next_postion(BlueProps& ent)
 GPU_FUNCTION
 static void update_position(PlayerProps& ent)
 {
-    if(!gpuf::is_active(ent.props.status[ent.id]))
+    auto& status = ent.props.status[ent.id];
+    if (!gpuf::is_active(status))
     {
         return;
     }
 
+    auto& dt = ent.props.dt[ent.id];
+
+    if (gpuf::is_stop_x(status))
+    {
+        dt.x = 0.0f;
+
+        gpuf::reset_stop_x(status);
+    }
+
+    if (gpuf::is_stop_y(status))
+    {
+        dt.y = 0.0f;
+
+        gpuf::reset_stop_x(status);
+    }
+
+    next_postion(ent);
+
     auto& pos = ent.props.position[ent.id];
     auto& next_pos = ent.props.next_position[ent.id];
     auto& delta_pos = ent.props.delta_pos_m[ent.id];
-
-    pos = gpuf::add_delta(pos, delta_pos);
-    next_pos = pos;
+    
+    pos = next_pos;
     delta_pos = { 0.0f, 0.0f };
 }
 
@@ -324,17 +326,35 @@ static void update_position(PlayerProps& ent)
 GPU_FUNCTION
 static void update_position(BlueProps& ent)
 {
-    if(!gpuf::is_active(ent.props.status[ent.id]))
+    auto& status = ent.props.status[ent.id];
+    if (!gpuf::is_active(status))
     {
         return;
     }
 
+    auto& dt = ent.props.dt[ent.id];
+
+    if (gpuf::is_inv_x(status))
+    {
+        dt.x *= -1.0f;
+
+        gpuf::reset_inv_x(status);
+    }
+
+    if (gpuf::is_inv_y(status))
+    {
+        dt.y *= -1.0f;
+
+        gpuf::reset_inv_y(status);
+    }
+
+    next_postion(ent);
+
     auto& pos = ent.props.position[ent.id];
     auto& next_pos = ent.props.next_position[ent.id];
     auto& delta_pos = ent.props.delta_pos_m[ent.id];
-
-    pos = gpuf::add_delta(pos, delta_pos);
-    next_pos = pos;
+    
+    pos = next_pos;
     delta_pos = { 0.0f, 0.0f };
 }
 

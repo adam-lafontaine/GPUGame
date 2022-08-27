@@ -121,6 +121,8 @@ namespace STATUS
     constexpr uStatus ONSCREEN = 2 * ACTIVE;
     constexpr uStatus INV_X = 2 * ONSCREEN;
     constexpr uStatus INV_Y = 2 * INV_X;
+    constexpr uStatus STOP_X = 2 * INV_Y;
+    constexpr uStatus STOP_Y = 2 * STOP_X;
 }
 
 
@@ -150,8 +152,6 @@ public:
 namespace SIZE
 {
     constexpr size_t PlayerEntitySOA_uStatus = COUNT::PLAYER_ENTITIES * sizeof(uStatus);
-    //constexpr size_t PlayerEntitySOA_Image = COUNT::PLAYER_ENTITIES * sizeof(Image);
-    //constexpr size_t PlayerEntitySOA_Pixel = COUNT::PLAYER_ENTITIES * sizeof(Pixel);
     constexpr size_t PlayerEntitySOA_EntityBitmap = COUNT::PLAYER_ENTITIES * sizeof(EntityBitmap);
     constexpr size_t PlayerEntitySOA_Vec2Dr32 = COUNT::PLAYER_ENTITIES * sizeof(Vec2Dr32) * 3;
     constexpr size_t PlayerEntitySOA_WorldPosition = COUNT::PLAYER_ENTITIES * sizeof(WorldPosition) * 2;
@@ -183,8 +183,6 @@ public:
 namespace SIZE
 {
     constexpr size_t BlueEntitySOA_uStatus = COUNT::BLUE_ENTITIES * sizeof(uStatus);
-    //constexpr size_t BlueEntitySOA_Image = COUNT::BLUE_ENTITIES * sizeof(Image);
-    //constexpr size_t BlueEntitySOA_Pixel = COUNT::BLUE_ENTITIES * sizeof(Pixel);
     constexpr size_t BlueEntitySOA_EntityBitmap = COUNT::BLUE_ENTITIES * sizeof(EntityBitmap);
     constexpr size_t BlueEntitySOA_Vec2Dr32 = COUNT::BLUE_ENTITIES * sizeof(Vec2Dr32) * 3;
     constexpr size_t BlueEntitySOA_WorldPosition = COUNT::BLUE_ENTITIES * sizeof(WorldPosition) * 2;
@@ -220,8 +218,6 @@ namespace SIZE
 namespace SIZE
 {
     constexpr size_t Entity_uStatus = PlayerEntitySOA_uStatus + BlueEntitySOA_uStatus + WallEntitySOA_uStatus;
-    //constexpr size_t Entity_Image = PlayerEntitySOA_Image + BlueEntitySOA_Image + WallEntitySOA_Image;
-    //constexpr size_t Entity_Pixel = PlayerEntitySOA_Pixel + BlueEntitySOA_Pixel + WallEntitySOA_Pixel;
     constexpr size_t Entity_EntityBitmap = PlayerEntitySOA_EntityBitmap + BlueEntitySOA_EntityBitmap + WallEntitySOA_EntityBitmap;
     constexpr size_t Entity_WorldPosition = PlayerEntitySOA_WorldPosition + BlueEntitySOA_WorldPosition + WallEntitySOA_WorldPosition;
     constexpr size_t Entity_Vec2Dr32 = PlayerEntitySOA_Vec2Dr32 + BlueEntitySOA_Vec2Dr32 + WallEntitySOA_Vec2Dr32;
@@ -296,8 +292,6 @@ public:
 
     // soa data
     MemoryBuffer<uStatus> device_entity_ustatus_buffer;
-    //MemoryBuffer<Image> device_entity_image_buffer;
-    //MemoryBuffer<Pixel> device_entity_pixel_buffer;
     MemoryBuffer<EntityBitmap> device_entity_entity_bitmap_buffer;
     MemoryBuffer<Rect2Dr32> device_entity_rect_2d_r32_buffer;
     MemoryBuffer<r32> device_entity_r32_buffer;
