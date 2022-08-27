@@ -70,6 +70,10 @@ static void init_blue(BlueProps const& blue, BlueBitmap const& bitmap)
 
     Vec2Dr32 dt = { 0.0f, 0.0f };
 
+    blue.props.dt[i] = dt;
+
+
+/*
     switch(i % 8)
     {
         case 0:
@@ -114,11 +118,12 @@ static void init_blue(BlueProps const& blue, BlueBitmap const& bitmap)
     }
 
     blue.props.dt[i] = gpuf::vec_mul(dt, 1.0f / 60.0f); // assume 60 FPS
+    */
 }
 
 
 GPU_FUNCTION
-static void init_wall(WallProps wall, WallBitmap const& bitmap)
+static void init_wall(WallProps const& wall, WallBitmap const& bitmap)
 {
     assert(wall.id < COUNT::WALL_ENTITIES);
 

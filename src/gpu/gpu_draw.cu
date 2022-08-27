@@ -176,17 +176,19 @@ static void gpu_draw_player_pixels(ScreenProps props, u32 n_threads)
     auto& device = *props.device_p;
     auto ent_props = device.player_soa;
 
-    auto pixel_id = (u32)t;
-    auto id = pixel_id / COUNT::PIXELS_PER_PLAYER;
+    constexpr auto n_bitmap_pixels = COUNT::PIXELS_PER_PLAYER;
 
-    if (!gpuf::is_drawable(ent_props.status[id]))
+    auto ent_id = (u32)t / n_bitmap_pixels;
+    auto pixel_id = (u32)t - ent_id * n_bitmap_pixels;
+
+    if (!gpuf::is_drawable(ent_props.status[ent_id]))
     {
         return;
     }
 
-    auto entity_screen_pos_m = gpuf::subtract_abs(ent_props.position[id], props.screen_pos);
+    auto entity_screen_pos_m = gpuf::subtract_abs(ent_props.position[ent_id], props.screen_pos);
 
-    gpuf::draw_bitmap_pixel(ent_props.bitmap[id], pixel_id, ent_props.dim_m[id], entity_screen_pos_m, props);
+    gpuf::draw_bitmap_pixel(ent_props.bitmap[ent_id], pixel_id, ent_props.dim_m[ent_id], entity_screen_pos_m, props);
 }
 
 
@@ -204,17 +206,19 @@ static void gpu_draw_blue_pixels(ScreenProps props, u32 n_threads)
     auto& device = *props.device_p;
     auto ent_props = device.blue_soa;
 
-    auto pixel_id = (u32)t;
-    auto id = pixel_id / COUNT::PIXELS_PER_BLUE;
+    constexpr auto n_bitmap_pixels = COUNT::PIXELS_PER_BLUE;
 
-    if (!gpuf::is_drawable(ent_props.status[id]))
+    auto ent_id = (u32)t / n_bitmap_pixels;
+    auto pixel_id = (u32)t - ent_id * n_bitmap_pixels;
+
+    if (!gpuf::is_drawable(ent_props.status[ent_id]))
     {
         return;
     }
 
-    auto entity_screen_pos_m = gpuf::subtract_abs(ent_props.position[id], props.screen_pos);
+    auto entity_screen_pos_m = gpuf::subtract_abs(ent_props.position[ent_id], props.screen_pos);
 
-    gpuf::draw_bitmap_pixel(ent_props.bitmap[id], pixel_id, ent_props.dim_m[id], entity_screen_pos_m, props);
+    gpuf::draw_bitmap_pixel(ent_props.bitmap[ent_id], pixel_id, ent_props.dim_m[ent_id], entity_screen_pos_m, props);
 }
 
 
@@ -232,17 +236,19 @@ static void gpu_draw_wall_pixels(ScreenProps props, u32 n_threads)
     auto& device = *props.device_p;
     auto ent_props = device.wall_soa;
 
-    auto pixel_id = (u32)t;
-    auto id = pixel_id / COUNT::PIXELS_PER_WALL;
+    constexpr auto n_bitmap_pixels = COUNT::PIXELS_PER_WALL;
 
-    if (!gpuf::is_drawable(ent_props.status[id]))
+    auto ent_id = (u32)t / n_bitmap_pixels;
+    auto pixel_id = (u32)t - ent_id * n_bitmap_pixels;
+
+    if (!gpuf::is_drawable(ent_props.status[ent_id]))
     {
         return;
     }
 
-    auto entity_screen_pos_m = gpuf::subtract_abs(ent_props.position[id], props.screen_pos);
+    auto entity_screen_pos_m = gpuf::subtract_abs(ent_props.position[ent_id], props.screen_pos);
 
-    gpuf::draw_bitmap_pixel(ent_props.bitmap[id], pixel_id, ent_props.dim_m[id], entity_screen_pos_m, props);
+    gpuf::draw_bitmap_pixel(ent_props.bitmap[ent_id], pixel_id, ent_props.dim_m[ent_id], entity_screen_pos_m, props);
 }
 
 
@@ -272,17 +278,21 @@ namespace gpu
         result = cuda::launch_success("gpu_draw_tiles");
         assert(result);
 
+        cuda_launch_kernel(gpu_draw_wall_pixels, wall_pixel_blocks, THREADS_PER_BLOCK, props, wall_pixel_threads);
+        result = cuda::launch_success("gpu_draw_wall_pixels");
+        assert(result);
+
+
         cuda_launch_kernel(gpu_draw_player_pixels, player_pixel_blocks, THREADS_PER_BLOCK, props, player_pixel_threads);
         result = cuda::launch_success("gpu_draw_player_pixels");
         assert(result);
-/*
+        
+
         cuda_launch_kernel(gpu_draw_blue_pixels, blue_pixel_blocks, THREADS_PER_BLOCK, props, blue_pixel_threads);
         result = cuda::launch_success("gpu_draw_blue_pixels");
         assert(result);
 
-        cuda_launch_kernel(gpu_draw_wall_pixels, wall_pixel_blocks, THREADS_PER_BLOCK, props, wall_pixel_threads);
-        result = cuda::launch_success("gpu_draw_wall_pixels");
-        assert(result);
-        */
+        
+        
     }
 }

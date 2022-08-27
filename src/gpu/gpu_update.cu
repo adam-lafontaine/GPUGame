@@ -77,8 +77,8 @@ static void stop_wall(PlayerProps& ent, WallProps const& other)
         return;
     }
 
-    auto& d_ent = ent.props.delta_pos_m[ent.id];
-    if(!d_ent.x && !d_ent.y)
+    auto& d_pos_m = ent.props.delta_pos_m[ent.id];
+    if(!d_pos_m.x && !d_pos_m.y)
     {
         return;
     }
@@ -100,22 +100,22 @@ static void stop_wall(PlayerProps& ent, WallProps const& other)
 
     auto mm = 0.001f;
 
-    if (d_ent.x > 0.0f && rect_ent.x_end >= rect_other.x_begin)
+    if (d_pos_m.x > 0.0f && rect_ent.x_end >= rect_other.x_begin)
     {
-        d_ent.x = rect_other.x_begin - 0.5f * mm;
+        d_pos_m.x -= (rect_ent.x_end - rect_other.x_begin - mm);
     }
-    else if (d_ent.x < 0.0f && rect_ent.x_begin <= rect_other.x_end)
+    else if (d_pos_m.x < 0.0f && rect_ent.x_begin <= rect_other.x_end)
     {
-        d_ent.x = rect_other.x_end + 0.5f * mm;
+        d_pos_m.x += (rect_other.x_end - rect_ent.x_begin + mm);
     }
 
-    if(d_ent.y > 0.0f && rect_ent.y_end >= rect_other.y_begin)
+    if (d_pos_m.y > 0.0f && rect_ent.y_end >= rect_other.y_begin)
     {
-        d_ent.y = rect_other.y_begin - 0.5f * mm;
+        d_pos_m.y -= (rect_ent.y_end - rect_other.y_begin - mm);
     }
-    else if (d_ent.y < 0.0f && rect_ent.y_begin <= rect_other.y_end)
+    else if (d_pos_m.y < 0.0f && rect_ent.y_begin <= rect_other.y_end)
     {
-        d_ent.y = rect_other.y_end + 0.5f * mm;
+        d_pos_m.y += (rect_other.y_end - rect_ent.y_begin + mm);
     }
 }
 
@@ -677,11 +677,13 @@ namespace gpu
         cuda_launch_kernel(gpu_next_movable_positions, movable_blocks, THREADS_PER_BLOCK, device_p, unified_p, movable_threads);
         result = cuda::launch_success("gpu_next_movable_positions");
         assert(result);
-        /*
+        
+        
         cuda_launch_kernel(gpu_player_wall, player_wall_blocks, THREADS_PER_BLOCK, device_p, player_wall_threads);
         result = cuda::launch_success("gpu_player_wall");
         assert(result);
         
+        /*
         cuda_launch_kernel(gpu_blue_wall, blue_wall_blocks, THREADS_PER_BLOCK, device_p, blue_wall_threads);
         result = cuda::launch_success("gpu_blue_wall");
         assert(result);
