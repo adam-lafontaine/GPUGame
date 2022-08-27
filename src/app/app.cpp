@@ -1,8 +1,6 @@
 #include "app_include.hpp"
 
 
-
-
 static void add_input_record(InputList& list, InputRecord& item)
 {
     assert(list.data);
@@ -348,11 +346,9 @@ namespace app
         cuda::free(state.device_buffer);
         cuda::free(state.device_pixel_buffer);
         cuda::free(state.device_tile_buffer);
-        //cuda::free(state.device_entity_buffer);
         
         cuda::free(state.unified_input_record_buffer);
         cuda::free(state.unified_buffer);
-
 
         cuda::free(state.device_entity_ustatus_buffer);
         cuda::free(state.device_entity_image_buffer);

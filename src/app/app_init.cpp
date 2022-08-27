@@ -7,18 +7,7 @@ namespace img = libimage;
 
 
 constexpr auto GRASS_TILE_PATH = "/home/adam/Repos/GPUGame/assets/tiles/basic_grass.png";
-/*
-namespace SIZE
-{
-    constexpr size_t Device_r32 = Entity_r32 * N_ENTITIES;
-    constexpr size_t Device_Image = Entity_Image * N_ENTITIES;
-    constexpr size_t Device_Pixel = Entity_Pixel * N_ENTITIES;
-    constexpr size_t Device_WorldPosition = Entity_WorldPosition * N_ENTITIES;
-    constexpr size_t Device_Vec2Dr32 = Entity_Vec2Dr32 * N_ENTITIES;
-    
-    constexpr size_t Unified_uStatus = Entity_uStatus * N_ENTITIES;
-}
-*/
+
 
 static Pixel get_avg_color(Image const& image)
 {

@@ -112,32 +112,7 @@ namespace STATUS
     constexpr uStatus INV_Y = 2 * INV_X;
 }
 
-/*
-class Entity
-{
-public:
-    u32 id;
 
-    r32 width_m;
-    r32 height_m;
-    
-    Image bitmap;
-    Pixel avg_color;
-
-    WorldPosition position;
-    Vec2Dr32 dt;
-    r32 speed;
-
-    Vec2Dr32 delta_pos_m;
-
-    WorldPosition next_position;
-
-    uStatus status = 0;
-};
-
-
-using EntityArray = Array<Entity>;
-*/
 using TileMatrix = Matrix<Tile>;
 
 
@@ -262,13 +237,7 @@ public:
     DeviceAssets assets;
 
     TileMatrix tilemap;
-/*
-    EntityArray entities;
-
-    EntityArray player_entities;    
-    EntityArray blue_entities;
-    EntityArray wall_entities;
-*/
+    
     Image screen_pixels;
 
     PlayerEntitySOA player_soa;
@@ -281,7 +250,6 @@ namespace SIZE
 {
     constexpr size_t DeviceMemory_Pixel = DeviceAssets_Pixel + COUNT::SCREEN_PIXELS * sizeof(Pixel);
     constexpr size_t DeviceMemory_Tile = COUNT::WORLD_TILES * sizeof(Tile);
-    //constexpr size_t DeviceMemory_Entity = COUNT::ENTITIES * sizeof(Entity);
 }
 
 
@@ -310,7 +278,6 @@ public:
     MemoryBuffer<Image> device_image_buffer;
     MemoryBuffer<Pixel> device_pixel_buffer;
     MemoryBuffer<Tile> device_tile_buffer;
-    //MemoryBuffer<Entity> device_entity_buffer;
 
     MemoryBuffer<UnifiedMemory> unified_buffer;
     MemoryBuffer<InputRecord> unified_input_record_buffer;

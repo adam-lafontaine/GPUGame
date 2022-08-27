@@ -154,18 +154,6 @@ inline Vec2Dr32 add(Vec2Dr32 const& lhs, Vec2Dr32 const& rhs)
     return vec;
 }
 
-/*
-GPU_FUNCTION
-inline Point2Dr32 add(Point2Dr32 const& pt, Vec2Dr32 const& delta)
-{
-    Point2Dr32 end{};
-
-    end.x = pt.x + delta.x;
-    end.y = pt.y + delta.y;
-
-    return end;
-}
-*/
 
 GPU_FUNCTION
 inline Vec2Di32 subtract(Vec2Di32 const& lhs, Vec2Di32 const& rhs)
@@ -280,21 +268,6 @@ inline Rect2Dr32 add_delta(Rect2Dr32 const& rect, Vec2Dr32 const& delta)
     return r;
 }
 
-/*
-GPU_FUNCTION
-inline Rect2Dr32 get_screen_rect(Entity const& entity, Point2Dr32 const& screen_pos)
-{
-    Rect2Dr32 r{};
-
-    // pos at top left
-    r.x_begin = screen_pos.x;
-    r.x_end = r.x_begin + entity.width_m;
-    r.y_begin = screen_pos.y;
-    r.y_end = r.y_begin + entity.height_m;
-
-    return r;
-}
-*/
 
 GPU_FUNCTION
 inline bool rect_intersect(Rect2Dr32 const& a, Rect2Dr32 const& b)
@@ -488,133 +461,6 @@ inline bool is_drawable(uStatus status)
 {
     return is_active(status) && is_onscreen(status);
 }
-
-/*
-GPU_FUNCTION
-inline bool is_inv_x(uStatus status)
-{
-    return status & STATUS::INV_X;
-}
-
-
-GPU_FUNCTION
-inline bool is_inv_y(uStatus status)
-{
-    return status & STATUS::INV_Y;
-}
-
-
-GPU_FUNCTION
-inline void set_inv_x(uStatus& status)
-{
-    status |= STATUS::INV_X;
-}
-
-
-GPU_FUNCTION
-inline void set_inv_y(uStatus& status)
-{
-    status |= STATUS::INV_Y;
-}
-
-
-GPU_FUNCTION
-inline void unset_inv(uStatus& status)
-{
-    constexpr auto inv = STATUS::INV_X | STATUS::INV_Y;
-
-    status &= ~inv;
-}
-*/
-
-
-
-/*
-GPU_FUNCTION
-inline bool is_active(Entity const& entity)
-{
-    return entity.status & STATUS::ACTIVE;
-}
-
-
-GPU_FUNCTION
-inline bool is_onscreen(Entity const& entity)
-{
-    return entity.status & STATUS::ONSCREEN;
-}
-
-
-GPU_FUNCTION
-inline bool is_drawable(Entity const& entity)
-{
-    return gpuf::is_active(entity) && gpuf::is_onscreen(entity);
-}
-
-
-GPU_FUNCTION
-inline void set_active(Entity& entity)
-{
-    entity.status |= STATUS::ACTIVE;
-}
-
-
-GPU_FUNCTION
-inline void set_inactive(Entity& entity)
-{
-    entity.status &= ~STATUS::ACTIVE;
-}
-
-
-GPU_FUNCTION
-inline void set_onscreen(Entity& entity)
-{
-    entity.status |= STATUS::ONSCREEN;
-}
-
-
-GPU_FUNCTION
-inline void set_offscreen(Entity& entity)
-{
-    entity.status &= ~STATUS::ONSCREEN;
-}
-
-
-GPU_FUNCTION
-inline bool is_inv_x(Entity const& entity)
-{
-    return entity.status & STATUS::INV_X;
-}
-
-
-GPU_FUNCTION
-inline bool is_inv_y(Entity const& entity)
-{
-    return entity.status & STATUS::INV_Y;
-}
-
-
-GPU_FUNCTION
-inline void set_inv_x(Entity& entity)
-{
-    entity.status |= STATUS::INV_X;
-}
-
-
-GPU_FUNCTION
-inline void set_inv_y(Entity& entity)
-{
-    entity.status |= STATUS::INV_Y;
-}
-
-
-GPU_FUNCTION
-inline void unset_inv(Entity& entity)
-{
-    constexpr auto inv = STATUS::INV_X | STATUS::INV_Y;
-
-    entity.status &= ~inv;
-}
-*/
 
 /***********************/
 
