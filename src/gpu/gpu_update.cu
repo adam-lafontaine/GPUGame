@@ -128,8 +128,8 @@ static void bounce_wall(BlueProps& ent, WallProps const& other)
         return;
     }
 
-    auto& d_ent = ent.props.delta_pos_m[ent.id];
-    if(!d_ent.x && !d_ent.y)
+    auto& d_pos_m = ent.props.delta_pos_m[ent.id];
+    if(!d_pos_m.x && !d_pos_m.y)
     {
         return;
     }
@@ -152,25 +152,25 @@ static void bounce_wall(BlueProps& ent, WallProps const& other)
     auto mm = 0.001f;
     auto& dt = ent.props.dt[ent.id];
 
-    if (d_ent.x > 0.0f && rect_ent.x_end >= rect_other.x_begin)
+    if (d_pos_m.x > 0.0f && rect_ent.x_end >= rect_other.x_begin)
     {
-        d_ent.x = rect_other.x_begin - 0.5f * mm;
+        d_pos_m.x -= (rect_ent.x_end - rect_other.x_begin - mm);
         dt.x *= -1.0f;
     }
-    else if (d_ent.x < 0.0f && rect_ent.x_begin <= rect_other.x_end)
+    else if (d_pos_m.x < 0.0f && rect_ent.x_begin <= rect_other.x_end)
     {
-        d_ent.x = rect_other.x_end + 0.5f * mm;
+        d_pos_m.x += (rect_other.x_end - rect_ent.x_begin + mm);
         dt.x *= -1.0f;
     }
 
-    if (d_ent.y > 0.0f && rect_ent.y_end >= rect_other.y_begin)
+    if (d_pos_m.y > 0.0f && rect_ent.y_end >= rect_other.y_begin)
     {
-        d_ent.y = rect_other.y_begin - 0.5f * mm;
+        d_pos_m.y -= (rect_ent.y_end - rect_other.y_begin - mm);
         dt.y *= -1.0f;
     }
-    else if (d_ent.y < 0.0f && rect_ent.y_begin <= rect_other.y_end)
+    else if (d_pos_m.y < 0.0f && rect_ent.y_begin <= rect_other.y_end)
     {
-        d_ent.y = rect_other.y_end + 0.5f * mm;
+        d_pos_m.y += (rect_other.y_end - rect_ent.y_begin + mm);
         dt.y *= -1.0f;
     }
 }
@@ -184,15 +184,15 @@ static void blue_blue(BlueProps& ent, BlueProps const& other)
         return;
     }
 
-    auto& d_ent = ent.props.delta_pos_m[ent.id];
-    if(!d_ent.x && !d_ent.y)
+    auto& d_pos_m = ent.props.delta_pos_m[ent.id];
+    if(!d_pos_m.x && !d_pos_m.y)
     {
         return;
     }
 
     auto ent_pos = ent.props.next_position[ent.id];
     auto ent_dim = ent.props.dim_m[ent.id];
-    auto other_pos = other.props.position[other.id];
+    auto other_pos = other.props.next_position[other.id];
     auto other_dim = other.props.dim_m[other.id];
 
     auto delta = gpuf::sub_delta_m(ent_pos, other_pos);
@@ -208,27 +208,29 @@ static void blue_blue(BlueProps& ent, BlueProps const& other)
     auto mm = 0.001f;
     auto& dt = ent.props.dt[ent.id];
 
-    if (d_ent.x > 0.0f && rect_ent.x_end >= rect_other.x_begin)
+    if (d_pos_m.x > 0.0f && rect_ent.x_end >= rect_other.x_begin)
     {
-        d_ent.x = rect_other.x_begin - 0.5f * mm;
+        d_pos_m.x -= (rect_ent.x_end - rect_other.x_begin - mm);
         dt.x *= -1.0f;
     }
-    else if (d_ent.x < 0.0f && rect_ent.x_begin <= rect_other.x_end)
+    else if (d_pos_m.x < 0.0f && rect_ent.x_begin <= rect_other.x_end)
     {
-        d_ent.x = rect_other.x_end + 0.5f * mm;
+        d_pos_m.x += (rect_other.x_end - rect_ent.x_begin + mm);
         dt.x *= -1.0f;
     }
 
-    if (d_ent.y > 0.0f && rect_ent.y_end >= rect_other.y_begin)
+    if (d_pos_m.y > 0.0f && rect_ent.y_end >= rect_other.y_begin)
     {
-        d_ent.y = rect_other.y_begin - 0.5f * mm;
+        d_pos_m.y -= (rect_ent.y_end - rect_other.y_begin - mm);
         dt.y *= -1.0f;
     }
-    else if (d_ent.y < 0.0f && rect_ent.y_begin <= rect_other.y_end)
+    else if (d_pos_m.y < 0.0f && rect_ent.y_begin <= rect_other.y_end)
     {
-        d_ent.y = rect_other.y_end + 0.5f * mm;
+        d_pos_m.y += (rect_other.y_end - rect_ent.y_begin + mm);
         dt.y *= -1.0f;
     }
+
+    
 }
 
 
@@ -236,12 +238,6 @@ GPU_FUNCTION
 static void blue_player(BlueProps& ent, PlayerProps const& other)
 {
     if(!gpuf::is_active(ent.props.status[ent.id]) || !gpuf::is_active(other.props.status[other.id]))
-    {
-        return;
-    }
-
-    auto& d_ent = ent.props.delta_pos_m[ent.id];
-    if(!d_ent.x && !d_ent.y)
     {
         return;
     }
@@ -260,6 +256,8 @@ static void blue_player(BlueProps& ent, PlayerProps const& other)
     {
         return;
     }
+
+    gpuf::set_inactive(ent.props.status[ent.id]);
 }
 
 
@@ -595,8 +593,8 @@ static void gpu_blue_blue(DeviceMemory* device_p, u32 n_threads)
     blue.props = device.blue_soa;
 
     BlueProps other{};
-    blue.id = b_offset;
-    blue.props = device.blue_soa;
+    other.id = b_offset;
+    other.props = device.blue_soa;
 
     gpuf::blue_blue(blue, other);
 }
@@ -678,24 +676,22 @@ namespace gpu
         result = cuda::launch_success("gpu_next_movable_positions");
         assert(result);
         
+        cuda_launch_kernel(gpu_player_blue, player_blue_blocks, THREADS_PER_BLOCK, device_p, player_blue_threads);
+        result = cuda::launch_success("gpu_player_blue");
+        assert(result);        
         
         cuda_launch_kernel(gpu_player_wall, player_wall_blocks, THREADS_PER_BLOCK, device_p, player_wall_threads);
         result = cuda::launch_success("gpu_player_wall");
-        assert(result);
+        assert(result);        
         
-        /*
         cuda_launch_kernel(gpu_blue_wall, blue_wall_blocks, THREADS_PER_BLOCK, device_p, blue_wall_threads);
         result = cuda::launch_success("gpu_blue_wall");
-        assert(result);
-        
-        cuda_launch_kernel(gpu_player_blue, player_blue_blocks, THREADS_PER_BLOCK, device_p, player_blue_threads);
-        result = cuda::launch_success("gpu_player_blue");
         assert(result);
         
         cuda_launch_kernel(gpu_blue_blue, blue_blue_blocks, THREADS_PER_BLOCK, device_p, blue_blue_threads);
         result = cuda::launch_success("gpu_blue_blue");
         assert(result);
-*/
+
         auto props = make_screen_props(state);
 
         cuda_launch_kernel(gpu_update_entity_positions, entity_blocks, THREADS_PER_BLOCK, props, entity_threads);
