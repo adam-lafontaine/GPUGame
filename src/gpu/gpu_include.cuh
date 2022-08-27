@@ -280,7 +280,7 @@ inline Rect2Dr32 add_delta(Rect2Dr32 const& rect, Vec2Dr32 const& delta)
     return r;
 }
 
-
+/*
 GPU_FUNCTION
 inline Rect2Dr32 get_screen_rect(Entity const& entity, Point2Dr32 const& screen_pos)
 {
@@ -294,7 +294,7 @@ inline Rect2Dr32 get_screen_rect(Entity const& entity, Point2Dr32 const& screen_
 
     return r;
 }
-
+*/
 
 GPU_FUNCTION
 inline bool rect_intersect(Rect2Dr32 const& a, Rect2Dr32 const& b)
@@ -529,7 +529,7 @@ inline void unset_inv(uStatus& status)
 
 
 
-
+/*
 GPU_FUNCTION
 inline bool is_active(Entity const& entity)
 {
@@ -614,6 +614,7 @@ inline void unset_inv(Entity& entity)
 
     entity.status &= ~inv;
 }
+*/
 
 /***********************/
 

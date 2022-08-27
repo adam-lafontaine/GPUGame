@@ -112,7 +112,7 @@ namespace STATUS
     constexpr uStatus INV_Y = 2 * INV_X;
 }
 
-
+/*
 class Entity
 {
 public:
@@ -137,6 +137,7 @@ public:
 
 
 using EntityArray = Array<Entity>;
+*/
 using TileMatrix = Matrix<Tile>;
 
 
@@ -280,7 +281,7 @@ namespace SIZE
 {
     constexpr size_t DeviceMemory_Pixel = DeviceAssets_Pixel + COUNT::SCREEN_PIXELS * sizeof(Pixel);
     constexpr size_t DeviceMemory_Tile = COUNT::WORLD_TILES * sizeof(Tile);
-    constexpr size_t DeviceMemory_Entity = COUNT::ENTITIES * sizeof(Entity);
+    //constexpr size_t DeviceMemory_Entity = COUNT::ENTITIES * sizeof(Entity);
 }
 
 
