@@ -309,7 +309,7 @@ static void update_position(PlayerProps& ent)
     {
         dt.y = 0.0f;
 
-        gpuf::reset_stop_x(status);
+        gpuf::reset_stop_y(status);
     }
 
     next_postion(ent);
@@ -671,23 +671,23 @@ namespace gpu
         bool result = cuda::no_errors("gpu::update");
         assert(result);
 
-        constexpr auto entity_threads = COUNT::ENTITIES;
-        constexpr auto entity_blocks = calc_thread_blocks(entity_threads);
+        LocalConstexpr auto entity_threads = COUNT::ENTITIES;
+        LocalConstexpr auto entity_blocks = calc_thread_blocks(entity_threads);
         
-        constexpr auto movable_threads = COUNT::MOVABLE_ENTITIES;
-        constexpr auto movable_blocks = calc_thread_blocks(movable_threads);
+        LocalConstexpr auto movable_threads = COUNT::MOVABLE_ENTITIES;
+        LocalConstexpr auto movable_blocks = calc_thread_blocks(movable_threads);
 
-        constexpr auto player_wall_threads = COUNT::PLAYER_WALL_COLLISIONS;
-        constexpr auto player_wall_blocks = calc_thread_blocks(player_wall_threads);
+        LocalConstexpr auto player_wall_threads = COUNT::PLAYER_WALL_COLLISIONS;
+        LocalConstexpr auto player_wall_blocks = calc_thread_blocks(player_wall_threads);
 
-        constexpr auto blue_wall_threads = COUNT::BLUE_WALL_COLLISIONS;
-        constexpr auto blue_wall_blocks = calc_thread_blocks(blue_wall_threads);
+        LocalConstexpr auto blue_wall_threads = COUNT::BLUE_WALL_COLLISIONS;
+        LocalConstexpr auto blue_wall_blocks = calc_thread_blocks(blue_wall_threads);
 
-        constexpr auto player_blue_threads = COUNT::PLAYER_BLUE_COLLISIONS;
-        constexpr auto player_blue_blocks = calc_thread_blocks(player_blue_threads);
+        LocalConstexpr auto player_blue_threads = COUNT::PLAYER_BLUE_COLLISIONS;
+        LocalConstexpr auto player_blue_blocks = calc_thread_blocks(player_blue_threads);
 
-        constexpr auto blue_blue_threads = COUNT::BLUE_BLUE_COLLISIONS;
-        constexpr auto blue_blue_blocks = calc_thread_blocks(blue_blue_threads);
+        LocalConstexpr auto blue_blue_threads = COUNT::BLUE_BLUE_COLLISIONS;
+        LocalConstexpr auto blue_blue_blocks = calc_thread_blocks(blue_blue_threads);
 
         auto device_p = state.device_buffer.data;
         auto unified_p = state.unified_buffer.data;

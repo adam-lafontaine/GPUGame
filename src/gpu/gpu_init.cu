@@ -265,17 +265,17 @@ namespace gpu
             return false;
         }
 
-        constexpr auto player_threads = COUNT::PLAYER_ENTITIES;
-        constexpr auto player_blocks = calc_thread_blocks(player_threads);
+        LocalConstexpr auto player_threads = COUNT::PLAYER_ENTITIES;
+        LocalConstexpr auto player_blocks = calc_thread_blocks(player_threads);
 
-        constexpr auto blue_threads = COUNT::BLUE_ENTITIES;
-        constexpr auto blue_blocks = calc_thread_blocks(blue_threads);
+        LocalConstexpr auto blue_threads = COUNT::BLUE_ENTITIES;
+        LocalConstexpr auto blue_blocks = calc_thread_blocks(blue_threads);
 
-        constexpr auto wall_threads = COUNT::WALL_ENTITIES;
-        constexpr auto wall_blocks = calc_thread_blocks(wall_threads);
+        LocalConstexpr auto wall_threads = COUNT::WALL_ENTITIES;
+        LocalConstexpr auto wall_blocks = calc_thread_blocks(wall_threads);
 
-        constexpr auto tile_threads = COUNT::WORLD_TILES;
-        constexpr auto tile_blocks = calc_thread_blocks(tile_threads);        
+        LocalConstexpr auto tile_threads = COUNT::WORLD_TILES;
+        LocalConstexpr auto tile_blocks = calc_thread_blocks(tile_threads);        
         
         
         cuda_launch_kernel(gpu_init_players, player_blocks, THREADS_PER_BLOCK, device_p, player_threads);

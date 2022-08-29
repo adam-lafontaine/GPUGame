@@ -259,17 +259,17 @@ namespace gpu
         bool result = cuda::no_errors("gpu::render");
         assert(result);
         
-        constexpr auto tile_pixel_threads = COUNT::SCREEN_PIXELS;
-        constexpr auto tile_pixel_blocks = calc_thread_blocks(tile_pixel_threads);
+        LocalConstexpr auto tile_pixel_threads = COUNT::SCREEN_PIXELS;
+        LocalConstexpr auto tile_pixel_blocks = calc_thread_blocks(tile_pixel_threads);
 
-        constexpr auto player_pixel_threads = COUNT::PLAYER_PIXELS;
-        constexpr auto player_pixel_blocks = calc_thread_blocks(player_pixel_threads);
+        LocalConstexpr auto player_pixel_threads = COUNT::PLAYER_PIXELS;
+        LocalConstexpr auto player_pixel_blocks = calc_thread_blocks(player_pixel_threads);
 
-        constexpr auto blue_pixel_threads = COUNT::BLUE_PIXELS;
-        constexpr auto blue_pixel_blocks = calc_thread_blocks(blue_pixel_threads);
+        LocalConstexpr auto blue_pixel_threads = COUNT::BLUE_PIXELS;
+        LocalConstexpr auto blue_pixel_blocks = calc_thread_blocks(blue_pixel_threads);
 
-        constexpr auto wall_pixel_threads = COUNT::WALL_PIXELS;
-        constexpr auto wall_pixel_blocks = calc_thread_blocks(wall_pixel_threads);
+        LocalConstexpr auto wall_pixel_threads = COUNT::WALL_PIXELS;
+        LocalConstexpr auto wall_pixel_blocks = calc_thread_blocks(wall_pixel_threads);
 
 
         auto props = make_screen_props(state);

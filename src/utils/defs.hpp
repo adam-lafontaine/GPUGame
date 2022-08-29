@@ -27,3 +27,4 @@ using cstr = const char*;
 #define Terabytes(value) (Gigabytes(value) * 1024LL)
 
 #define GlobalVariable static
+#define LocalConstexpr static constexpr
