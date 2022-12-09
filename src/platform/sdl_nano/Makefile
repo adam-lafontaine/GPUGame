@@ -5,7 +5,7 @@
 ################################################################################
 
 # Location of the CUDA Toolkit
-CUDA_PATH ?= /usr/local/cuda-11.8
+CUDA_PATH ?= /usr/local/cuda-10.2
 
 ##############################
 # start deprecated interface #
@@ -45,9 +45,9 @@ endif
 # architecture
 HOST_ARCH   := $(shell uname -m)
 TARGET_ARCH ?= $(HOST_ARCH)
-ifneq (,$(filter $(TARGET_ARCH),x86_64 aarch64 sbsa ppc64le armv7l))
+ifneq (,$(filter $(TARGET_ARCH),x86_64 aarch64 ppc64le armv7l))
     ifneq ($(TARGET_ARCH),$(HOST_ARCH))
-        ifneq (,$(filter $(TARGET_ARCH),x86_64 aarch64 sbsa ppc64le))
+        ifneq (,$(filter $(TARGET_ARCH),x86_64 aarch64 ppc64le))
             TARGET_SIZE := 64
         else ifneq (,$(filter $(TARGET_ARCH),armv7l))
             TARGET_SIZE := 32
@@ -58,17 +58,8 @@ ifneq (,$(filter $(TARGET_ARCH),x86_64 aarch64 sbsa ppc64le armv7l))
 else
     $(error ERROR - unsupported value $(TARGET_ARCH) for TARGET_ARCH!)
 endif
-
-# sbsa and aarch64 systems look similar. Need to differentiate them at host level for now.
-ifeq ($(HOST_ARCH),aarch64)
-    ifeq ($(CUDA_PATH)/targets/sbsa-linux,$(shell ls -1d $(CUDA_PATH)/targets/sbsa-linux 2>/dev/null))
-        HOST_ARCH := sbsa
-        TARGET_ARCH := sbsa
-    endif
-endif
-
 ifneq ($(TARGET_ARCH),$(HOST_ARCH))
-    ifeq (,$(filter $(HOST_ARCH)-$(TARGET_ARCH),aarch64-armv7l x86_64-armv7l x86_64-aarch64 x86_64-sbsa x86_64-ppc64le))
+    ifeq (,$(filter $(HOST_ARCH)-$(TARGET_ARCH),aarch64-armv7l x86_64-armv7l x86_64-aarch64 x86_64-ppc64le))
         $(error ERROR - cross compiling from $(HOST_ARCH) to $(TARGET_ARCH) is not supported!)
     endif
 endif
@@ -123,8 +114,6 @@ else ifneq ($(TARGET_ARCH),$(HOST_ARCH))
         else ifeq ($(TARGET_OS), android)
             HOST_COMPILER ?= aarch64-linux-android-clang++
         endif
-    else ifeq ($(TARGET_ARCH),sbsa)
-        HOST_COMPILER ?= aarch64-linux-gnu-g++
     else ifeq ($(TARGET_ARCH),ppc64le)
         HOST_COMPILER ?= powerpc64le-linux-gnu-g++
     endif
@@ -174,13 +163,12 @@ ifneq ($(TARGET_ARCH),$(HOST_ARCH))
             LDFLAGS += -rpath-link=$(TARGET_FS)/usr/lib -L$(TARGET_FS)/usr/lib
             LDFLAGS += -rpath-link=$(TARGET_FS)/usr/lib/aarch64-linux-gnu -L$(TARGET_FS)/usr/lib/aarch64-linux-gnu
             LDFLAGS += --unresolved-symbols=ignore-in-shared-libs
-            CCFLAGS += -isystem=$(TARGET_FS)/usr/include -I$(TARGET_FS)/usr/include -I$(TARGET_FS)/usr/include/libdrm
+            CCFLAGS += -isystem=$(TARGET_FS)/usr/include  -I$(TARGET_FS)/usr/include
             CCFLAGS += -isystem=$(TARGET_FS)/usr/include/aarch64-linux-gnu -I$(TARGET_FS)/usr/include/aarch64-linux-gnu
         endif
     endif
     ifeq ($(TARGET_ARCH)-$(TARGET_OS),aarch64-qnx)
-        NVCCFLAGS += -D_QNX_SOURCE
-        NVCCFLAGS += --qpp-config 8.3.0,gcc_ntoaarch64le
+        NVCCFLAGS += --qpp-config 5.4.0,gcc_ntoaarch64le
         CCFLAGS += -DWIN_INTERFACE_CUSTOM -I/usr/include/aarch64-qnx-gnu
         LDFLAGS += -lsocket
         LDFLAGS += -L/usr/lib/aarch64-qnx-gnu
@@ -209,8 +197,6 @@ ifeq ($(TARGET_ARCH)-$(TARGET_OS),armv7l-linux)
     CUDA_INSTALL_TARGET_DIR = targets/armv7-linux-gnueabihf/
 else ifeq ($(TARGET_ARCH)-$(TARGET_OS),aarch64-linux)
     CUDA_INSTALL_TARGET_DIR = targets/aarch64-linux/
-else ifeq ($(TARGET_ARCH)-$(TARGET_OS),sbsa-linux)
-    CUDA_INSTALL_TARGET_DIR = targets/sbsa-linux/
 else ifeq ($(TARGET_ARCH)-$(TARGET_OS),armv7l-android)
     CUDA_INSTALL_TARGET_DIR = targets/armv7-linux-androideabi/
 else ifeq ($(TARGET_ARCH)-$(TARGET_OS),aarch64-android)
@@ -236,6 +222,7 @@ ALL_CCFLAGS += $(NVCCFLAGS)
 ALL_CCFLAGS += $(EXTRA_NVCCFLAGS)
 ALL_CCFLAGS += $(addprefix -Xcompiler ,$(CCFLAGS))
 ALL_CCFLAGS += $(addprefix -Xcompiler ,$(EXTRA_CCFLAGS))
+ALL_CCFLAGS += --expt-relaxed-constexpr
 
 SAMPLE_ENABLED := 1
 
@@ -245,17 +232,18 @@ ALL_LDFLAGS += $(addprefix -Xlinker ,$(LDFLAGS))
 ALL_LDFLAGS += $(addprefix -Xlinker ,$(EXTRA_LDFLAGS))
 
 # Common includes and paths for CUDA
-INCLUDES  := -I../../../Common
+#INCLUDES  := -I../../common/inc
+#INCLUDES  := -I../samples/common/inc
+INCLUDES   :=
 LIBRARIES :=
 
 ################################################################################
 
 # Gencode arguments
-ifeq ($(TARGET_ARCH),$(filter $(TARGET_ARCH),armv7l aarch64 sbsa))
-SMS ?= 53 61 70 72 75 80 86 87 90
+ifeq ($(TARGET_ARCH),$(filter $(TARGET_ARCH),armv7l aarch64))
+SMS ?= 30 32 53 61 62 70 72 75
 else
-#SMS ?= 35 37 50 52 60 61 70 75 80 86 90
-SMS ?= 50 52 60 61 70 75 80 86 90
+SMS ?= 30 61 70 75
 endif
 
 ifeq ($(SMS),)
@@ -274,15 +262,13 @@ GENCODE_FLAGS += -gencode arch=compute_$(HIGHEST_SM),code=compute_$(HIGHEST_SM)
 endif
 endif
 
-#ALL_CCFLAGS += --threads 0 --std=c++11
-
 ifeq ($(SAMPLE_ENABLED),0)
 EXEC ?= @echo "[@]"
 endif
 
 ################################################################################
 
-GPP := g++-11 -std=c++17
+GPP := g++-10 -std=c++17
 SDL2 := `sdl2-config --cflags --libs`
 
 # sudo killall ibus-daemon
@@ -292,19 +278,20 @@ exe_name := gpu_game_sdl
 
 # directories
 root   := ../../..
-build  := $(root)/build/sdl
+build  := $(root)/build/sdl_nano
 build_lib := $(build)/lib
 build_app := $(build)/app
 
-code   := $(root)/src
-img    := $(code)/libimage
-stb    := $(img)/stb_wrapper
-sdl    := $(code)/platform/sdl
-input  := $(code)/input
-utils  := $(code)/utils
-device := $(code)/device
-app    := $(code)/app
-gpu    := $(code)/gpu
+code     := $(root)/src
+img      := $(code)/libimage
+stb      := $(img)/stb_wrapper
+sdl      := $(code)/platform/sdl
+sdl_nano := $(code)/platform/sdl_nano
+input    := $(code)/input
+utils    := $(code)/utils
+device   := $(code)/device
+app      := $(code)/app
+gpu      := $(code)/gpu
 input_record := $(app)/input_record
 device_image := $(app)/device_image
 
@@ -381,7 +368,7 @@ app_include_h += $(gpu_app_h)
 
 
 # main
-main_c       := $(sdl)/sdl_main.cpp
+main_c       := $(sdl_nano)/sdl_nano_main.cpp
 main_o       := $(build_app)/main.o
 object_files := $(main_o)
 
