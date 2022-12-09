@@ -278,19 +278,20 @@ exe_name := gpu_game_sdl
 
 # directories
 root   := ../../..
-build  := $(root)/build/sdl
+build  := $(root)/build/sdl_nano
 build_lib := $(build)/lib
 build_app := $(build)/app
 
-code   := $(root)/src
-img    := $(code)/libimage
-stb    := $(img)/stb_wrapper
-sdl    := $(code)/platform/sdl
-input  := $(code)/input
-utils  := $(code)/utils
-device := $(code)/device
-app    := $(code)/app
-gpu    := $(code)/gpu
+code     := $(root)/src
+img      := $(code)/libimage
+stb      := $(img)/stb_wrapper
+sdl      := $(code)/platform/sdl
+sdl_nano := $(code)/platform/sdl_nano
+input    := $(code)/input
+utils    := $(code)/utils
+device   := $(code)/device
+app      := $(code)/app
+gpu      := $(code)/gpu
 input_record := $(app)/input_record
 device_image := $(app)/device_image
 
@@ -367,7 +368,7 @@ app_include_h += $(gpu_app_h)
 
 
 # main
-main_c       := $(sdl)/sdl_main.cpp
+main_c       := $(sdl_nano)/sdl_nano_main.cpp
 main_o       := $(build_app)/main.o
 object_files := $(main_o)
 
