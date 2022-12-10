@@ -8,8 +8,9 @@
 constexpr u32 MAX_CONTROLLERS = 1;
 
 
-typedef struct input_t
+class Input
 {
+public:
 	KeyboardInput keyboard;
 	MouseInput mouse;
 
@@ -17,5 +18,4 @@ typedef struct input_t
 	u32 num_controllers;
 
 	r32 dt_frame;
-
-} Input;
+};

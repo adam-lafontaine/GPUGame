@@ -335,8 +335,8 @@ input_h += $(mouse_h)
 input_state_h := $(input)/input_state.hpp
 input_state_h += $(input_h)
 
-sdl_input_h := $(sdl)/sdl_input.hpp
-sdl_input_h += $(input_h)
+sdl_include_h := $(sdl)/sdl_include.hpp
+sdl_include_h += $(input_h)
 
 device_h := $(device)/device.hpp
 device_h += $(types_h)
@@ -419,7 +419,7 @@ $(device_o): $(device_c) $(device_h) $(cuda_def_h)
 	@echo "\n device"
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
-$(input_o): $(input_c) $(sdl_input_h) $(input_state_h)
+$(input_o): $(input_c) $(sdl_include_h) $(input_state_h)
 	@echo "\n input"
 	$(GPP) -o $@ -c $< $(SDL2)
 
@@ -443,7 +443,7 @@ $(app_init_o): $(app_init_c) $(app_include_h) $(libimage_h)
 	@echo "\n app_init"
 	$(GPP) -o $@ -c $<
 
-$(main_o): $(main_c) $(app_h) $(sdl_input_h) $(stopwatch_h)
+$(main_o): $(main_c) $(app_h) $(sdl_include_h) $(stopwatch_h)
 	@echo "\n main"
 	$(GPP) -o $@ -c $< $(SDL2)
 

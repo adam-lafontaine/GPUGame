@@ -1,6 +1,6 @@
 #include "input.hpp"
 
-inline void record_input(ButtonState const& old_state, ButtonState& new_state, b32 is_down)
+inline void record_button_input(ButtonState const& old_state, ButtonState& new_state, b32 is_down)
 {
     new_state.pressed = !old_state.is_down && is_down;
     new_state.is_down = is_down;
