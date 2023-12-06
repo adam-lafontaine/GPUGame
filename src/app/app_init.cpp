@@ -301,31 +301,31 @@ static bool allocate_entity_entity_bitmap(AppState& state, DeviceMemory& device)
     return true;
 }
 
-static bool allocate_entity_r32(AppState& state, DeviceMemory& device)
+static bool allocate_entity_f32(AppState& state, DeviceMemory& device)
 {
-    auto& buffer = state.device_entity_r32_buffer;
+    auto& buffer = state.device_entity_f32_buffer;
 
-    if(!cuda::device_malloc(buffer, SIZE::Entity_r32))
+    if(!cuda::device_malloc(buffer, SIZE::Entity_f32))
     {
-        print_error("entity r32");
+        print_error("entity f32");
         return false;
     }
 
-    auto r32_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
-    if(!r32_data)
+    auto f32_data = cuda::push_elements(buffer, COUNT::PLAYER_ENTITIES);
+    if(!f32_data)
     {
         print_error("player speed data");
         return false;
     }
-    device.player_soa.speed = r32_data;
+    device.player_soa.speed = f32_data;
 
-    r32_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
-    if(!r32_data)
+    f32_data = cuda::push_elements(buffer, COUNT::BLUE_ENTITIES);
+    if(!f32_data)
     {
         print_error("blue speed data");
         return false;
     }
-    device.blue_soa.speed = r32_data;
+    device.blue_soa.speed = f32_data;
 
     return true;
 }
@@ -385,13 +385,13 @@ static bool allocate_entity_world_position(AppState& state, DeviceMemory& device
 }
 
 
-static bool allocate_entity_vec_2d_r32(AppState& state, DeviceMemory& device)
+static bool allocate_entity_vec_2d_f32(AppState& state, DeviceMemory& device)
 {
-    auto& buffer = state.device_entity_vec_2d_r32_buffer;
+    auto& buffer = state.device_entity_vec_2d_f32_buffer;
 
-    if(!cuda::device_malloc(buffer, SIZE::Entity_Vec2Dr32))
+    if(!cuda::device_malloc(buffer, SIZE::Entity_Vec2Df32))
     {
-        print_error("entity Vec2Dr32");
+        print_error("entity Vec2Df32");
         return false;
     }
 
@@ -523,7 +523,7 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
         return false;
     }
 
-    if(!allocate_entity_r32(state, device))
+    if(!allocate_entity_f32(state, device))
     {
         return false;
     }    
@@ -533,7 +533,7 @@ bool init_device_memory(AppState& state, app::ScreenBuffer& buffer)
         return false;
     }    
    
-    if(!allocate_entity_vec_2d_r32(state, device))
+    if(!allocate_entity_vec_2d_f32(state, device))
     {
         return false;
     }    

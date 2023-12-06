@@ -21,24 +21,24 @@ static InputRecord& get_last_input_record(InputList const& list)
 }
 
 
-static void apply_delta(WorldPosition& pos, Vec2Dr32 const& delta)
+static void apply_delta(WorldPosition& pos, Vec2Df32 const& delta)
 {
     if(delta.x != 0.0f)
     {
-        r32 dist_m = pos.offset_m.x + delta.x;
-        i32 delta_tile = floor_r32_to_i32(dist_m / TILE_LENGTH_M);
+        f32 dist_m = pos.offset_m.x + delta.x;
+        i32 delta_tile = floor_f32_to_i32(dist_m / TILE_LENGTH_M);
         
         pos.tile.x = pos.tile.x + delta_tile;
-        pos.offset_m.x = dist_m - (r32)delta_tile * TILE_LENGTH_M;
+        pos.offset_m.x = dist_m - (f32)delta_tile * TILE_LENGTH_M;
     }    
 
     if(delta.y != 0.0f)
     {
-        r32 dist_m = pos.offset_m.y + delta.y;
-        i32 delta_tile = floor_r32_to_i32(dist_m / TILE_LENGTH_M);
+        f32 dist_m = pos.offset_m.y + delta.y;
+        i32 delta_tile = floor_f32_to_i32(dist_m / TILE_LENGTH_M);
         
         pos.tile.y = pos.tile.y + delta_tile;
-        pos.offset_m.y = dist_m - (r32)delta_tile * TILE_LENGTH_M;
+        pos.offset_m.y = dist_m - (f32)delta_tile * TILE_LENGTH_M;
     }    
 }
 
@@ -51,8 +51,8 @@ static void process_camera_input(Input const& input, AppState& state)
 
     auto dt = input.dt_frame;
 
-    r32 max_camera_speed_px = 300.0f;
-    r32 min_camera_speed_px = 200.0f;
+    f32 max_camera_speed_px = 300.0f;
+    f32 min_camera_speed_px = 200.0f;
 
     auto camera_speed_px = max_camera_speed_px - 
         (app_input.screen_width_m - MIN_SCREEN_WIDTH_M) / (MAX_SCREEN_WIDTH_M - MIN_SCREEN_WIDTH_M) * (max_camera_speed_px - min_camera_speed_px);
@@ -60,7 +60,7 @@ static void process_camera_input(Input const& input, AppState& state)
     auto camera_movement_px = camera_speed_px * dt;
     auto camera_movement_m = px_to_m(camera_movement_px, app_input.screen_width_m, state.screen_pixels.width);    
 
-    Vec2Dr32 camera_d_m = { 0.0f, 0.0f };
+    Vec2Df32 camera_d_m = { 0.0f, 0.0f };
 
     if(keyboard.up_key.is_down || controller.stick_left_y.end > 0.5f)
     {
@@ -79,7 +79,7 @@ static void process_camera_input(Input const& input, AppState& state)
         camera_d_m.x += camera_movement_m;
     }
 
-    r32 zoom_speed = 50.0f;
+    f32 zoom_speed = 50.0f;
     auto zoom_m = zoom_speed * dt;
 
     if(app_input.screen_width_m > MIN_SCREEN_WIDTH_M && controller.stick_right_y.end > 0.5f)
@@ -352,10 +352,10 @@ namespace app
 
         cuda::free(state.device_entity_ustatus_buffer);
         cuda::free(state.device_entity_entity_bitmap_buffer);
-        cuda::free(state.device_entity_rect_2d_r32_buffer);
-        cuda::free(state.device_entity_r32_buffer);
+        cuda::free(state.device_entity_rect_2d_f32_buffer);
+        cuda::free(state.device_entity_f32_buffer);
         cuda::free(state.device_entity_world_position_buffer);
-        cuda::free(state.device_entity_vec_2d_r32_buffer);
+        cuda::free(state.device_entity_vec_2d_f32_buffer);
     }
 
 

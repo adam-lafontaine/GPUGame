@@ -25,7 +25,7 @@ public:
     u64 frame_end;
     uInput input;
 
-    r32 est_dt_frame;
+    f32 est_dt_frame;
 };
 
 
@@ -109,7 +109,7 @@ class WorldPosition
 {
 public:
     Point2Di32 tile;
-    Point2Dr32 offset_m;
+    Point2Df32 offset_m;
 };
 
 
@@ -137,13 +137,13 @@ public:
 
     EntityBitmap* bitmap;
 
-    Vec2Dr32* dim_m;
+    Vec2Df32* dim_m;
 
     WorldPosition* position;
-    Vec2Dr32* dt;
-    r32* speed;
+    Vec2Df32* dt;
+    f32* speed;
 
-    Vec2Dr32* delta_pos_m;
+    Vec2Df32* delta_pos_m;
 
     WorldPosition* next_position;
 };
@@ -153,9 +153,9 @@ namespace SIZE
 {
     constexpr size_t PlayerEntitySOA_uStatus = COUNT::PLAYER_ENTITIES * sizeof(uStatus);
     constexpr size_t PlayerEntitySOA_EntityBitmap = COUNT::PLAYER_ENTITIES * sizeof(EntityBitmap);
-    constexpr size_t PlayerEntitySOA_Vec2Dr32 = COUNT::PLAYER_ENTITIES * sizeof(Vec2Dr32) * 3;
+    constexpr size_t PlayerEntitySOA_Vec2Df32 = COUNT::PLAYER_ENTITIES * sizeof(Vec2Df32) * 3;
     constexpr size_t PlayerEntitySOA_WorldPosition = COUNT::PLAYER_ENTITIES * sizeof(WorldPosition) * 2;
-    constexpr size_t PlayerEntitySOA_r32 = COUNT::PLAYER_ENTITIES * sizeof(r32);
+    constexpr size_t PlayerEntitySOA_f32 = COUNT::PLAYER_ENTITIES * sizeof(f32);
 }
 
 
@@ -167,14 +167,14 @@ public:
 
     EntityBitmap* bitmap;
 
-    Vec2Dr32* dim_m;
+    Vec2Df32* dim_m;
 
     WorldPosition* position;
 
-    Vec2Dr32* dt;
-    r32* speed;
+    Vec2Df32* dt;
+    f32* speed;
 
-    Vec2Dr32* delta_pos_m;
+    Vec2Df32* delta_pos_m;
 
     WorldPosition* next_position;
 };
@@ -184,9 +184,9 @@ namespace SIZE
 {
     constexpr size_t BlueEntitySOA_uStatus = COUNT::BLUE_ENTITIES * sizeof(uStatus);
     constexpr size_t BlueEntitySOA_EntityBitmap = COUNT::BLUE_ENTITIES * sizeof(EntityBitmap);
-    constexpr size_t BlueEntitySOA_Vec2Dr32 = COUNT::BLUE_ENTITIES * sizeof(Vec2Dr32) * 3;
+    constexpr size_t BlueEntitySOA_Vec2Df32 = COUNT::BLUE_ENTITIES * sizeof(Vec2Df32) * 3;
     constexpr size_t BlueEntitySOA_WorldPosition = COUNT::BLUE_ENTITIES * sizeof(WorldPosition) * 2;
-    constexpr size_t BlueEntitySOA_r32 = COUNT::BLUE_ENTITIES * sizeof(r32);
+    constexpr size_t BlueEntitySOA_f32 = COUNT::BLUE_ENTITIES * sizeof(f32);
 }
 
 
@@ -198,7 +198,7 @@ public:
 
     EntityBitmap* bitmap;
 
-    Vec2Dr32* dim_m;
+    Vec2Df32* dim_m;
 
     WorldPosition* position;
 };
@@ -210,7 +210,7 @@ namespace SIZE
     constexpr size_t WallEntitySOA_Image = COUNT::WALL_ENTITIES * sizeof(Image);
     constexpr size_t WallEntitySOA_Pixel = COUNT::WALL_ENTITIES * sizeof(Pixel);
     constexpr size_t WallEntitySOA_EntityBitmap = COUNT::PLAYER_ENTITIES * sizeof(EntityBitmap);
-    constexpr size_t WallEntitySOA_Vec2Dr32 = COUNT::WALL_ENTITIES * sizeof(Vec2Dr32);
+    constexpr size_t WallEntitySOA_Vec2Df32 = COUNT::WALL_ENTITIES * sizeof(Vec2Df32);
     constexpr size_t WallEntitySOA_WorldPosition = COUNT::WALL_ENTITIES * sizeof(WorldPosition);
 }
 
@@ -220,8 +220,8 @@ namespace SIZE
     constexpr size_t Entity_uStatus = PlayerEntitySOA_uStatus + BlueEntitySOA_uStatus + WallEntitySOA_uStatus;
     constexpr size_t Entity_EntityBitmap = PlayerEntitySOA_EntityBitmap + BlueEntitySOA_EntityBitmap + WallEntitySOA_EntityBitmap;
     constexpr size_t Entity_WorldPosition = PlayerEntitySOA_WorldPosition + BlueEntitySOA_WorldPosition + WallEntitySOA_WorldPosition;
-    constexpr size_t Entity_Vec2Dr32 = PlayerEntitySOA_Vec2Dr32 + BlueEntitySOA_Vec2Dr32 + WallEntitySOA_Vec2Dr32;
-    constexpr size_t Entity_r32 = PlayerEntitySOA_r32 + BlueEntitySOA_r32;
+    constexpr size_t Entity_Vec2Df32 = PlayerEntitySOA_Vec2Df32 + BlueEntitySOA_Vec2Df32 + WallEntitySOA_Vec2Df32;
+    constexpr size_t Entity_f32 = PlayerEntitySOA_f32 + BlueEntitySOA_f32;
 }
 
 
@@ -231,8 +231,8 @@ public:
 
     bool reset_frame_count;
 
-    r32 screen_width_m;
-    r32 screen_height_m;
+    f32 screen_width_m;
+    f32 screen_height_m;
 
     WorldPosition screen_position;
 };
@@ -293,8 +293,8 @@ public:
     // soa data
     MemoryBuffer<uStatus> device_entity_ustatus_buffer;
     MemoryBuffer<EntityBitmap> device_entity_entity_bitmap_buffer;
-    MemoryBuffer<Rect2Dr32> device_entity_rect_2d_r32_buffer;
-    MemoryBuffer<r32> device_entity_r32_buffer;
+    MemoryBuffer<Rect2Df32> device_entity_rect_2d_f32_buffer;
+    MemoryBuffer<f32> device_entity_f32_buffer;
     MemoryBuffer<WorldPosition> device_entity_world_position_buffer;
-    MemoryBuffer<Vec2Dr32> device_entity_vec_2d_r32_buffer;
+    MemoryBuffer<Vec2Df32> device_entity_vec_2d_f32_buffer;
 };

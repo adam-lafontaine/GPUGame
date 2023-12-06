@@ -13,8 +13,8 @@ constexpr auto WINDOW_TITLE = app::APP_TITLE;
 constexpr size_t APP_MEMORY_SIZE = Megabytes(16);
 
 // control the framerate of the application
-constexpr r32 TARGET_FRAMERATE_HZ = 60.0f;
-constexpr r32 TARGET_MS_PER_FRAME = 1000.0f / TARGET_FRAMERATE_HZ;
+constexpr f32 TARGET_FRAMERATE_HZ = 60.0f;
+constexpr f32 TARGET_MS_PER_FRAME = 1000.0f / TARGET_FRAMERATE_HZ;
 
 GlobalVariable b32 g_running = false;
 
@@ -148,10 +148,10 @@ int main(int argc, char *argv[])
     bool in_current = 0;
     bool in_old = 1;
     Stopwatch sw;
-    r64 frame_ms_elapsed = TARGET_MS_PER_FRAME;
+    f64 frame_ms_elapsed = TARGET_MS_PER_FRAME;
     char dbg_title[50] = { 0 };
-    r64 ms_elapsed = 0.0;
-    r64 title_refresh_ms = 500.0;
+    f64 ms_elapsed = 0.0;
+    f64 title_refresh_ms = 500.0;
 
     //app::DebugInfo dbg{};
 

@@ -21,13 +21,13 @@ static void print_error(cstr msg)
 }
 
 
-constexpr r32 screen_height_m(r32 screen_width_m)
+constexpr f32 screen_height_m(f32 screen_width_m)
 {
     return screen_width_m * SCREEN_HEIGHT_PX / SCREEN_WIDTH_PX;
 }
 
 
-constexpr r32 px_to_m(r32 n_pixels, r32 width_m, u32 width_px)
+constexpr f32 px_to_m(f32 n_pixels, f32 width_m, u32 width_px)
 {
     return n_pixels * width_m / width_px;
 }
