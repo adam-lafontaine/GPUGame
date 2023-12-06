@@ -38,11 +38,11 @@ CONTROLLER_Y;
 class AxisState
 {
 public:
-    r32 start;
-    r32 end;
+    f32 start;
+    f32 end;
     
-    r32 min;
-    r32 max;
+    f32 min;
+    f32 max;
 };
 
 

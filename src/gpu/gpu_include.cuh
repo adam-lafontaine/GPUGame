@@ -9,8 +9,8 @@ public:
     DeviceMemory* device_p;
 
     WorldPosition screen_pos;
-    r32 screen_width_m;
-    r32 screen_height_m;
+    f32 screen_width_m;
+    f32 screen_height_m;
 };
 
 
@@ -64,28 +64,28 @@ namespace gpuf
 /***********************/
 
 GPU_CONSTEXPR_FUNCTION
-inline i32 floor_r32_to_i32(r32 value)
+inline i32 floor_f32_to_i32(f32 value)
 {
     return (i32)(floorf(value));
 }
 
 
 GPU_CONSTEXPR_FUNCTION
-inline i32 ceil_r32_to_i32(r32 value)
+inline i32 ceil_f32_to_i32(f32 value)
 {
     return (i32)(ceilf(value));
 }
 
 
 GPU_CONSTEXPR_FUNCTION
-inline i32 round_r32_to_i32(r32 value)
+inline i32 round_f32_to_i32(f32 value)
 {
     return (i32)(roundf(value));
 }
 
 
 GPU_CONSTEXPR_FUNCTION
-inline r32 px_to_m(u32 n_pixels, r32 length_m, u32 length_px)
+inline f32 px_to_m(u32 n_pixels, f32 length_m, u32 length_px)
 {
     auto dist = n_pixels * length_m / length_px;
 
@@ -94,11 +94,11 @@ inline r32 px_to_m(u32 n_pixels, r32 length_m, u32 length_px)
 
 
 GPU_CONSTEXPR_FUNCTION
-inline i32 m_to_px(r32 dist_m, r32 length_m, u32 length_px)
+inline i32 m_to_px(f32 dist_m, f32 length_m, u32 length_px)
 {
     auto px = dist_m * length_px / length_m;
 
-    return gpuf::floor_r32_to_i32(px);
+    return gpuf::floor_f32_to_i32(px);
 }
 
 
@@ -116,24 +116,24 @@ inline Pixel to_pixel(u8 red, u8 green, u8 blue)
 
 
 GPU_FUNCTION
-inline void update_position(WorldPosition& pos, Vec2Dr32 const& delta)
+inline void update_position(WorldPosition& pos, Vec2Df32 const& delta)
 {
-    r32 dist_m = pos.offset_m.x + delta.x;
-    i32 delta_tile = gpuf::floor_r32_to_i32(dist_m / TILE_LENGTH_M);
+    f32 dist_m = pos.offset_m.x + delta.x;
+    i32 delta_tile = gpuf::floor_f32_to_i32(dist_m / TILE_LENGTH_M);
     
     pos.tile.x = pos.tile.x + delta_tile;
-    pos.offset_m.x = dist_m - (r32)delta_tile * TILE_LENGTH_M;
+    pos.offset_m.x = dist_m - (f32)delta_tile * TILE_LENGTH_M;
 
     dist_m = pos.offset_m.y + delta.y;
-    delta_tile = gpuf::floor_r32_to_i32(dist_m / TILE_LENGTH_M);
+    delta_tile = gpuf::floor_f32_to_i32(dist_m / TILE_LENGTH_M);
     
     pos.tile.y = pos.tile.y + delta_tile;
-    pos.offset_m.y = dist_m - (r32)delta_tile * TILE_LENGTH_M;
+    pos.offset_m.y = dist_m - (f32)delta_tile * TILE_LENGTH_M;
 }
 
 
 GPU_FUNCTION
-inline WorldPosition add_delta(WorldPosition const& pos, Vec2Dr32 const& delta)
+inline WorldPosition add_delta(WorldPosition const& pos, Vec2Df32 const& delta)
 {
     WorldPosition added = pos;
 
@@ -144,9 +144,9 @@ inline WorldPosition add_delta(WorldPosition const& pos, Vec2Dr32 const& delta)
 
 
 GPU_FUNCTION
-inline Vec2Dr32 add(Vec2Dr32 const& lhs, Vec2Dr32 const& rhs)
+inline Vec2Df32 add(Vec2Df32 const& lhs, Vec2Df32 const& rhs)
 {
-    Vec2Dr32 vec{};
+    Vec2Df32 vec{};
 
     vec.x = lhs.x + rhs.x;
     vec.y = lhs.y + rhs.y;
@@ -167,9 +167,9 @@ inline Vec2Di32 subtract(Vec2Di32 const& lhs, Vec2Di32 const& rhs)
 }
 
 GPU_FUNCTION
-inline Vec2Dr32 subtract(Vec2Dr32 const& lhs, Vec2Dr32 const& rhs)
+inline Vec2Df32 subtract(Vec2Df32 const& lhs, Vec2Df32 const& rhs)
 {
-    Vec2Dr32 delta{};
+    Vec2Df32 delta{};
 
     delta.x = lhs.x - rhs.x;
     delta.y = lhs.y - rhs.y;
@@ -179,16 +179,16 @@ inline Vec2Dr32 subtract(Vec2Dr32 const& lhs, Vec2Dr32 const& rhs)
 
 
 GPU_FUNCTION
-inline bool equal(Vec2Dr32 const& lhs, Vec2Dr32 const& rhs)
+inline bool equal(Vec2Df32 const& lhs, Vec2Df32 const& rhs)
 {
     return lhs.x == rhs.x && lhs.y == rhs.y;
 }
 
 
 GPU_FUNCTION
-inline Vec2Dr32 sub_delta_m(WorldPosition const& pos, WorldPosition const& origin)
+inline Vec2Df32 sub_delta_m(WorldPosition const& pos, WorldPosition const& origin)
 {
-    Vec2Dr32 delta{};
+    Vec2Df32 delta{};
 
     delta.x = TILE_LENGTH_M * (pos.tile.x - origin.tile.x) + pos.offset_m.x - origin.offset_m.x;
     delta.y = TILE_LENGTH_M * (pos.tile.y - origin.tile.y) + pos.offset_m.y - origin.offset_m.y;
@@ -198,9 +198,9 @@ inline Vec2Dr32 sub_delta_m(WorldPosition const& pos, WorldPosition const& origi
 
 
 GPU_FUNCTION
-inline Point2Dr32 subtract_abs(WorldPosition const& pos, WorldPosition const& origin)
+inline Point2Df32 subtract_abs(WorldPosition const& pos, WorldPosition const& origin)
 {
-    Point2Dr32 delta{};
+    Point2Df32 delta{};
 
     delta.x = TILE_LENGTH_M * (pos.tile.x - origin.tile.x) + pos.offset_m.x - origin.offset_m.x;
     delta.y = TILE_LENGTH_M * (pos.tile.y - origin.tile.y) + pos.offset_m.y - origin.offset_m.y;
@@ -225,9 +225,9 @@ inline WorldPosition subtract(WorldPosition const& pos, WorldPosition const& ori
 
 
 GPU_FUNCTION
-inline Rect2Dr32 make_rect(r32 width, r32 height)
+inline Rect2Df32 make_rect(f32 width, f32 height)
 {
-    Rect2Dr32 r{};
+    Rect2Df32 r{};
 
     r.x_begin = 0.0f;
     r.x_end = width;
@@ -239,12 +239,12 @@ inline Rect2Dr32 make_rect(r32 width, r32 height)
 
 
 GPU_FUNCTION
-inline Rect2Dr32 make_rect(Point2Dr32 const& begin, r32 width, r32 height)
+inline Rect2Df32 make_rect(Point2Df32 const& begin, f32 width, f32 height)
 {
     assert(width > 0.0f);
     assert(height > 0.0f);
 
-    Rect2Dr32 r{};
+    Rect2Df32 r{};
 
     r.x_begin = begin.x;
     r.x_end = begin.x + width;
@@ -256,9 +256,9 @@ inline Rect2Dr32 make_rect(Point2Dr32 const& begin, r32 width, r32 height)
 
 
 GPU_FUNCTION
-inline Rect2Dr32 add_delta(Rect2Dr32 const& rect, Vec2Dr32 const& delta)
+inline Rect2Df32 add_delta(Rect2Df32 const& rect, Vec2Df32 const& delta)
 {
-    Rect2Dr32 r = rect;
+    Rect2Df32 r = rect;
 
     r.x_begin += delta.x;
     r.x_end += delta.x;
@@ -270,7 +270,7 @@ inline Rect2Dr32 add_delta(Rect2Dr32 const& rect, Vec2Dr32 const& delta)
 
 
 GPU_FUNCTION
-inline bool rect_intersect(Rect2Dr32 const& a, Rect2Dr32 const& b)
+inline bool rect_intersect(Rect2Df32 const& a, Rect2Df32 const& b)
 {
     bool is_out = 
         a.x_end < b.x_begin ||
@@ -283,7 +283,7 @@ inline bool rect_intersect(Rect2Dr32 const& a, Rect2Dr32 const& b)
 
 
 GPU_FUNCTION
-inline void clamp_rect(Rect2Dr32& rect, Rect2Dr32 const& boundary)
+inline void clamp_rect(Rect2Df32& rect, Rect2Df32 const& boundary)
 {
     if(rect.x_begin < boundary.x_begin)
     {
@@ -308,24 +308,24 @@ inline void clamp_rect(Rect2Dr32& rect, Rect2Dr32 const& boundary)
 
 
 GPU_FUNCTION
-inline Rect2Di32 to_pixel_rect(Rect2Dr32 const& rect_m, r32 length_m, u32 length_px)
+inline Rect2Di32 to_pixel_rect(Rect2Df32 const& rect_m, f32 length_m, u32 length_px)
 {
     auto const m_px = length_px / length_m;
 
     Rect2Di32 rect_px{};
-    rect_px.x_begin = gpuf::floor_r32_to_i32(rect_m.x_begin * m_px);
-    rect_px.x_end = gpuf::ceil_r32_to_i32(rect_m.x_end * m_px);
-    rect_px.y_begin = gpuf::floor_r32_to_i32(rect_m.y_begin * m_px);
-    rect_px.y_end = gpuf::ceil_r32_to_i32(rect_m.y_end * m_px);
+    rect_px.x_begin = gpuf::floor_f32_to_i32(rect_m.x_begin * m_px);
+    rect_px.x_end = gpuf::ceil_f32_to_i32(rect_m.x_end * m_px);
+    rect_px.y_begin = gpuf::floor_f32_to_i32(rect_m.y_begin * m_px);
+    rect_px.y_end = gpuf::ceil_f32_to_i32(rect_m.y_end * m_px);
 
     return rect_px;
 }
 
 
 GPU_FUNCTION
-inline Vec2Dr32 vec_mul(Vec2Dr32 const& vec, r32 scale)
+inline Vec2Df32 vec_mul(Vec2Df32 const& vec, f32 scale)
 {
-    Vec2Dr32 res{};
+    Vec2Df32 res{};
     res.x = vec.x * scale;
     res.y = vec.y * scale;
 

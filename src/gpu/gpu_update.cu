@@ -18,7 +18,7 @@ namespace gpuf
 
 
 GPU_FUNCTION
-static void update_player_dt(Vec2Dr32& player_dt, InputRecord const& input)
+static void update_player_dt(Vec2Df32& player_dt, InputRecord const& input)
 {    
     if(input.input & INPUT::PLAYER_UP)
     {

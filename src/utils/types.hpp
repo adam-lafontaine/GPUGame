@@ -11,11 +11,11 @@ public:
 };
 
 
-class Vec2Dr32
+class Vec2Df32
 {
 public:
-    r32 x;
-    r32 y;
+    f32 x;
+    f32 y;
 };
 
 
@@ -55,13 +55,13 @@ public:
 };
 
 
-class Rect2Dr32
+class Rect2Df32
 {
 public:
-	r32 x_begin;
-	r32 x_end;
-	r32 y_begin;
-	r32 y_end;
+	f32 x_begin;
+	f32 x_end;
+	f32 y_begin;
+	f32 y_end;
 };
 
 
@@ -69,7 +69,7 @@ public:
 using Range2Du32 = Rect2Du32;
 
 using Point2Di32 = Vec2Di32;
-using Point2Dr32 = Vec2Dr32;
+using Point2Df32 = Vec2Df32;
 using Point2Df64 = Vec2Df64;
 using Point2Du32 = Vec2Du32;
 
@@ -96,19 +96,19 @@ public:
 };
 
 
-inline i32 round_r32_to_i32(r32 value)
+inline i32 round_f32_to_i32(f32 value)
 {
     return (i32)roundf(value);
 }
 
 
-inline i32 round_r32_to_u32(r32 value)
+inline i32 round_f32_to_u32(f32 value)
 {
     return (u32)(value + 0.5f);
 }
 
 
-inline u8 scale_r32_to_u8(r32 value)
+inline u8 scale_f32_to_u8(f32 value)
 {
     if(value < 0.0f)
         return 0;
@@ -116,22 +116,22 @@ inline u8 scale_r32_to_u8(r32 value)
     if(value > 255.0f)
         return 255;
 
-    return (u8)round_r32_to_u32(value);
+    return (u8)round_f32_to_u32(value);
 }
 
 
-inline i32 floor_r32_to_i32(r32 value)
+inline i32 floor_f32_to_i32(f32 value)
 {
     return (i32)(floorf(value));
 }
 
-inline r32 absolute_value(r32 value)
+inline f32 absolute_value(f32 value)
 {
     return fabsf(value);
 }
 
 
-inline r32 square_root(r32 value)
+inline f32 square_root(f32 value)
 {
     return sqrtf(value);
 }

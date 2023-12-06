@@ -13,8 +13,8 @@ constexpr auto WINDOW_TITLE = app::APP_TITLE;
 constexpr size_t APP_MEMORY_SIZE = Megabytes(16);
 
 // control the framerate of the application
-constexpr r32 TARGET_FRAMERATE_HZ = 60.0f;
-constexpr r32 TARGET_MS_PER_FRAME = 1000.0f / TARGET_FRAMERATE_HZ;
+constexpr f32 TARGET_FRAMERATE_HZ = 60.0f;
+constexpr f32 TARGET_MS_PER_FRAME = 1000.0f / TARGET_FRAMERATE_HZ;
 
 GlobalVariable b32 g_running = false;
 

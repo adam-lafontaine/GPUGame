@@ -67,7 +67,7 @@ static void init_blue(BlueProps const& blue, BlueBitmap const& bitmap)
 
     blue.props.delta_pos_m[i] = { 0.0f, 0.0f };
 
-    Vec2Dr32 dt = { 0.0f, 0.0f };
+    Vec2Df32 dt = { 0.0f, 0.0f };
     
     switch(i % 8)
     {

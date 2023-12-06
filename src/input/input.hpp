@@ -17,5 +17,5 @@ public:
 	ControllerInput controllers[MAX_CONTROLLERS];
 	u32 num_controllers;
 
-	r32 dt_frame;
+	f32 dt_frame;
 };

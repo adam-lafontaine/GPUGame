@@ -77,7 +77,7 @@ static Pixel get_tile_pixel(Tile const& tile, WorldPosition const& pixel_world_p
 
 
 GPU_FUNCTION
-static void draw_bitmap_pixel(EntityBitmap const& bitmap, u32 pixel_offset, Vec2Dr32 const& dim_m, Point2Dr32 const& screen_pos_m, ScreenProps const& screen_props)
+static void draw_bitmap_pixel(EntityBitmap const& bitmap, u32 pixel_offset, Vec2Df32 const& dim_m, Point2Df32 const& screen_pos_m, ScreenProps const& screen_props)
 {
     auto bitmap_width_px = bitmap.width;
     auto bitmap_height_px = bitmap.height;
@@ -88,7 +88,7 @@ static void draw_bitmap_pixel(EntityBitmap const& bitmap, u32 pixel_offset, Vec2
     auto bitmap_pixel_offset_y = pixel_offset / bitmap_width_px;
     auto bitmap_pixel_offset_x = pixel_offset - bitmap_pixel_offset_y * bitmap_width_px;
 
-    Vec2Dr32 bitmap_pixel_offset_m{};
+    Vec2Df32 bitmap_pixel_offset_m{};
     bitmap_pixel_offset_m.x = bitmap_pixel_offset_x * bitmap_pixel_width_m;
     bitmap_pixel_offset_m.y = bitmap_pixel_offset_y * bitmap_pixel_height_m;
 
