@@ -148,10 +148,10 @@ int main(int argc, char *argv[])
     bool in_current = 0;
     bool in_old = 1;
     Stopwatch sw;
-    r64 frame_ms_elapsed = TARGET_MS_PER_FRAME;
+    f64 frame_ms_elapsed = TARGET_MS_PER_FRAME;
     char dbg_title[50] = { 0 };
-    r64 ms_elapsed = 0.0;
-    r64 title_refresh_ms = 500.0;
+    f64 ms_elapsed = 0.0;
+    f64 title_refresh_ms = 500.0;
 
     //app::DebugInfo dbg{};
 
